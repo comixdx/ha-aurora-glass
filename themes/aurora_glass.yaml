@@ -4,8 +4,9 @@
 #     themes: !include_dir_merge_named themes
 # Then: Developer tools → Actions → frontend.reload_themes, and pick the theme in your profile.
 #
-# The blur needs card-mod (HACS → Frontend → card-mod). Without it everything still works,
-# the cards are just translucent instead of frosted.
+# Optional: the Aurora Glass card already applies this look to its own dashboard
+# (editor switch "Apply the glass theme to the whole dashboard"). Use this file only if you
+# want the glass look on every dashboard and in the rest of the HA interface.
 
 Aurora Glass:
   # Shared by both modes
@@ -20,12 +21,8 @@ Aurora Glass:
   energy-battery-out-color: "var(--ag-battery)"
   energy-grid-return-color: "var(--ag-grid)"
   error-color: "var(--ag-alert)"
-  card-mod-theme: Aurora Glass
-  card-mod-card: |
-    ha-card {
-      backdrop-filter: blur(24px) saturate(170%);
-      -webkit-backdrop-filter: blur(24px) saturate(170%);
-    }
+  ha-card-backdrop-filter: "blur(24px) saturate(170%)"
+  app-header-backdrop-filter: "blur(24px) saturate(170%)"
   modes:
     dark:   # Midnight
       ag-cool: "#6cb6ff"
@@ -116,12 +113,8 @@ Aurora Glass Lagoon:
     radial-gradient(circle at 85% 35%, rgba(36,83,198,0.45), transparent 42%),
     radial-gradient(circle at 30% 100%, rgba(79,197,141,0.40), transparent 48%),
     #03131a fixed
-  card-mod-theme: Aurora Glass Lagoon
-  card-mod-card: |
-    ha-card {
-      backdrop-filter: blur(24px) saturate(170%);
-      -webkit-backdrop-filter: blur(24px) saturate(170%);
-    }
+  ha-card-backdrop-filter: "blur(24px) saturate(170%)"
+  app-header-backdrop-filter: "blur(24px) saturate(170%)"
 
 Aurora Glass Ember:
   ha-card-border-radius: "28px"
@@ -153,9 +146,5 @@ Aurora Glass Ember:
     radial-gradient(circle at 85% 35%, rgba(122,47,142,0.45), transparent 42%),
     radial-gradient(circle at 30% 100%, rgba(212,150,42,0.40), transparent 48%),
     #140b09 fixed
-  card-mod-theme: Aurora Glass Ember
-  card-mod-card: |
-    ha-card {
-      backdrop-filter: blur(24px) saturate(170%);
-      -webkit-backdrop-filter: blur(24px) saturate(170%);
-    }
+  ha-card-backdrop-filter: "blur(24px) saturate(170%)"
+  app-header-backdrop-filter: "blur(24px) saturate(170%)"
