@@ -1,0 +1,67 @@
+# Aurora Glass — example dashboard (Settings → Dashboards → ⋮ → Raw configuration editor)
+# Replace the entity IDs with yours. Unused widgets can simply be deleted.
+title: Acasă
+views:
+  - title: Acasă
+    path: home
+    icon: mdi:home
+    type: panel              # full width; the card has its own glass background
+    cards:
+      - type: custom:aurora-glass-card
+        # preset: auto        # auto (follows HA dark/light) | midnight | dawn | lagoon | ember
+        # accent: peach       # peach | gold | mint | sky | lilac
+        # blur: 24            # px, 0–40
+        # motion: true
+        # language: ro        # default: your HA profile language
+        min_height: 100vh
+        chips:
+          - { entity: sensor.living_room_temperature, name: Inside, color: cool }
+          - { entity: sensor.pv_power, name: Solar, color: solar }
+          - { entity: sensor.house_consumption, name: Using }
+        widgets:
+          - type: energy
+            size: L
+            solar_power: sensor.pv_power
+            home_power: sensor.house_consumption       # optional, computed if missing
+            battery_power: sensor.battery_power
+            battery_soc: sensor.battery_state_of_charge
+            grid_power: sensor.active_power
+            invert_battery: true   # GoodWe reports discharge as positive
+            invert_grid: true      # GoodWe active_power is + when exporting
+          - type: lights
+            size: L
+            entities:
+              - { entity: light.living_room_ceiling, subtitle: Living room }
+              - { entity: light.living_room_sofa_lamp, name: Sofa lamp, subtitle: Living room }
+              - { entity: light.bedroom_bedside, subtitle: Bedroom }
+              - { entity: light.kitchen_worktop, subtitle: Kitchen }
+              - { entity: light.bathroom_mirror, subtitle: Bathroom }
+              - { entity: light.hallway, subtitle: Hallway }
+          - type: climate
+            entity: climate.living_room_ac
+            title: Living room
+            # modes: [cool, heat, dry, off]
+          - type: scenes
+            entities:
+              - { entity: scene.good_morning, description: "Lights at 80%, bedroom stays dark" }
+              - { entity: scene.evening, description: "Soft 30% lights, AC to 23°" }
+              - { entity: scene.away, description: "Everything off, heating low" }
+              - { entity: script.night, description: "Hallway dim, bedroom AC only" }
+          - type: media
+            entity: media_player.living_room
+            subtitle: Living room
+          - type: fan
+            size: S
+            entity: fan.bedroom
+          - type: floor
+            size: S
+            entity: climate.bathroom_floor     # or a switch / input_boolean
+            temperature: sensor.bathroom_floor_temperature
+            subtitle: Bathroom
+          - type: security
+            size: S
+            lock: lock.front_door
+            sensors: [binary_sensor.kitchen_window, binary_sensor.bedroom_window]
+          - type: weather
+            size: S
+            entity: weather.home
