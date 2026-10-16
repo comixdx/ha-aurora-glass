@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.2.0
+ * Aurora Glass Card for Home Assistant — v0.3.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
@@ -7,7 +7,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.2.0";
+  const VERSION = "0.3.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -353,7 +353,7 @@
       this._clock = setInterval(() => this._schedule(), 30000);
       this._schedule();
     }
-    disconnectedCallback() { clearInterval(this._clock); }
+    disconnectedCallback() { clearInterval(this._clock); this._clearDashTheme(); }
 
     /* ----- prefs (per device, per card) */
     get _key() { return `aurora-glass:${this._config.id || location.pathname}`; }
@@ -436,6 +436,46 @@
       return Object.keys(v).map((k) => `${k}:${v[k]}`).join(";");
     }
 
+    /* ----- dashboard-wide theme: no theme file or YAML needed */
+    _dashHost() {
+      let n = this;
+      while (n) {
+        if (n.tagName === "HUI-ROOT") return n;
+        n = n.assignedSlot || n.parentNode || n.host;
+      }
+      return null;
+    }
+    _applyDashTheme() {
+      const on = this._config.dashboard_theme !== false && !this.preview;
+      const host = on && this.isConnected ? this._dashHost() : null;
+      if (this._themed && this._themed !== host) this._clearDashTheme();
+      if (!host) return;
+      const { T, A, S } = this._theme();
+      const blur = `blur(${this._p.blur}px) saturate(170%)`;
+      const bg = `radial-gradient(circle at 8% 0%, ${hexA(T.orbs[0], T.orbOp)}, transparent 42%), radial-gradient(circle at 85% 35%, ${hexA(T.orbs[1], T.orbOp * 0.85)}, transparent 42%), radial-gradient(circle at 30% 100%, ${hexA(T.orbs[2], T.orbOp * 0.75)}, transparent 48%), ${T.ground} fixed`;
+      const vars = {
+        "--lovelace-background": bg, "--primary-background-color": T.ground,
+        "--ha-card-background": T.glass, "--ha-card-border-color": T.border, "--ha-card-border-radius": "28px",
+        "--ha-card-box-shadow": `inset 0 1px 0 ${T.hi}, 0 30px 60px -32px ${T.shadow}`, "--ha-card-backdrop-filter": blur,
+        "--primary-text-color": T.text, "--secondary-text-color": T.muted, "--divider-color": T.faint,
+        "--primary-color": T.dark ? A.c : A.deep, "--accent-color": T.dark ? A.c : A.deep,
+        "--state-light-active-color": A.c, "--state-climate-cool-color": S.cool, "--state-climate-heat-color": S.heat,
+        "--energy-solar-color": S.solar, "--energy-battery-in-color": S.battery, "--energy-battery-out-color": S.battery, "--energy-grid-return-color": S.grid,
+        "--app-header-background-color": hexA(T.ground, 0.55), "--app-header-text-color": T.text, "--app-header-backdrop-filter": blur
+      };
+      const sig = JSON.stringify(vars);
+      if (this._themed === host && this._themeSig === sig) return;
+      Object.keys(vars).forEach((k) => host.style.setProperty(k, vars[k]));
+      this._themed = host;
+      this._themeSig = sig;
+      this._themeKeys = Object.keys(vars);
+    }
+    _clearDashTheme() {
+      if (this._themed) (this._themeKeys || []).forEach((k) => this._themed.style.removeProperty(k));
+      this._themed = null;
+      this._themeSig = null;
+    }
+
     /* ----- render loop */
     _schedule() {
       if (this._raf) return;
@@ -463,6 +503,7 @@
       next.className = cls;
       next.setAttribute("style", this._vars());
       morph(this._root, next, sr.activeElement);
+      this._applyDashTheme();
       if (this._first) { this._first = false; setTimeout(() => { if (this._root) this._root.classList.remove("enter"); }, 1500); }
     }
 
@@ -908,7 +949,7 @@
     en: {
       appearance: "Appearance", chips: "Header chips", widgets: "Widgets", add_widget: "Add widget", add_chip: "Add chip", add_light: "Add light", add_scene: "Add scene",
       preset: "Theme preset", accent: "Accent colour", blur: "Glass blur", motion: "Animations", background: "Draw the glass background", header: "Show header",
-      customize: "Show the Customize button", title: "Title", top_title: "Title (empty = greeting)", min_height: "Minimum height (e.g. 100vh for a Panel view)", language: "Language",
+      customize: "Show the Customize button", dashboard_theme: "Apply the glass theme to the whole dashboard (no theme file needed)", title: "Title", top_title: "Title (empty = greeting)", min_height: "Minimum height (e.g. 100vh for a Panel view)", language: "Language",
       type: "Widget type", size: "Size", entity: "Entity", name: "Name", subtitle: "Subtitle", color: "Dot colour", decimals: "Decimals", description: "Description",
       solar_power: "Solar power", home_power: "House consumption (optional, computed if empty)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
       grid_power: "Grid power", invert_battery: "Battery sensor is positive when discharging (GoodWe)", invert_grid: "Grid sensor is positive when exporting (GoodWe)",
@@ -920,7 +961,7 @@
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
       preset: "Temă", accent: "Culoare de accent", blur: "Estompare sticlă", motion: "Animații", background: "Fundal de sticlă", header: "Afișează antetul",
-      customize: "Afișează butonul Personalizează", title: "Titlu", top_title: "Titlu (gol = salut)", min_height: "Înălțime minimă (ex. 100vh pentru vizualizare Panou)", language: "Limbă",
+      customize: "Afișează butonul Personalizează", dashboard_theme: "Aplică tema de sticlă pe tot tabloul (fără fișier de temă)", title: "Titlu", top_title: "Titlu (gol = salut)", min_height: "Înălțime minimă (ex. 100vh pentru vizualizare Panou)", language: "Limbă",
       type: "Tip widget", size: "Mărime", entity: "Entitate", name: "Nume", subtitle: "Subtitlu", color: "Culoare punct", decimals: "Zecimale", description: "Descriere",
       solar_power: "Putere solară", home_power: "Consum casă (opțional, calculat dacă e gol)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
       grid_power: "Putere rețea", invert_battery: "Senzorul bateriei e pozitiv la descărcare (GoodWe)", invert_grid: "Senzorul rețelei e pozitiv la injectare (GoodWe)",
@@ -938,7 +979,7 @@
     chev: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"
   };
   const opt = (values, labels) => values.map((v) => ({ value: v, label: labels ? labels[v] || v : v }));
-  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, customize: true, language: "auto" };
+  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, customize: true, dashboard_theme: true, language: "auto" };
 
   function cleanCfg(v) {
     if (Array.isArray(v)) return v.map(cleanCfg).filter((x) => x !== undefined);
@@ -1026,6 +1067,7 @@
           { name: "header", selector: { boolean: {} } },
           { name: "customize", selector: { boolean: {} } }
         ] },
+        { name: "dashboard_theme", selector: { boolean: {} } },
         { type: "grid", name: "", schema: [
           { name: "title", selector: { text: {} } },
           { name: "language", selector: { select: { mode: "dropdown", options: opt(["auto", "en", "ro"], { auto: this._l("auto"), en: "English", ro: "Română" }) } } }
