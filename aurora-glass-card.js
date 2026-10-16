@@ -1,12 +1,13 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.1.0
+ * Aurora Glass Card for Home Assistant — v0.2.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
+ * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
  * No build step, no dependencies. Add as a dashboard resource (type: JavaScript module).
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.1.0";
+  const VERSION = "0.2.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -324,9 +325,8 @@
       this._raf = 0;
     }
 
-    static getStubConfig() {
-      return { background: true, widgets: [{ type: "weather", entity: "weather.home" }, { type: "lights", entities: [] }] };
-    }
+    static getStubConfig(hass) { return stubFromHass(hass); }
+    static getConfigElement() { return document.createElement("aurora-glass-card-editor"); }
 
     setConfig(config) {
       if (!config || !Array.isArray(config.widgets) || !config.widgets.length) throw new Error("aurora-glass-card: add a `widgets:` list");
@@ -362,10 +362,24 @@
         blur: this._config.blur ?? 24, motion: this._config.motion ?? true, editing: false };
       let saved = {};
       try { saved = JSON.parse(localStorage.getItem(this._key) || "{}") || {}; } catch (e) { saved = {}; }
+      // A device keeps its own Customize choices only until the card's settings change in the editor:
+      // any setting edited there since the device saved wins over the device's copy.
+      const base = this._base();
+      const sb = saved.base || {};
+      ["preset", "accent", "blur", "motion"].forEach((k) => { if (k in saved && sb[k] !== base[k]) delete saved[k]; });
+      if (sb.order !== base.order) delete saved.order;
+      if (sb.size !== base.size) delete saved.size;
+      if (sb.ids !== base.ids) saved.hidden = (saved.hidden || []).filter((id) => base.ids.split("|").includes(id));
       this._p = { ...def, ...saved, editing: false };
     }
+    _base() {
+      const c = this._config;
+      return { preset: c.preset || "auto", accent: c.accent || "peach", blur: c.blur ?? 24, motion: c.motion ?? true,
+        order: this._widgets.map((w) => w.id).join("|"), ids: this._widgets.map((w) => w.id).join("|"),
+        size: this._widgets.map((w) => w.size || "M").join("|") };
+    }
     _savePrefs() {
-      try { const { editing, ...rest } = this._p; localStorage.setItem(this._key, JSON.stringify(rest)); } catch (e) { /* storage blocked */ }
+      try { const { editing, ...rest } = this._p; localStorage.setItem(this._key, JSON.stringify({ ...rest, base: this._base() })); } catch (e) { /* storage blocked */ }
     }
     _set(patch) { Object.assign(this._p, patch); this._savePrefs(); this._schedule(); }
 
@@ -417,7 +431,7 @@
         "--acc": A.c, "--acc-ink": T.dark ? A.c : A.deep, "--acc-a": T.dark ? "14%" : "28%", "--acc-t": T.dark ? "16%" : "32%",
         "--blur": `${this._p.blur}px`, "--cool": S.cool, "--heat": S.heat, "--solar": S.solar, "--battery": S.battery, "--grid": S.grid, "--alert": S.alert
       };
-      if (this._config.min_height) v["--min-h"] = this._config.min_height;
+      if (this._config.min_height && !this.preview && !this.editMode) v["--min-h"] = this._config.min_height;
       if (this._config.radius) v["--root-radius"] = this._config.radius;
       return Object.keys(v).map((k) => `${k}:${v[k]}`).join(";");
     }
@@ -888,10 +902,407 @@
     }
   }
 
+  /* ================================================================ visual editor */
+  const WIDGET_TYPES = ["energy", "lights", "climate", "scenes", "media", "fan", "floor", "security", "weather"];
+  const ED_LABELS = {
+    en: {
+      appearance: "Appearance", chips: "Header chips", widgets: "Widgets", add_widget: "Add widget", add_chip: "Add chip", add_light: "Add light", add_scene: "Add scene",
+      preset: "Theme preset", accent: "Accent colour", blur: "Glass blur", motion: "Animations", background: "Draw the glass background", header: "Show header",
+      customize: "Show the Customize button", title: "Title", top_title: "Title (empty = greeting)", min_height: "Minimum height (e.g. 100vh for a Panel view)", language: "Language",
+      type: "Widget type", size: "Size", entity: "Entity", name: "Name", subtitle: "Subtitle", color: "Dot colour", decimals: "Decimals", description: "Description",
+      solar_power: "Solar power", home_power: "House consumption (optional, computed if empty)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
+      grid_power: "Grid power", invert_battery: "Battery sensor is positive when discharging (GoodWe)", invert_grid: "Grid sensor is positive when exporting (GoodWe)",
+      modes: "Mode buttons (empty = automatic)", active_hours: "Keep a scene marked active for (hours)", temperature: "Temperature sensor",
+      lock: "Lock", lock_name: "Lock name", sensors: "Door and window sensors", move_up: "Move up", move_down: "Move down", delete: "Delete",
+      loading: "Loading Home Assistant editor components…", no_lights: "No lights yet.", no_scenes: "No scenes yet.", no_chips: "No chips yet.",
+      device_note: "Tip: the Customize button on the dashboard changes the layout only on that device. Settings here apply everywhere."
+    },
+    ro: {
+      appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
+      preset: "Temă", accent: "Culoare de accent", blur: "Estompare sticlă", motion: "Animații", background: "Fundal de sticlă", header: "Afișează antetul",
+      customize: "Afișează butonul Personalizează", title: "Titlu", top_title: "Titlu (gol = salut)", min_height: "Înălțime minimă (ex. 100vh pentru vizualizare Panou)", language: "Limbă",
+      type: "Tip widget", size: "Mărime", entity: "Entitate", name: "Nume", subtitle: "Subtitlu", color: "Culoare punct", decimals: "Zecimale", description: "Descriere",
+      solar_power: "Putere solară", home_power: "Consum casă (opțional, calculat dacă e gol)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
+      grid_power: "Putere rețea", invert_battery: "Senzorul bateriei e pozitiv la descărcare (GoodWe)", invert_grid: "Senzorul rețelei e pozitiv la injectare (GoodWe)",
+      modes: "Butoane moduri (gol = automat)", active_hours: "Păstrează scena activă timp de (ore)", temperature: "Senzor temperatură",
+      lock: "Încuietoare", lock_name: "Nume încuietoare", sensors: "Senzori uși și ferestre", move_up: "Mută sus", move_down: "Mută jos", delete: "Șterge",
+      loading: "Se încarcă editorul Home Assistant…", no_lights: "Nicio lumină încă.", no_scenes: "Nicio scenă încă.", no_chips: "Niciun indicator încă.",
+      device_note: "Sfat: butonul Personalizează de pe tablou schimbă aranjarea doar pe acel dispozitiv. Setările de aici se aplică peste tot."
+    }
+  };
+  const MDI = {
+    up: "M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z",
+    down: "M11,4H13V16L18.5,10.5L19.92,11.92L12,19.84L4.08,11.92L5.5,10.5L11,16V4Z",
+    del: "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z",
+    plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
+    chev: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"
+  };
+  const opt = (values, labels) => values.map((v) => ({ value: v, label: labels ? labels[v] || v : v }));
+  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, customize: true, language: "auto" };
+
+  function cleanCfg(v) {
+    if (Array.isArray(v)) return v.map(cleanCfg).filter((x) => x !== undefined);
+    if (v && typeof v === "object") {
+      const o = {};
+      Object.keys(v).forEach((k) => {
+        const c = cleanCfg(v[k]);
+        if (c === undefined || c === "" || c === null) return;
+        if (Array.isArray(c) && !c.length && k !== "widgets") return;
+        o[k] = c;
+      });
+      return o;
+    }
+    return v;
+  }
+  // A list item with only an entity is written back as a plain entity id.
+  const compactItem = (x) => (x && typeof x === "object" && Object.keys(cleanCfg(x)).length === 1 && x.entity ? x.entity : cleanCfg(x));
+
+  let helpersPromise = null;
+  function ensureHaComponents() {
+    if (customElements.get("ha-form") && customElements.get("ha-entity-picker")) return Promise.resolve();
+    if (!helpersPromise) {
+      helpersPromise = (async () => {
+        try {
+          const helpers = await window.loadCardHelpers?.();
+          if (helpers) {
+            const c = await helpers.createCardElement({ type: "entities", entities: [] });
+            if (c?.constructor?.getConfigElement) await c.constructor.getConfigElement();
+          }
+        } catch (e) { /* fall through */ }
+        await Promise.race([customElements.whenDefined("ha-form"), new Promise((r) => setTimeout(r, 4000))]);
+      })();
+    }
+    return helpersPromise;
+  }
+
+  class AuroraGlassCardEditor extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this._open = new Set(["appearance"]);
+      this._forms = [];
+    }
+    setConfig(config) {
+      const incoming = JSON.stringify(config || {});
+      if (this._config && incoming === this._lastFired) return;   // our own change echoed back: keep the live objects the forms edit
+      this._config = JSON.parse(incoming);
+      if (!Array.isArray(this._config.widgets)) this._config.widgets = [];
+      this._render();
+    }
+    set hass(h) {
+      const first = !this._hass;
+      this._hass = h;
+      this._forms.forEach((f) => { f.hass = h; });
+      if (first) this._render();
+    }
+    connectedCallback() { ensureHaComponents().then(() => { this._ready = true; this._render(); }); }
+
+    get _lang() { const l = (this._hass?.locale?.language || "en").split("-")[0]; return ED_LABELS[l] ? l : "en"; }
+    _l(k) { return ED_LABELS[this._lang][k] ?? ED_LABELS.en[k] ?? I18N[this._lang]?.[k] ?? I18N.en[k] ?? k; }
+    _typeName(t) { return I18N[this._lang]?.[t] || I18N.en[t] || t; }
+
+    _fire() {
+      const cfg = cleanCfg(this._config);
+      cfg.type = this._config.type || "custom:aurora-glass-card";
+      this._lastFired = JSON.stringify(cfg);
+      this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: cfg }, bubbles: true, composed: true }));
+    }
+
+    /* ----- schemas */
+    _topSchema() {
+      const presetLabels = { auto: this._l("auto") + " (HA light/dark)" };
+      Object.keys(PRESETS).forEach((k) => { presetLabels[k] = PRESETS[k].name; });
+      const accentLabels = {};
+      Object.keys(ACCENTS).forEach((k) => { accentLabels[k] = ACCENTS[k].name; });
+      return [
+        { type: "grid", name: "", schema: [
+          { name: "preset", selector: { select: { mode: "dropdown", options: opt(["auto", ...Object.keys(PRESETS)], presetLabels) } } },
+          { name: "accent", selector: { select: { mode: "dropdown", options: opt(Object.keys(ACCENTS), accentLabels) } } }
+        ] },
+        { name: "blur", selector: { number: { min: 0, max: 40, step: 1, mode: "slider", unit_of_measurement: "px" } } },
+        { type: "grid", name: "", schema: [
+          { name: "motion", selector: { boolean: {} } },
+          { name: "background", selector: { boolean: {} } },
+          { name: "header", selector: { boolean: {} } },
+          { name: "customize", selector: { boolean: {} } }
+        ] },
+        { type: "grid", name: "", schema: [
+          { name: "title", selector: { text: {} } },
+          { name: "language", selector: { select: { mode: "dropdown", options: opt(["auto", "en", "ro"], { auto: this._l("auto"), en: "English", ro: "Română" }) } } }
+        ] },
+        { name: "min_height", selector: { text: {} } }
+      ];
+    }
+    _widgetSchema(type) {
+      const sizes = { type: "grid", name: "", schema: [
+        { name: "type", selector: { select: { mode: "dropdown", options: WIDGET_TYPES.map((t) => ({ value: t, label: this._typeName(t) })) } } },
+        { name: "size", selector: { select: { mode: "dropdown", options: opt(["S", "M", "L", "XL"]) } } }
+      ] };
+      const title = { name: "title", selector: { text: {} } };
+      const subtitle = { name: "subtitle", selector: { text: {} } };
+      const power = (n) => ({ name: n, selector: { entity: { domain: "sensor" } } });
+      switch (type) {
+        case "energy": return [sizes, title, power("solar_power"), power("home_power"),
+          { type: "grid", name: "", schema: [power("battery_power"), power("battery_soc")] }, power("grid_power"),
+          { name: "invert_battery", selector: { boolean: {} } }, { name: "invert_grid", selector: { boolean: {} } }];
+        case "lights": return [sizes, title];
+        case "climate": return [sizes, title, { name: "entity", selector: { entity: { domain: "climate" } } },
+          { name: "modes", selector: { select: { multiple: true, mode: "list", options: ["cool", "heat", "heat_cool", "auto", "dry", "fan_only", "off"].map((m) => ({ value: m, label: this._hass?.localize?.(`component.climate.entity_component._.state.${m}`) || pretty(m) })) } } },
+          subtitle];
+        case "scenes": return [sizes, title, { name: "active_hours", selector: { number: { min: 1, max: 48, step: 1, mode: "box", unit_of_measurement: "h" } } }];
+        case "media": return [sizes, title, { name: "entity", selector: { entity: { domain: "media_player" } } }, subtitle];
+        case "fan": return [sizes, title, { name: "entity", selector: { entity: { domain: "fan" } } }];
+        case "floor": return [sizes, title, { name: "entity", selector: { entity: { domain: ["climate", "switch", "input_boolean"] } } },
+          { name: "temperature", selector: { entity: { domain: "sensor" } } }, subtitle];
+        case "security": return [sizes, title, { type: "grid", name: "", schema: [{ name: "lock", selector: { entity: { domain: "lock" } } }, { name: "lock_name", selector: { text: {} } }] },
+          { name: "sensors", selector: { entity: { multiple: true, domain: "binary_sensor" } } }];
+        case "weather": return [sizes, title, { name: "entity", selector: { entity: { domain: "weather" } } }, subtitle];
+        default: return [sizes, title];
+      }
+    }
+    _rowSchema(kind) {
+      if (kind === "lights") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: "light" } } }, { name: "name", selector: { text: {} } }, { name: "subtitle", selector: { text: {} } }] }];
+      if (kind === "scenes") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["scene", "script", "button", "input_button"] } } }, { name: "name", selector: { text: {} } }] }, { name: "description", selector: { text: {} } }];
+      const colors = { "": this._l("accent"), cool: "Cool (blue)", heat: "Heat (orange)", solar: "Solar (yellow)", battery: "Battery (green)", grid: "Grid (violet)", alert: "Alert (red)" };
+      return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: "sensor" } } }, { name: "name", selector: { text: {} } },
+        { name: "color", selector: { select: { mode: "dropdown", options: opt(["", "cool", "heat", "solar", "battery", "grid", "alert"], colors) } } }] }];
+    }
+
+    /* ----- DOM helpers */
+    _form(schema, data, onChange, labels) {
+      const f = document.createElement("ha-form");
+      f.computeLabel = (s) => this._l((labels && labels[s.name]) || s.name);
+      f.hass = this._hass;
+      f.schema = schema;
+      f.data = data;
+      f.addEventListener("value-changed", (ev) => { ev.stopPropagation(); f.data = ev.detail.value; onChange(ev.detail.value); });
+      this._forms.push(f);
+      return f;
+    }
+    _iconBtn(path, label, onClick, disabled) {
+      const b = document.createElement("button");
+      b.className = "ib";
+      b.type = "button";
+      b.title = label;
+      b.setAttribute("aria-label", label);
+      b.disabled = !!disabled;
+      b.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="${path}" fill="currentColor"></path></svg>`;
+      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); onClick(); });
+      return b;
+    }
+    _addBtn(label, onClick) {
+      const b = document.createElement("button");
+      b.className = "add";
+      b.type = "button";
+      b.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="${MDI.plus}" fill="currentColor"></path></svg><span>${esc(label)}</span>`;
+      b.addEventListener("click", (e) => { e.preventDefault(); onClick(); });
+      return b;
+    }
+    _section(key, title, badge) {
+      const d = document.createElement("details");
+      d.className = "sec";
+      d.open = this._open.has(key);
+      d.addEventListener("toggle", () => { if (d.open) this._open.add(key); else this._open.delete(key); });
+      const s = document.createElement("summary");
+      s.innerHTML = `<span class="st">${esc(title)}</span>${badge ? `<span class="badge">${esc(badge)}</span>` : ""}<svg class="chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="${MDI.chev}" fill="currentColor"></path></svg>`;
+      d.appendChild(s);
+      const body = document.createElement("div");
+      body.className = "body";
+      d.appendChild(body);
+      return { d, s, body };
+    }
+
+    /* list of {entity,…} rows stored at obj[key] */
+    _list(container, obj, key, kind, emptyKey, addKey) {
+      const items = asList(obj[key]).map(entOf);
+      obj[key] = items;
+      if (!items.length) {
+        const p = document.createElement("div");
+        p.className = "empty";
+        p.textContent = this._l(emptyKey);
+        container.appendChild(p);
+      }
+      items.forEach((it, i) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        const data = kind === "chips" ? { ...it, color: it.color || "" } : { ...it };
+        row.appendChild(this._form(this._rowSchema(kind), data, (v) => {
+          items[i] = { ...v };
+          obj[key] = items.map(compactItem);
+          this._fire();
+        }));
+        const tools = document.createElement("div");
+        tools.className = "tools";
+        tools.appendChild(this._iconBtn(MDI.up, this._l("move_up"), () => { [items[i - 1], items[i]] = [items[i], items[i - 1]]; obj[key] = items.map(compactItem); this._fire(); this._render(); }, i === 0));
+        tools.appendChild(this._iconBtn(MDI.down, this._l("move_down"), () => { [items[i + 1], items[i]] = [items[i], items[i + 1]]; obj[key] = items.map(compactItem); this._fire(); this._render(); }, i === items.length - 1));
+        tools.appendChild(this._iconBtn(MDI.del, this._l("delete"), () => { items.splice(i, 1); obj[key] = items.map(compactItem); this._fire(); this._render(); }));
+        row.appendChild(tools);
+        container.appendChild(row);
+      });
+      obj[key] = items.map(compactItem);
+      container.appendChild(this._addBtn(this._l(addKey), () => { obj[key] = [...asList(obj[key]), { entity: "" }]; this._render(); }));
+    }
+
+    _render() {
+      if (!this._config || !this.shadowRoot) return;
+      const sr = this.shadowRoot;
+      this._forms = [];
+      sr.innerHTML = `<style>${ED_CSS}</style><div class="ed"></div>`;
+      const root = sr.querySelector(".ed");
+      if (!this._ready || !customElements.get("ha-form") || !this._hass) {
+        root.innerHTML = `<div class="empty">${esc(this._l("loading"))}</div>`;
+        return;
+      }
+      const c = this._config;
+
+      // Appearance
+      const ap = this._section("appearance", this._l("appearance"));
+      const top = {};
+      Object.keys(TOP_DEFAULTS).forEach((k) => { top[k] = c[k] ?? TOP_DEFAULTS[k]; });
+      top.title = c.title || "";
+      top.min_height = c.min_height || "";
+      ap.body.appendChild(this._form(this._topSchema(), top, (v) => {
+        Object.keys(v).forEach((k) => {
+          if (k in TOP_DEFAULTS && v[k] === TOP_DEFAULTS[k]) delete c[k]; else c[k] = v[k];
+        });
+        if (c.language === "auto") delete c.language;
+        this._fire();
+      }, { title: "top_title" }));
+      const note = document.createElement("div");
+      note.className = "note";
+      note.textContent = this._l("device_note");
+      ap.body.appendChild(note);
+      root.appendChild(ap.d);
+
+      // Chips
+      const ch = this._section("chips", this._l("chips"), String(asList(c.chips).length));
+      this._list(ch.body, c, "chips", "chips", "no_chips", "add_chip");
+      root.appendChild(ch.d);
+
+      // Widgets
+      const wl = this._section("widgets", this._l("widgets"), String(c.widgets.length));
+      c.widgets.forEach((w, i) => {
+        const key = `w${i}:${w.type}`;
+        const sec = this._section(key, `${this._typeName(w.type)}${w.title ? " · " + w.title : ""}`, w.size || "M");
+        sec.d.classList.add("wd");
+        const tools = document.createElement("span");
+        tools.className = "tools";
+        tools.appendChild(this._iconBtn(MDI.up, this._l("move_up"), () => { [c.widgets[i - 1], c.widgets[i]] = [c.widgets[i], c.widgets[i - 1]]; this._fire(); this._render(); }, i === 0));
+        tools.appendChild(this._iconBtn(MDI.down, this._l("move_down"), () => { [c.widgets[i + 1], c.widgets[i]] = [c.widgets[i], c.widgets[i + 1]]; this._fire(); this._render(); }, i === c.widgets.length - 1));
+        tools.appendChild(this._iconBtn(MDI.del, this._l("delete"), () => { c.widgets.splice(i, 1); this._fire(); this._render(); }));
+        sec.s.insertBefore(tools, sec.s.querySelector(".chev"));
+        const data = { size: "M", ...w };
+        if (w.type === "security") data.sensors = asList(w.sensors).map((x) => entOf(x).entity).filter(Boolean);
+        sec.body.appendChild(this._form(this._widgetSchema(w.type), data, (v) => {
+          const typeChanged = v.type !== w.type;
+          const next = { ...w, ...v };
+          if (typeChanged) {
+            const keep = { type: v.type, size: v.size, title: v.title };
+            if (w.id) keep.id = w.id;
+            c.widgets[i] = keep;
+            this._open.add(`w${i}:${v.type}`);
+          } else c.widgets[i] = next;
+          this._fire();
+          const label = sec.s.querySelector(".st");
+          if (label) label.textContent = `${this._typeName(c.widgets[i].type)}${c.widgets[i].title ? " · " + c.widgets[i].title : ""}`;
+          const badge = sec.s.querySelector(".badge");
+          if (badge) badge.textContent = c.widgets[i].size || "M";
+          if (typeChanged) this._render();
+        }));
+        if (w.type === "lights") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "entities", "lights", "no_lights", "add_light"); sec.body.appendChild(box); }
+        if (w.type === "scenes") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "entities", "scenes", "no_scenes", "add_scene"); sec.body.appendChild(box); }
+        wl.body.appendChild(sec.d);
+      });
+      const addRow = document.createElement("div");
+      addRow.className = "addrow";
+      const sel = document.createElement("select");
+      sel.setAttribute("aria-label", this._l("type"));
+      sel.innerHTML = WIDGET_TYPES.map((t) => `<option value="${t}">${esc(this._typeName(t))}</option>`).join("");
+      addRow.appendChild(sel);
+      addRow.appendChild(this._addBtn(this._l("add_widget"), () => {
+        const t = sel.value;
+        c.widgets.push({ type: t, size: t === "energy" || t === "lights" ? "L" : ["fan", "floor", "security", "weather"].includes(t) ? "S" : "M" });
+        this._open.add("widgets");
+        this._open.add(`w${c.widgets.length - 1}:${t}`);
+        this._fire();
+        this._render();
+      }));
+      wl.body.appendChild(addRow);
+      root.appendChild(wl.d);
+    }
+  }
+
+  const ED_CSS = `
+    :host{display:block}
+    .ed{display:flex;flex-direction:column;gap:12px}
+    .sec{border:1px solid var(--divider-color,rgba(127,127,127,.25));border-radius:12px;background:var(--card-background-color,transparent)}
+    .sec>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 8px 0 16px;cursor:pointer;font-weight:500;color:var(--primary-text-color)}
+    .sec>summary::-webkit-details-marker{display:none}
+    .sec .st{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--secondary-background-color,rgba(127,127,127,.15));color:var(--secondary-text-color)}
+    .chev{color:var(--secondary-text-color);transition:transform .2s;flex:none}
+    .sec[open]>summary .chev{transform:rotate(180deg)}
+    .body{display:flex;flex-direction:column;gap:12px;padding:4px 16px 16px}
+    .wd{border-radius:10px}
+    .tools{display:flex;gap:2px;flex:none}
+    .ib{width:40px;height:40px;border:0;border-radius:50%;background:none;color:var(--secondary-text-color);cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .ib:hover:not(:disabled){background:var(--secondary-background-color,rgba(127,127,127,.15));color:var(--primary-text-color)}
+    .ib:disabled{opacity:.35;cursor:default}
+    .row{display:flex;align-items:flex-start;gap:4px;padding:8px 0;border-bottom:1px solid var(--divider-color,rgba(127,127,127,.2))}
+    .row>ha-form{flex:1;min-width:0}
+    .sub{display:flex;flex-direction:column;gap:4px;padding-top:4px}
+    .add{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--primary-color);background:none;color:var(--primary-color);font:inherit;font-weight:500;cursor:pointer}
+    .add:hover{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
+    .addrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:4px}
+    .addrow select{min-height:40px;padding:0 12px;border-radius:8px;border:1px solid var(--divider-color,rgba(127,127,127,.4));background:var(--card-background-color,transparent);color:var(--primary-text-color);font:inherit}
+    .empty,.note{font-size:14px;color:var(--secondary-text-color)}
+    .note{font-size:13px;line-height:1.4}
+  `;
+
+  if (!customElements.get("aurora-glass-card-editor")) customElements.define("aurora-glass-card-editor", AuroraGlassCardEditor);
+
+  /* Card-picker stub: builds a starting config from what the user's HA actually has. */
+  function stubFromHass(hass) {
+    const st = hass?.states || {};
+    const ids = Object.keys(st);
+    const of = (dom) => ids.filter((id) => id.startsWith(dom + "."));
+    const nm = (id) => `${id} ${st[id].attributes.friendly_name || ""}`.toLowerCase();
+    const power = ids.filter((id) => id.startsWith("sensor.") && (st[id].attributes.device_class === "power" || /^(k?w)$/i.test(st[id].attributes.unit_of_measurement || "")));
+    const pick = (list, re) => list.find((id) => re.test(nm(id)));
+    const widgets = [];
+    const solar = pick(power, /pv|solar|fotovolt/);
+    if (solar) {
+      const e = { type: "energy", size: "L", solar_power: solar };
+      const bat = pick(power, /batt/); if (bat) e.battery_power = bat;
+      const grid = pick(power, /grid|meter|active_power|retea/); if (grid) e.grid_power = grid;
+      const home = pick(power, /load|house|home|consum/); if (home) e.home_power = home;
+      const soc = ids.find((id) => id.startsWith("sensor.") && st[id].attributes.device_class === "battery" && /batt|soc|charge/.test(nm(id)));
+      if (soc) e.battery_soc = soc;
+      widgets.push(e);
+    }
+    const lights = of("light").filter((id) => !st[id].attributes.entity_id).slice(0, 6);
+    if (lights.length) widgets.push({ type: "lights", size: "L", entities: lights });
+    const clim = of("climate");
+    if (clim[0]) widgets.push({ type: "climate", entity: clim[0] });
+    const scenes = of("scene").slice(0, 4);
+    if (scenes.length) widgets.push({ type: "scenes", entities: scenes });
+    const media = of("media_player");
+    if (media.length) widgets.push({ type: "media", entity: media.find((id) => st[id].state === "playing") || media[0] });
+    const fans = of("fan");
+    if (fans[0]) widgets.push({ type: "fan", size: "S", entity: fans[0] });
+    const lock = of("lock")[0];
+    const opens = of("binary_sensor").filter((id) => ["door", "window", "opening", "garage_door"].includes(st[id].attributes.device_class)).slice(0, 6);
+    if (lock || opens.length) { const s = { type: "security", size: "S" }; if (lock) s.lock = lock; if (opens.length) s.sensors = opens; widgets.push(s); }
+    const wx = of("weather")[0];
+    if (wx) widgets.push({ type: "weather", size: "S", entity: wx });
+    if (!widgets.length) widgets.push({ type: "weather", size: "S", entity: "weather.home" });
+    return { widgets };
+  }
+
   if (!customElements.get("aurora-glass-card")) customElements.define("aurora-glass-card", AuroraGlassCard);
   window.customCards = window.customCards || [];
   if (!window.customCards.some((c) => c.type === "aurora-glass-card")) {
-    window.customCards.push({ type: "aurora-glass-card", name: "Aurora Glass", description: "Frosted-glass, customizable dashboard with state animations", preview: false });
+    window.customCards.push({ type: "aurora-glass-card", name: "Aurora Glass", description: "Frosted-glass, customizable dashboard with state animations", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
   console.info(`%c AURORA-GLASS-CARD %c v${VERSION} `, "background:#ffb27a;color:#1c140c;font-weight:700", "background:#080c18;color:#f2f4fb");
 })();
