@@ -21,17 +21,23 @@ A frosted-glass theme plus a customizable dashboard card whose animations follow
 **Card**
 1. Copy `aurora-glass-card.js` to `/config/www/aurora-glass/`.
 2. Settings → Dashboards → ⋮ → Resources → add `/local/aurora-glass/aurora-glass-card.js?v=1` as **JavaScript module**. Bump `?v=` after each update so the phone app reloads it.
-3. Make a **Panel** view and paste `examples/dashboard.yaml`.
+3. Edit a dashboard → **Add card** → search **Aurora Glass**. It starts filled in with entities it finds in your Home Assistant (solar, battery, grid, lights, climate, scenes, lock, weather), and everything is set in the visual editor — no YAML needed. A **Panel** view gives it the full width.
+
+Prefer YAML? `examples/dashboard.yaml` is a complete example for the raw configuration editor.
 
 Or add this repo to HACS as a custom repository (category Dashboard).
 
+## Visual editor
+
+Everything below can be set in the card editor: theme preset, accent, blur, animations, header chips, and the widget list (add, remove, reorder, change type and size, pick entities with Home Assistant's own entity pickers). Light and scene lists have their own rows for name, subtitle and description.
+
 ## Customize mode
 
-The **Customize** button opens a panel where you can pick the theme preset and accent colour, set the blur strength, and turn animations on or off. Each widget then shows controls to move it, change its size (S → M → L → XL) or take it off the board; removed widgets wait under *Add widgets*. These choices are saved on the device, so a wall tablet and your phone can look different. *Reset layout* returns to the YAML order.
+The **Customize** button opens a panel where you can pick the theme preset and accent colour, set the blur strength, and turn animations on or off. Each widget then shows controls to move it, change its size (S → M → L → XL) or take it off the board; removed widgets wait under *Add widgets*. These choices are saved on the device, so a wall tablet and your phone can look different. *Reset layout* returns to the card's configured order. When you change a setting in the card editor, that setting replaces what the device had chosen.
 
 `prefers-reduced-motion` on the device always turns the animations off.
 
-## Card options
+## Card options (YAML reference)
 
 | Key | Default | |
 |---|---|---|
