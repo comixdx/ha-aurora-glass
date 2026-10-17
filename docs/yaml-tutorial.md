@@ -187,7 +187,7 @@ hold_action: popup
 
 ## 9. A complete example
 
-[`examples/dashboard.yaml`](../examples/dashboard.yaml) is a full dashboard view with every widget. Paste it into the **Raw configuration editor** of an empty dashboard and replace the entity ids with yours.
+[`examples/dashboard.yaml`](../examples/dashboard.yaml) is a full dashboard with every widget, kiosk mode and the top-right power menu. Paste it into the **Raw configuration editor** of an empty dashboard, replace the entity ids with yours and `YOUR_ADMIN_USER_ID` with your user id.
 
 ## 10. When something doesn't work
 
