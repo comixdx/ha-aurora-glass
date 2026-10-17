@@ -4,12 +4,13 @@
 # Also included:
 #   • Kiosk mode — guests get a clean, full-screen dashboard without the sidebar and top bar;
 #     admins keep them. Needs kiosk-mode (HACS → Frontend).
-#   • A small power menu in the top-right corner: one round button opens a glass menu with
-#     Restart Home Assistant, Reboot host and Shut down (each asks for confirmation), next to a
-#     logout button. Needs card-mod and Bubble Card (HACS → Frontend).
+#   • A small power menu in the card header's top-right corner: one round button opens a glass
+#     menu with Restart Home Assistant, Reboot host and Shut down (each asks for confirmation),
+#     next to a logout button. Needs Bubble Card (HACS → Frontend).
 #     Replace YOUR_ADMIN_USER_ID with your user id (Settings → People → Users → open the user;
-#     the id is in the address bar). Only that user sees the power button and the menu.
-#     Don't use the power menu? Delete the horizontal-stack and the bubble-card pop-up below.
+#     the id is in the address bar). Only the users listed see the power button and the menu.
+#     Restart, reboot and shut down only work for administrator accounts.
+#     Don't use the power menu? Delete header_buttons and the bubble-card pop-up below.
 
 kiosk_mode:
   non_admin_settings:
@@ -26,8 +27,8 @@ views:
     icon: mdi:home
     type: panel              # full width; the card has its own glass background
     cards:
-      # A Panel view shows one card, so the Aurora Glass card, the floating buttons
-      # and the power pop-up sit together in one vertical stack.
+      # A Panel view shows one card, so the Aurora Glass card and the power pop-up
+      # sit together in one vertical stack.
       - type: vertical-stack
         cards:
           - type: custom:aurora-glass-card
@@ -37,6 +38,20 @@ views:
             # motion: true
             # language: ro        # default: your HA profile language
             min_height: 100vh
+            # Small round buttons in the header's top-right corner
+            header_buttons:
+              - icon: mdi:logout
+                name: Log out
+                tap_action:
+                  action: navigate
+                  navigation_path: /profile
+              - icon: mdi:power
+                name: Power
+                users: &power_users       # who sees the power button (or use  admin_only: true)
+                  - YOUR_ADMIN_USER_ID
+                tap_action:
+                  action: navigate
+                  navigation_path: "#power"
             chips:
               - { entity: sensor.living_room_temperature, name: Inside, color: cool }
               - { entity: sensor.pv_power, name: Solar, color: solar }
@@ -89,60 +104,15 @@ views:
                 size: S
                 source: open_meteo       # built-in, free; or remove this line and set  entity: weather.home
 
-          # Floating buttons, top right, just under Home Assistant's top bar
-          - type: horizontal-stack
-            card_mod:
-              style: |
-                :host {
-                  position: fixed;
-                  top: calc(var(--header-height, 56px) + 10px);
-                  right: 16px;
-                  z-index: 999;
-                  width: auto;
-                  height: auto !important;
-                  bottom: auto;
-                  --stack-card-gap: 6px;
-                  --horizontal-stack-card-gap: 6px;
-                }
-            cards:
-              - type: button
-                icon: mdi:logout
-                show_name: false
-                show_state: false
-                tap_action:
-                  action: navigate
-                  navigation_path: /profile
-                card_mod: &round
-                  style: |
-                    :host { display: block; width: 32px; height: 32px; }
-                    ha-card {
-                      min-height: 32px; padding: 0 !important; display: flex; align-items: center; justify-content: center;
-                      width: 32px; height: 32px; border-radius: 50%;
-                      --mdc-icon-size: 16px;
-                      background: rgba(255,255,255,0.12);
-                      backdrop-filter: blur(8px);
-                      border: none; box-shadow: none;
-                    }
-              - type: button
-                icon: mdi:power
-                show_name: false
-                show_state: false
-                tap_action:
-                  action: navigate
-                  navigation_path: "#power"
-                visibility: &admin_only
-                  - condition: user
-                    users:
-                      - YOUR_ADMIN_USER_ID
-                card_mod: *round
-
           # The menu (a Bubble Card pop-up opened by the #power link)
           - type: custom:bubble-card
             card_type: pop-up
             hash: "#power"
             name: Power
             icon: mdi:power
-            visibility: *admin_only
+            visibility:
+              - condition: user
+                users: *power_users
             bg_color: "#080c18"
             bg_opacity: 70
             bg_blur: 24
