@@ -64,7 +64,7 @@ Home Assistant's own dialogs get the glass look too: automatically on dashboards
 
 **Weather service.** In the weather widget pick *Weather service*: a Home Assistant weather entity from any integration, or **Open-Meteo**, built into the card — no integration, account or API key, it uses your home location and also gives the pop-up a 5-day forecast.
 
-**Power menu.** [`examples/power-menu.yaml`](examples/power-menu.yaml) adds a small round power button in the top-right corner that opens a glass menu with Restart, Reboot host and Shut down (with confirmation), visible only to your admin user. Needs card-mod and Bubble Card.
+**Complete example.** [`examples/dashboard.yaml`](examples/dashboard.yaml) is a whole dashboard: the Aurora Glass card with every widget, kiosk mode (guests get it full screen without the sidebar and top bar) and a small round power button in the top-right corner that opens a glass menu with Restart, Reboot host and Shut down (with confirmation), visible only to your admin user. Kiosk mode needs kiosk-mode; the power menu needs card-mod and Bubble Card.
 
 ## Optional: the theme for all of Home Assistant
 
@@ -74,7 +74,7 @@ Home Assistant's own dialogs get the glass look too: automatically on dashboards
 
 **Step-by-step YAML tutorial with pictures:** [docs/yaml-tutorial.md](docs/yaml-tutorial.md)
 
-`examples/dashboard.yaml` is a complete example view. Card options:
+`examples/dashboard.yaml` is a complete example dashboard (with kiosk mode and the power menu). Card options:
 
 | Key | Default | |
 |---|---|---|
