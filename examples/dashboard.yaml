@@ -4,7 +4,7 @@
 # Also included:
 #   • Kiosk mode — guests get a clean, full-screen dashboard without the sidebar and top bar;
 #     admins keep them. Needs kiosk-mode (HACS → Frontend).
-#   • A small power menu in the card header's top-right corner: one round button opens a glass
+#   • A small power menu next to the Customize button: one round button opens a glass
 #     menu with Restart Home Assistant, Reboot host and Shut down (each asks for confirmation),
 #     next to a logout button. Needs Bubble Card (HACS → Frontend).
 #     Replace YOUR_ADMIN_USER_ID with your user id (Settings → People → Users → open the user;
@@ -38,7 +38,7 @@ views:
             # motion: true
             # language: ro        # default: your HA profile language
             min_height: 100vh
-            # Small round buttons in the header's top-right corner
+            # Small round buttons next to the Customize button
             header_buttons:
               - icon: mdi:logout
                 name: Log out
