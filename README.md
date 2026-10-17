@@ -44,6 +44,8 @@ The **Customize** button on the dashboard changes the layout on that one device:
 
 ## For YAML users
 
+**Step-by-step YAML tutorial with pictures:** [docs/yaml-tutorial.md](docs/yaml-tutorial.md)
+
 `examples/dashboard.yaml` is a complete example view. Card options:
 
 | Key | Default | |
