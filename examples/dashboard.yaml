@@ -1,5 +1,24 @@
 # Aurora Glass — example dashboard (Settings → Dashboards → ⋮ → Raw configuration editor)
 # Replace the entity IDs with yours. Unused widgets can simply be deleted.
+#
+# Also included:
+#   • Kiosk mode — guests get a clean, full-screen dashboard without the sidebar and top bar;
+#     admins keep them. Needs kiosk-mode (HACS → Frontend).
+#   • A small power menu in the top-right corner: one round button opens a glass menu with
+#     Restart Home Assistant, Reboot host and Shut down (each asks for confirmation), next to a
+#     logout button. Needs card-mod and Bubble Card (HACS → Frontend).
+#     Replace YOUR_ADMIN_USER_ID with your user id (Settings → People → Users → open the user;
+#     the id is in the address bar). Only that user sees the power button and the menu.
+#     Don't use the power menu? Delete the horizontal-stack and the bubble-card pop-up below.
+
+kiosk_mode:
+  non_admin_settings:
+    hide_sidebar: true
+    hide_header: true
+  admin_settings:
+    hide_sidebar: false
+    hide_header: false
+
 title: Acasă
 views:
   - title: Acasă
@@ -7,61 +26,164 @@ views:
     icon: mdi:home
     type: panel              # full width; the card has its own glass background
     cards:
-      - type: custom:aurora-glass-card
-        # preset: auto        # auto (follows HA dark/light) | midnight | dawn | lagoon | ember
-        # accent: peach       # peach | gold | mint | sky | lilac
-        # blur: 24            # px, 0–40
-        # motion: true
-        # language: ro        # default: your HA profile language
-        min_height: 100vh
-        chips:
-          - { entity: sensor.living_room_temperature, name: Inside, color: cool }
-          - { entity: sensor.pv_power, name: Solar, color: solar }
-          - { entity: sensor.house_consumption, name: Using }
-        widgets:
-          - type: energy
-            size: L
-            solar_power: sensor.pv_power
-            home_power: sensor.house_consumption       # optional, computed if missing
-            battery_power: sensor.battery_power
-            battery_soc: sensor.battery_state_of_charge
-            grid_power: sensor.active_power
-            invert_battery: true   # GoodWe reports discharge as positive
-            invert_grid: true      # GoodWe active_power is + when exporting
-          - type: lights
-            size: L
-            entities:
-              - { entity: light.living_room_ceiling, subtitle: Living room }
-              - { entity: light.living_room_sofa_lamp, name: Sofa lamp, subtitle: Living room }
-              - { entity: light.bedroom_bedside, subtitle: Bedroom }
-              - { entity: light.kitchen_worktop, subtitle: Kitchen }
-              - { entity: light.bathroom_mirror, subtitle: Bathroom }
-              - { entity: light.hallway, subtitle: Hallway }
-          - type: climate
-            entity: climate.living_room_ac
-            title: Living room
-            # modes: [cool, heat, dry, off]
-          - type: scenes
-            entities:
-              - { entity: scene.good_morning, description: "Lights at 80%, bedroom stays dark" }
-              - { entity: scene.evening, description: "Soft 30% lights, AC to 23°" }
-              - { entity: scene.away, description: "Everything off, heating low" }
-              - { entity: script.night, description: "Hallway dim, bedroom AC only" }
-          - type: media
-            entity: media_player.living_room
-            subtitle: Living room
-          - type: fan
-            size: S
-            entity: fan.bedroom
-          - type: floor
-            size: S
-            entity: climate.bathroom_floor     # or a switch / input_boolean
-            temperature: sensor.bathroom_floor_temperature
-            subtitle: Bathroom
-          - type: security
-            size: S
-            lock: lock.front_door
-            sensors: [binary_sensor.kitchen_window, binary_sensor.bedroom_window]
-          - type: weather
-            size: S
-            entity: weather.home
+      # A Panel view shows one card, so the Aurora Glass card, the floating buttons
+      # and the power pop-up sit together in one vertical stack.
+      - type: vertical-stack
+        cards:
+          - type: custom:aurora-glass-card
+            # preset: auto        # auto (follows HA dark/light) | midnight | dawn | lagoon | ember
+            # accent: peach       # peach | gold | mint | sky | lilac
+            # blur: 24            # px, 0–40
+            # motion: true
+            # language: ro        # default: your HA profile language
+            min_height: 100vh
+            chips:
+              - { entity: sensor.living_room_temperature, name: Inside, color: cool }
+              - { entity: sensor.pv_power, name: Solar, color: solar }
+              - { entity: sensor.house_consumption, name: Using }
+            widgets:
+              - type: energy
+                size: L
+                solar_power: sensor.pv_power
+                home_power: sensor.house_consumption       # optional, computed if missing
+                battery_power: sensor.battery_power
+                battery_soc: sensor.battery_state_of_charge
+                grid_power: sensor.active_power
+                invert_battery: true   # GoodWe reports discharge as positive
+                invert_grid: true      # GoodWe active_power is + when exporting
+              - type: lights
+                size: L
+                entities:
+                  - { entity: light.living_room_ceiling, subtitle: Living room }
+                  - { entity: light.living_room_sofa_lamp, name: Sofa lamp, subtitle: Living room }
+                  - { entity: light.bedroom_bedside, subtitle: Bedroom }
+                  - { entity: light.kitchen_worktop, subtitle: Kitchen }
+                  - { entity: light.bathroom_mirror, subtitle: Bathroom }
+                  - { entity: light.hallway, subtitle: Hallway }
+              - type: climate
+                entity: climate.living_room_ac
+                title: Living room
+                # modes: [cool, heat, dry, off]
+              - type: scenes
+                entities:
+                  - { entity: scene.good_morning, description: "Lights at 80%, bedroom stays dark" }
+                  - { entity: scene.evening, description: "Soft 30% lights, AC to 23°" }
+                  - { entity: scene.away, description: "Everything off, heating low" }
+                  - { entity: script.night, description: "Hallway dim, bedroom AC only" }
+              - type: media
+                entity: media_player.living_room
+                subtitle: Living room
+              - type: fan
+                size: S
+                entity: fan.bedroom
+              - type: floor
+                size: S
+                entity: climate.bathroom_floor     # or a switch / input_boolean
+                temperature: sensor.bathroom_floor_temperature
+                subtitle: Bathroom
+              - type: security
+                size: S
+                lock: lock.front_door
+                sensors: [binary_sensor.kitchen_window, binary_sensor.bedroom_window]
+              - type: weather
+                size: S
+                source: open_meteo       # built-in, free; or remove this line and set  entity: weather.home
+
+          # Floating buttons, top right, just under Home Assistant's top bar
+          - type: horizontal-stack
+            card_mod:
+              style: |
+                :host {
+                  position: fixed;
+                  top: calc(var(--header-height, 56px) + 10px);
+                  right: 16px;
+                  z-index: 999;
+                  width: auto;
+                  height: auto !important;
+                  bottom: auto;
+                  --stack-card-gap: 6px;
+                  --horizontal-stack-card-gap: 6px;
+                }
+            cards:
+              - type: button
+                icon: mdi:logout
+                show_name: false
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /profile
+                card_mod: &round
+                  style: |
+                    :host { display: block; width: 32px; height: 32px; }
+                    ha-card {
+                      min-height: 32px; padding: 0 !important; display: flex; align-items: center; justify-content: center;
+                      width: 32px; height: 32px; border-radius: 50%;
+                      --mdc-icon-size: 16px;
+                      background: rgba(255,255,255,0.12);
+                      backdrop-filter: blur(8px);
+                      border: none; box-shadow: none;
+                    }
+              - type: button
+                icon: mdi:power
+                show_name: false
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: "#power"
+                visibility: &admin_only
+                  - condition: user
+                    users:
+                      - YOUR_ADMIN_USER_ID
+                card_mod: *round
+
+          # The menu (a Bubble Card pop-up opened by the #power link)
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#power"
+            name: Power
+            icon: mdi:power
+            visibility: *admin_only
+            bg_color: "#080c18"
+            bg_opacity: 70
+            bg_blur: 24
+            shadow_opacity: 0
+            width_desktop: 420px
+            margin_top_desktop: calc(100vh - 360px)
+            margin_top_mobile: calc(100vh - 340px)
+            styles: &menu_text |
+              .bubble-name, .bubble-icon, .bubble-close-button, ha-icon { color: #f2f4fb !important; }
+              .bubble-button-card-container, .bubble-close-button { background: rgba(255,255,255,0.08) !important; }
+            cards:
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Restart Home Assistant
+                icon: mdi:home-assistant
+                styles: *menu_text
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.restart
+                  confirmation:
+                    text: Restart Home Assistant?
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Reboot host
+                icon: mdi:restart
+                styles: *menu_text
+                tap_action:
+                  action: perform-action
+                  perform_action: hassio.host_reboot
+                  confirmation:
+                    text: Reboot the Home Assistant host?
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Shut down
+                icon: mdi:power
+                styles: *menu_text
+                tap_action:
+                  action: perform-action
+                  perform_action: hassio.host_shutdown
+                  confirmation:
+                    text: Shut down Home Assistant?
