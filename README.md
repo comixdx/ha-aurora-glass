@@ -62,6 +62,10 @@ The **Customize** button on the dashboard changes the layout on that one device:
 
 Home Assistant's own dialogs get the glass look too: automatically on dashboards with the Aurora Glass card, and everywhere when you use the theme below.
 
+**Weather service.** In the weather widget pick *Weather service*: a Home Assistant weather entity from any integration, or **Open-Meteo**, built into the card — no integration, account or API key, it uses your home location and also gives the pop-up a 5-day forecast.
+
+**Power menu.** [`examples/power-menu.yaml`](examples/power-menu.yaml) adds a small round power button in the top-right corner that opens a glass menu with Restart, Reboot host and Shut down (with confirmation), visible only to your admin user. Needs card-mod and Bubble Card.
+
 ## Optional: the theme for all of Home Assistant
 
 `themes/aurora_glass.yaml` puts the same look on every dashboard and on the rest of the interface (sidebar, settings, dialogs). This is the only part that needs a file: copy it to `/config/themes/`, make sure `configuration.yaml` has `frontend: themes: !include_dir_merge_named themes`, run `frontend.reload_themes`, then choose **Aurora Glass** in your profile. Not needed for the dashboard itself.
@@ -101,7 +105,7 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | `fan` | `entity`. Tap cycles 33 / 66 / 100 % / off. |
 | `floor` | `entity` (climate, switch or input_boolean), `temperature`, `subtitle`. |
 | `security` | `lock`, `lock_name`, `sensors` (binary sensors; open ones pulse). |
-| `weather` | `entity`. |
+| `weather` | `entity` (any weather integration: Met.no, OpenWeatherMap, AccuWeather, …), **or** `source: open_meteo` for the built-in Open-Meteo service (free, no account), with optional `latitude`, `longitude` (default: your home) and `location_name`. |
 
 Hold (or right-click) a tile, or tap a chip, an energy node or a widget icon, to open its pop-up.
 
