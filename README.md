@@ -1,6 +1,6 @@
 # Aurora Glass for Home Assistant
 
-A frosted-glass dashboard card whose animations follow real entity states: dots flow along the energy lines at a speed set by the kW, the fan spins at its set speed, air streaks while the AC cools, the floor shimmers while it heats, the music bars move while a speaker plays. Everything is set up with clicks — no YAML.
+A frosted-glass dashboard card whose animations follow real entity states: dots flow along the energy lines at a speed set by the kW, the fan spins at its set speed, air streaks while the AC cools, the floor shimmers while it heats, the music bars move while a speaker plays. Hold any tile for a glass pop-up with its controls, and use the Aurora Glass Entity card to give any entity an animated tile. Everything is set up with clicks — no YAML.
 
 ## Set up with clicks only
 
@@ -38,6 +38,30 @@ The **Customize** button on the dashboard changes the layout on that one device:
 
 `prefers-reduced-motion` on a device always turns the animations off.
 
+## Pop-ups and animated entity tiles
+
+**Glass pop-ups.** Hold any tile on the Aurora Glass card (or right-click it), or tap a header chip, an energy-flow node or a widget's icon, and a glass pop-up grows out of it. On a phone it slides up from the bottom and closes with a swipe down. What's inside depends on the entity:
+
+| Entity | In the pop-up |
+|---|---|
+| Light | Drag-to-dim brightness slab, on/off, colour temperature, colour swatches, effects |
+| Switch, input boolean | A big on/off slab |
+| Fan | Speed slab, spinning fan, oscillate, direction, preset modes |
+| Climate | Large dial with − / +, hvac modes, fan modes, presets, air or heat animation |
+| Media player | Artwork, progress, previous / play / next, volume, mute, sources |
+| Cover | Moving shutter, position slab, open / stop / close |
+| Lock | Animated lock, lock / unlock / open |
+| Sensor | Big value, 24-hour chart that draws itself, min / average / max |
+| Binary sensor, person | Animated icon and a 24-hour on/off timeline |
+| Weather | Animated sky, humidity / wind / pressure, 5-day forecast |
+| Scene, script, button | A run button with a ripple |
+
+**⋯** or *More details* opens Home Assistant's own dialog. In the editor, *Hold a tile … to open* lets you choose the Aurora Glass pop-up, Home Assistant's dialog or nothing.
+
+**Aurora Glass Entity card.** + Add card → **Aurora Glass Entity** puts a single entity anywhere as a glass tile (or a row with a switch) whose icon animates with its state: the bulb glows and sends out rays at its brightness, the power ring turns, fan blades spin at their speed, the snowflake turns while cooling and the flame flickers while heating, the speaker bars bounce, the lock shackle jumps, blinds slide, doors swing, motion sends out ripples, the thermometer and battery fill to their level, and power sensors flicker while energy flows. Tap toggles (or runs a scene), hold opens the pop-up; both can be changed in its editor along with layout, icon, theme and accent.
+
+Home Assistant's own dialogs get the glass look too: automatically on dashboards with the Aurora Glass card, and everywhere when you use the theme below.
+
 ## Optional: the theme for all of Home Assistant
 
 `themes/aurora_glass.yaml` puts the same look on every dashboard and on the rest of the interface (sidebar, settings, dialogs). This is the only part that needs a file: copy it to `/config/themes/`, make sure `configuration.yaml` has `frontend: themes: !include_dir_merge_named themes`, run `frontend.reload_themes`, then choose **Aurora Glass** in your profile. Not needed for the dashboard itself.
@@ -61,6 +85,7 @@ The **Customize** button on the dashboard changes the layout on that one device:
 | `chips` | — | `{entity, name, color, decimals}`; `color` is a hex or `cool`/`heat`/`solar`/`battery`/`grid`/`alert`. |
 | `title` | greeting | Header title. `header: false` hides the header. |
 | `customize` | `true` | `false` hides the Customize button. |
+| `popup` | `aurora` | What holding a tile opens: `aurora` (glass pop-up), `native` (Home Assistant's dialog) or `none`. |
 | `language` | profile | `en`, `ro`. Add others with `translations: { de: { lights: "Licht" } }`. |
 | `id` | page path | Key for the saved device layout, if the card is on several dashboards. |
 
@@ -78,4 +103,24 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | `security` | `lock`, `lock_name`, `sensors` (binary sensors; open ones pulse). |
 | `weather` | `entity`. |
 
-Long-press (or right-click) a light, chip, energy node or sensor to open its more-info dialog.
+Hold (or right-click) a tile, or tap a chip, an energy node or a widget icon, to open its pop-up.
+
+**Aurora Glass Entity card**
+
+```yaml
+type: custom:aurora-glass-entity
+entity: light.living_room_ceiling
+name: Ceiling            # optional
+icon: mdi:ceiling-light  # optional, replaces the animated icon
+layout: tile             # tile | row
+tap_action: auto         # auto | toggle | popup | native | none
+hold_action: popup       # popup | native | none
+subtitle: Living room    # optional, default = the area
+preset: auto             # auto | midnight | dawn | lagoon | ember
+accent: peach            # peach | gold | mint | sky | lilac
+glass: true              # false = no glass background
+show_state: true
+motion: true
+```
+
+`auto` toggles lights, switches, fans and covers, runs scenes, scripts and buttons, and opens the pop-up for everything else.
