@@ -1,13 +1,14 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.4.1
+ * Aurora Glass Card for Home Assistant — v0.5.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
+ * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
  * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
  * No build step, no dependencies. Add as a dashboard resource (type: JavaScript module).
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.4.1";
+  const VERSION = "0.5.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -49,7 +50,13 @@
       nothing_playing: "Nothing playing", play: "Play", pause: "Pause", speed: "Speed {n}", tap_speed: "Tap to change speed",
       running: "Running", heating_to: "heating to {t}", locked: "Locked · tap to unlock", unlocked: "Unlocked · tap to lock",
       all_closed: "All closed", n_open: "{n} open", door_unlocked: "Door unlocked", secure: "All secure", not_found: "Entity not found: {e}",
-      humidity: "Humidity {h}%", brightness: "Brightness"
+      humidity: "Humidity {h}%", brightness: "Brightness",
+      close: "Close", more_details: "More details", turn_on: "Turn on", turn_off: "Turn off", color_temp: "Colour temperature", color: "Colour", effect: "Effect",
+      changed: "Changed {t}", just_now: "just now", oscillate: "Oscillate", direction: "Direction", forward: "Forward", reverse: "Reverse", preset: "Preset",
+      fan_mode: "Fan", cover_open: "Open", cover_close: "Close", stop: "Stop", position: "Position", lock_act: "Lock", unlock_act: "Unlock", open_act: "Open",
+      run: "Run", ran: "Done", last_24h: "Last 24 hours", min: "Min", avg: "Average", max: "Max", forecast: "Forecast", volume: "Volume", mute: "Mute",
+      source: "Source", no_history: "No history yet", wind: "Wind", pressure: "Pressure", previous: "Previous", next: "Next", hold_hint: "Hold any tile for details",
+      opening: "Opening", closing: "Closing", open: "Open", closed: "Closed", detected: "Detected", clear: "Clear", home_state: "Home", away: "Away", mode: "Mode"
     },
     ro: {
       good_morning: "Bună dimineața", good_afternoon: "Bună ziua", good_evening: "Bună seara",
@@ -64,7 +71,13 @@
       nothing_playing: "Nu se redă nimic", play: "Redă", pause: "Pauză", speed: "Viteza {n}", tap_speed: "Atinge pentru a schimba viteza",
       running: "Pornit", heating_to: "încălzește la {t}", locked: "Încuiat · atinge pentru a descuia", unlocked: "Descuiat · atinge pentru a încuia",
       all_closed: "Toate închise", n_open: "{n} deschise", door_unlocked: "Ușa descuiată", secure: "Totul în siguranță", not_found: "Entitate negăsită: {e}",
-      humidity: "Umiditate {h}%", brightness: "Luminozitate"
+      humidity: "Umiditate {h}%", brightness: "Luminozitate",
+      close: "Închide", more_details: "Mai multe detalii", turn_on: "Pornește", turn_off: "Oprește", color_temp: "Temperatura culorii", color: "Culoare", effect: "Efect",
+      changed: "Schimbat {t}", just_now: "chiar acum", oscillate: "Oscilare", direction: "Direcție", forward: "Înainte", reverse: "Invers", preset: "Presetare",
+      fan_mode: "Ventilator", cover_open: "Deschide", cover_close: "Închide", stop: "Stop", position: "Poziție", lock_act: "Încuie", unlock_act: "Descuie", open_act: "Deschide",
+      run: "Rulează", ran: "Gata", last_24h: "Ultimele 24 de ore", min: "Min", avg: "Medie", max: "Max", forecast: "Prognoză", volume: "Volum", mute: "Fără sunet",
+      source: "Sursă", no_history: "Încă nu există istoric", wind: "Vânt", pressure: "Presiune", previous: "Anterior", next: "Următor", hold_hint: "Ține apăsat pe orice element pentru detalii",
+      opening: "Se deschide", closing: "Se închide", open: "Deschis", closed: "Închis", detected: "Detectat", clear: "Liber", home_state: "Acasă", away: "Plecat", mode: "Mod"
     }
   };
 
@@ -85,7 +98,10 @@
     inverter: "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM7 12c1.2-2.6 2.6-2.6 3.8 0s2.6 2.6 3.8 0 2.2-2.4 2.4-1.6",
     battery: "M7 6h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zM10 3h4M12 10l-2 4h4l-2 4",
     left: "M15 6l-6 6 6 6", right: "M9 6l6 6-6 6", minus: "M5 12h14", plus: "M12 5v14M5 12h14",
-    sliders: "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4"
+    sliders: "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4",
+    power: "M12 3.5v7.5M7.2 6.6a7 7 0 1 0 9.6 0", x: "M6 6l12 12M18 6 6 18", dots: "M5 12h.01M12 12h.01M19 12h.01",
+    prev: "M18 6v12L9 12zM6 6v12", next: "M6 6v12l9-6zM18 6v12", vol: "M4 9.5h3.5L12 6v12l-4.5-3.5H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11",
+    mute: "M4 9.5h3.5L12 6v12l-4.5-3.5H4zM16 10l4 4M20 10l-4 4", up: "M6 15l6-6 6 6", down: "M6 9l6 6 6-6", stopsq: "M7 7h10v10H7z"
   };
   const svgIcon = (d, size = 18, sw = 1.8) =>
     `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"></path></svg>`;
@@ -222,6 +238,7 @@
   .tile.on{background:color-mix(in srgb,var(--acc) var(--acc-t),transparent);border-color:color-mix(in srgb,var(--acc) 50%,transparent);box-shadow:0 10px 40px -12px color-mix(in srgb,var(--acc) 55%,transparent)}
   .tile.focus{outline:2px solid color-mix(in srgb,var(--acc) 60%,transparent);outline-offset:2px}
   .bulb{width:38px;height:38px;border-radius:99px;display:flex;align-items:center;justify-content:center;background:var(--faint);color:var(--muted);transition:background .45s,box-shadow .6s,color .3s}
+  .bulb .ai{color:inherit}
   .tile.on .bulb{background:var(--acc);color:#1c140c;box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 18%,transparent),0 0 var(--glow,24px) color-mix(in srgb,var(--acc) 60%,transparent)}
   .tn{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ts{font-size:12px;color:var(--muted)}
@@ -315,6 +332,983 @@
   @keyframes agFall{0%{transform:translateY(-4px);opacity:0}30%{opacity:1}100%{transform:translateY(12px);opacity:0}}
   `;
 
+  /* ------------------------------------------------- shared theme + i18n helpers */
+  const trLang = (hass, forced) => { const l = (forced || hass?.locale?.language || hass?.language || "en").split("-")[0]; return I18N[l] ? l : "en"; };
+  const tr = (lang, k, vars) => {
+    let s = I18N[lang]?.[k] ?? I18N.en[k] ?? k;
+    if (vars) Object.keys(vars).forEach((v) => { s = s.replace(`{${v}}`, vars[v]); });
+    return s;
+  };
+  function resolveTheme(preset, accent, hass) {
+    let id = preset || "auto";
+    if (id === "auto" || !PRESETS[id]) id = hass?.themes?.darkMode === false ? "dawn" : "midnight";
+    const T = PRESETS[id];
+    const A = ACCENTS[accent] || ACCENTS.peach;
+    return { id, T, A, S: T.dark ? SEM_DARK : SEM_LIGHT };
+  }
+  function themeVars({ T, A, S }, blur) {
+    const v = {
+      "--ground": T.ground, "--glass": T.glass, "--glass2": T.glass2, "--border": T.border, "--hi": T.hi, "--shadow": T.shadow,
+      "--text": T.text, "--muted": T.muted, "--faint": T.faint, "--track": T.track, "--off": T.off, "--orb-op": T.orbOp,
+      "--acc": A.c, "--acc-ink": T.dark ? A.c : A.deep, "--acc-a": T.dark ? "14%" : "28%", "--acc-t": T.dark ? "16%" : "32%",
+      "--blur": `${blur}px`, "--cool": S.cool, "--heat": S.heat, "--solar": S.solar, "--battery": S.battery, "--grid": S.grid, "--alert": S.alert,
+      "--on-acc": "#1c140c"
+    };
+    return Object.keys(v).map((k) => `${k}:${v[k]}`).join(";");
+  }
+  const domainOf = (id) => String(id || "").split(".")[0];
+  const isOn = (s) => !!s && !INACTIVE.has(s.state) && s.state !== "not_home";
+  const TOGGLE_DOMAINS = ["light", "switch", "input_boolean", "fan", "cover", "automation", "siren", "humidifier", "climate", "media_player", "vacuum"];
+  const RUN_DOMAINS = ["scene", "script", "button", "input_button"];
+  function relTime(iso, lang) {
+    const t = Date.parse(iso);
+    if (!isFinite(t)) return "";
+    const s = (t - Date.now()) / 1000;
+    if (Math.abs(s) < 45) return tr(lang, "just_now");
+    const units = [["day", 86400], ["hour", 3600], ["minute", 60]];
+    for (const [u, n] of units) if (Math.abs(s) >= n) {
+      try { return new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(Math.round(s / n), u); } catch (e) { return `${Math.round(-s / n)} ${u}`; }
+    }
+    return tr(lang, "just_now");
+  }
+  function stateText(hass, st, lang) {
+    if (!st) return "";
+    const d = domainOf(st.entity_id);
+    if (RUN_DOMAINS.includes(d) && isFinite(Date.parse(st.state))) return relTime(st.state, lang);
+    try { const f = hass?.formatEntityState?.(st); if (f) return f; } catch (e) { /* older HA */ }
+    if (d === "weather") return WX_LABEL[st.state] || pretty(st.state);
+    const u = st.attributes.unit_of_measurement;
+    const n = parseFloat(st.state);
+    if (isFinite(n) && String(n) === String(st.state).trim()) return `${n.toLocaleString(lang)}${u ? " " + u : ""}`;
+    return pretty(st.state);
+  }
+  function areaOf(hass, id) {
+    const e = hass?.entities?.[id];
+    if (!e) return "";
+    const aid = e.area_id || hass?.devices?.[e.device_id]?.area_id;
+    return (aid && hass?.areas?.[aid]?.name) || "";
+  }
+  function toggleCall(hass, st) {
+    if (!hass || !st) return;
+    const id = st.entity_id, d = domainOf(id);
+    if (d === "cover") return hass.callService("cover", "toggle", { entity_id: id });
+    if (d === "lock") return hass.callService("lock", st.state === "locked" ? "unlock" : "lock", { entity_id: id });
+    if (d === "media_player") return hass.callService("media_player", "media_play_pause", { entity_id: id });
+    if (d === "climate") return hass.callService("climate", st.state === "off" ? "turn_on" : "turn_off", { entity_id: id });
+    if (["light", "switch", "input_boolean", "fan", "automation", "siren", "humidifier"].includes(d)) return hass.callService(d, "toggle", { entity_id: id });
+    if (d === "vacuum") return hass.callService("vacuum", st.state === "cleaning" ? "return_to_base" : "start", { entity_id: id });
+    return hass.callService("homeassistant", "toggle", { entity_id: id });
+  }
+  function runCall(hass, st) {
+    if (!hass || !st) return;
+    const id = st.entity_id, d = domainOf(id);
+    if (d === "scene" || d === "script") return hass.callService(d, "turn_on", { entity_id: id });
+    if (d === "button" || d === "input_button") return hass.callService(d, "press", { entity_id: id });
+  }
+
+  /* -------------------------------------------------------- animated entity icons */
+  // Colour of an entity, taken from the theme: accent for "on", semantic colours where they mean something.
+  function aiColor(st) {
+    if (!st) return "var(--muted)";
+    const d = domainOf(st.entity_id), a = st.attributes || {}, s = st.state;
+    if (s === "unavailable") return "var(--muted)";
+    if (d === "light" && s === "on" && Array.isArray(a.rgb_color) && a.color_mode && !/color_temp|brightness|onoff|white/.test(a.color_mode)) return `rgb(${a.rgb_color.join(",")})`;
+    if (d === "climate") { const act = a.hvac_action || s; return /cool|dry/.test(act) ? "var(--cool)" : /heat/.test(act) ? "var(--heat)" : s === "off" ? "var(--muted)" : "var(--acc)"; }
+    if (d === "fan") return s === "on" ? "var(--cool)" : "var(--muted)";
+    if (d === "lock") return s === "locked" ? "var(--battery)" : s === "unlocked" || s === "open" || s === "jammed" ? "var(--alert)" : "var(--acc)";
+    if (d === "binary_sensor") {
+      if (s !== "on") return "var(--muted)";
+      const dc = a.device_class;
+      if (["smoke", "gas", "problem", "safety", "moisture", "carbon_monoxide", "tamper", "heat"].includes(dc)) return "var(--alert)";
+      if (["door", "window", "opening", "garage_door", "lock"].includes(dc)) return "var(--heat)";
+      return "var(--acc)";
+    }
+    if (d === "sensor") {
+      const dc = a.device_class;
+      if (dc === "temperature") return "var(--heat)";
+      if (dc === "humidity" || dc === "moisture" || dc === "water") return "var(--cool)";
+      if (dc === "battery") return parseFloat(s) < 20 ? "var(--alert)" : "var(--battery)";
+      if (["power", "energy", "current", "voltage", "apparent_power"].includes(dc)) return "var(--solar)";
+      return "var(--acc)";
+    }
+    if (d === "weather" || d === "sun") return "var(--solar)";
+    if (d === "person" || d === "device_tracker") return s === "home" ? "var(--battery)" : "var(--muted)";
+    return isOn(st) ? "var(--acc)" : "var(--muted)";
+  }
+
+  // An SVG icon whose animation follows the entity's state. size in px; sw = stroke width (thinner for big icons).
+  function animIcon(st, size = 24, sw = 1.8, iconOverride) {
+    const d = domainOf(st?.entity_id), a = st?.attributes || {}, s = st?.state;
+    const on = isOn(st);
+    const svg = (body) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+    let kind = d, cls = "", extra = "", inner = "";
+    if (iconOverride) return `<span class="ai ${on ? "on" : ""}" style="--ai:${aiColor(st)}"><ha-icon icon="${esc(iconOverride)}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px"></ha-icon></span>`;
+    switch (d) {
+      case "light": {
+        const bri = on ? (a.brightness ?? 255) / 255 : 0;
+        extra = `--glow:${(3 + bri * 9).toFixed(1)}px;--ro:${on ? (0.35 + bri * 0.65).toFixed(2) : 0}`;
+        inner = svg(`<g class="ai-rays">${[-76, -38, 0, 38, 76].map((r) => `<path d="M12 -1.6v2.1" transform="rotate(${r} 12 9.5)"></path>`).join("")}</g><path class="ai-bulb" d="${ICON.lights}"></path>`);
+        break;
+      }
+      case "switch": case "input_boolean": case "automation": case "siren": case "humidifier":
+        kind = "power";
+        inner = svg(`<circle class="ai-ring" cx="12" cy="12" r="10.6" pathLength="100"></circle><path d="${ICON.power}" transform="translate(2.4 2.4) scale(.8)"></path>`);
+        break;
+      case "fan": {
+        const pct = on ? (a.percentage ?? 100) : 0;
+        extra = `--spd:${(1.7 - pct / 100 * 1.3).toFixed(2)}s`;
+        const blade = "M12 12C10.4 9 10.4 4.4 12.9 3.6c2.4-.7 2.8 4.4-.9 8.4z";
+        inner = svg(`<g class="ai-spin" fill="currentColor" stroke="none" opacity=".92"><path d="${blade}"></path><path d="${blade}" transform="rotate(120 12 12)"></path><path d="${blade}" transform="rotate(240 12 12)"></path></g><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="10.4" opacity=".35"></circle>`);
+        break;
+      }
+      case "climate": {
+        const act = a.hvac_action || s;
+        if (/cool/.test(act)) { cls = "ai-cool"; inner = svg(`<g class="ai-spin"><path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"></path><path d="M9.6 4.2 12 6.3l2.4-2.1M9.6 19.8 12 17.7l2.4 2.1M3.4 10.4l3.1.7-1 3M20.6 10.4l-3.1.7 1 3"></path></g>`); }
+        else if (/heat/.test(act)) { cls = "ai-heat"; inner = svg(`<path class="ai-flame" d="M12 21.2c-3.7 0-6.2-2.5-6.2-5.8 0-3.5 2.7-5.1 3.5-8.7 2.5 1.4 3.7 3.5 3.7 5.4 1-.6 1.7-1.9 1.7-3.3 2.1 1.6 3.5 3.9 3.5 6.6 0 3.3-2.5 5.8-6.2 5.8z"></path>`); }
+        else if (/dry/.test(act)) { cls = "ai-dry"; inner = svg(`<path class="ai-bobp" d="M12 3.2c3.3 4.2 5.6 7.4 5.6 10.4a5.6 5.6 0 0 1-11.2 0c0-3 2.3-6.2 5.6-10.4z"></path>`); }
+        else if (/fan/.test(act)) { kind = "fan"; cls = "on"; extra = "--spd:1s"; const blade = "M12 12C10.4 9 10.4 4.4 12.9 3.6c2.4-.7 2.8 4.4-.9 8.4z"; inner = svg(`<g class="ai-spin" fill="currentColor" stroke="none"><path d="${blade}"></path><path d="${blade}" transform="rotate(120 12 12)"></path><path d="${blade}" transform="rotate(240 12 12)"></path></g>`); }
+        else { const lv = a.current_temperature != null ? clamp((a.current_temperature - 10) / 25, 0.08, 1) : 0.5; extra = `--lv:${lv.toFixed(2)}`; cls = "ai-level"; inner = svg(`<path d="${ICON.climate}"></path><path class="ai-fillr" d="M12 17.6V8.8" stroke-width="${sw * 1.4}"></path>`); }
+        break;
+      }
+      case "media_player":
+        if (s === "playing") { cls = "ai-playing"; inner = svg(`<g fill="currentColor" stroke="none">${[[4, 0.9], [9.2, 1.2], [14.4, 0.8], [19.6, 1.05]].map(([x, dd], k) => `<rect class="ai-eqb" x="${x - 1.6}" y="4" width="3.2" height="16" rx="1.6" style="--d:${dd}s;--dl:${k * -0.23}s"></rect>`).join("")}</g>`); }
+        else inner = svg(`<path d="${ICON.media}"></path>`);
+        break;
+      case "lock": {
+        const moving = s === "locking" || s === "unlocking";
+        cls = `${s === "locked" ? "" : "unl"} ${moving ? "moving" : ""}`;
+        inner = svg(`<g class="ai-shackle"><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></g><rect x="5" y="11" width="14" height="10" rx="2.5"></rect><path d="M12 15v2"></path>`);
+        break;
+      }
+      case "cover": {
+        const pos = a.current_position ?? (s === "open" || s === "opening" ? 100 : 0);
+        const moving = s === "opening" || s === "closing";
+        cls = moving ? "moving" : "";
+        extra = `--cv:${(1 - pos / 100).toFixed(2)}`;
+        inner = svg(`<rect x="3.5" y="3" width="17" height="18" rx="2"></rect><g class="ai-shut"><rect x="4.5" y="4" width="15" height="16" rx="1" fill="currentColor" fill-opacity=".22" stroke="none"></rect><path d="M4.5 8h15M4.5 12h15M4.5 16h15" stroke-width="${sw * 0.7}"></path></g>${moving ? `<path class="ai-arrow" d="${s === "opening" ? "M9 14l3-3 3 3" : "M9 10l3 3 3-3"}"></path>` : ""}`);
+        break;
+      }
+      case "binary_sensor": {
+        const dc = a.device_class;
+        if (["door", "garage_door", "opening"].includes(dc)) { kind = "door"; inner = svg(`<path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h11A1.5 1.5 0 0 1 19 4.5V21M3 21h18"></path><g class="ai-leaf"><path d="M6.5 21V4.6l9.5 1.2V21" fill="currentColor" fill-opacity=".18"></path><circle cx="13.5" cy="13" r=".9" fill="currentColor"></circle></g>`); }
+        else if (dc === "window") { kind = "window"; inner = svg(`<rect x="4" y="3" width="16" height="18" rx="1.5"></rect><path d="M12 3v18"></path><g class="ai-leaf2"><rect x="12" y="4" width="7" height="16" fill="currentColor" fill-opacity=".18" stroke="none"></rect></g>`); }
+        else if (["motion", "occupancy", "presence", "moving", "vibration", "sound"].includes(dc)) { kind = "ripple"; inner = svg(`<circle class="rp" cx="12" cy="12" r="9" style="--dl:0s"></circle><circle class="rp" cx="12" cy="12" r="9" style="--dl:-.9s"></circle><circle cx="12" cy="7" r="2.1"></circle><path d="M8.5 21l1.6-6.2L8 12l3-2.8h2L16 12l-2 2.8 1.5 6.2"></path>`); }
+        else if (["moisture", "water"].includes(dc)) { kind = "ripple"; inner = svg(`<circle class="rp" cx="12" cy="19" r="4" style="--dl:0s"></circle><path d="M12 3.5c2.8 3.6 4.8 6.3 4.8 8.9a4.8 4.8 0 0 1-9.6 0c0-2.6 2-5.3 4.8-8.9z"></path>`); }
+        else if (["smoke", "gas", "problem", "safety", "carbon_monoxide", "tamper", "heat"].includes(dc)) { kind = "alert"; inner = svg(`<path d="M12 3.5 21 19.5H3z"></path><path d="M12 10v4.2M12 17h.01"></path>`); }
+        else if (dc === "connectivity" || dc === "plug" || dc === "power") { kind = "power"; inner = svg(`<circle class="ai-ring" cx="12" cy="12" r="10.6" pathLength="100"></circle><path d="${ICON.power}" transform="translate(2.4 2.4) scale(.8)"></path>`); }
+        else { kind = "ripple"; inner = svg(`<circle class="rp" cx="12" cy="12" r="7" style="--dl:0s"></circle><circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity=".35"></circle>`); }
+        break;
+      }
+      case "sensor": {
+        const dc = a.device_class, n = parseFloat(s);
+        if (dc === "temperature") { kind = "level"; const lv = isFinite(n) ? clamp((n + 5) / 40, 0.06, 1) : 0.5; extra = `--lv:${lv.toFixed(2)}`; inner = svg(`<path d="${ICON.climate}"></path><path class="ai-fillr" d="M12 17.6V8.8" stroke-width="${sw * 1.4}"></path>`); }
+        else if (dc === "humidity" || dc === "moisture") { kind = "level"; const lv = isFinite(n) ? clamp(n / 100, 0.05, 1) : 0.5; extra = `--lv:${lv.toFixed(2)}`; inner = svg(`<defs><clipPath id="agd"><path d="M12 3.2c3.3 4.2 5.6 7.4 5.6 10.4a5.6 5.6 0 0 1-11.2 0c0-3 2.3-6.2 5.6-10.4z"></path></clipPath></defs><g clip-path="url(#agd)"><rect class="ai-fillr2" x="5" y="3" width="14" height="17" fill="currentColor" fill-opacity=".35" stroke="none"></rect></g><path d="M12 3.2c3.3 4.2 5.6 7.4 5.6 10.4a5.6 5.6 0 0 1-11.2 0c0-3 2.3-6.2 5.6-10.4z"></path>`); }
+        else if (dc === "battery") { kind = "level"; const lv = isFinite(n) ? clamp(n / 100, 0.04, 1) : 0.5; extra = `--lv:${lv.toFixed(2)}`; inner = svg(`<rect x="6" y="5" width="12" height="16" rx="2.2"></rect><path d="M10 3h4"></path><rect class="ai-fillr2" x="8" y="7" width="8" height="12" rx="1" fill="currentColor" fill-opacity=".55" stroke="none"></rect>`); }
+        else if (["power", "energy", "current", "voltage", "apparent_power"].includes(dc)) { kind = "bolt"; cls = isFinite(n) && Math.abs(n) > 0 ? "on" : ""; inner = svg(`<path class="ai-bp" d="${ICON.energy}"></path>`); }
+        else if (dc === "illuminance") { kind = "wx"; inner = svg(`<g class="ai-sunr"><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></g><circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity=".3"></circle>`); }
+        else { kind = "chart"; inner = svg(`<path d="M4 20h16" opacity=".5"></path><path class="ai-line" pathLength="1" d="M4 16l4.5-5 3.5 3 3.5-6 4.5 4"></path>`); }
+        break;
+      }
+      case "scene":
+        inner = svg(`${[[12, 12, 7, 0], [5, 5.5, 3, -0.8], [19, 6, 2.6, -1.6]].map(([x, y, r, dl]) => `<path class="ai-star" style="--dl:${dl}s" d="M${x} ${y - r}C${x + r * 0.15} ${y - r * 0.15} ${x + r * 0.15} ${y - r * 0.15} ${x + r} ${y}C${x + r * 0.15} ${y + r * 0.15} ${x + r * 0.15} ${y + r * 0.15} ${x} ${y + r}C${x - r * 0.15} ${y + r * 0.15} ${x - r * 0.15} ${y + r * 0.15} ${x - r} ${y}C${x - r * 0.15} ${y - r * 0.15} ${x - r * 0.15} ${y - r * 0.15} ${x} ${y - r}z" fill="currentColor" fill-opacity=".25"></path>`).join("")}`);
+        break;
+      case "script":
+        kind = "run";
+        inner = svg(`<circle class="ai-ring" cx="12" cy="12" r="10.4" pathLength="100"></circle><path d="M9.5 7.8v8.4l7-4.2z" fill="currentColor" fill-opacity=".25"></path>`);
+        break;
+      case "button": case "input_button":
+        kind = "run";
+        inner = svg(`<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4.5" fill="currentColor" fill-opacity=".3"></circle>`);
+        break;
+      case "vacuum":
+        cls = s === "cleaning" ? "on" : "";
+        inner = svg(`<circle cx="12" cy="12" r="9.4"></circle><g class="ai-spin"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 7.8V5.2M16.2 12h2.6"></path></g>`);
+        break;
+      case "person": case "device_tracker":
+        if (s === "home") { kind = "home"; inner = svg(`<path d="${ICON.home}"></path>`); }
+        else { kind = "away"; inner = svg(`<g class="ai-pin"><path d="M12 21s-6-5.4-6-10.2a6 6 0 0 1 12 0C18 15.6 12 21 12 21z"></path><circle cx="12" cy="10.6" r="2.2"></circle></g>`); }
+        break;
+      case "weather": case "sun":
+        kind = "wx";
+        inner = svg(`<g class="ai-sunr"><path d="M9 1.8v1.6M9 14.6v1.6M1.8 9h1.6M14.6 9h1.6M3.9 3.9l1.1 1.1M13 13l1.1 1.1M3.9 14.1 5 13M13 5l1.1-1.1"></path></g><circle cx="9" cy="9" r="3.4" fill="currentColor" fill-opacity=".3"></circle>${s !== "sunny" && s !== "clear-night" && s !== "above_horizon" ? `<path class="ai-cl" d="M9.5 20.5h8.3a3.7 3.7 0 0 0 .2-7.4 5 5 0 0 0-9.4 1.3 3.1 3.1 0 0 0 .9 6.1z" fill="var(--ground)"></path>` : ""}`);
+        break;
+      default:
+        if (a.icon) return `<span class="ai ${on ? "on" : ""}" style="--ai:${aiColor(st)}"><ha-icon icon="${esc(a.icon)}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px"></ha-icon></span>`;
+        inner = svg(`<circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="3" fill="currentColor"></circle>`);
+    }
+    return `<span class="ai ai-${kind} ${on ? "on" : ""} ${cls}" style="--ai:${aiColor(st)};${extra}">${inner}</span>`;
+  }
+
+  function weatherArt(cond, dark, w = 96, h = 72) {
+    const sun = ["sunny", "partlycloudy", "windy", "exceptional"].includes(cond);
+    const moon = cond === "clear-night";
+    const cloud = !["sunny", "clear-night"].includes(cond);
+    const rain = ["rainy", "pouring", "lightning-rainy", "snowy-rainy"].includes(cond);
+    const snow = ["snowy", "snowy-rainy"].includes(cond);
+    return `<svg width="${w}" height="${h}" viewBox="0 0 120 90" aria-hidden="true" style="flex:none;overflow:visible">
+      ${sun ? `<g class="rays"><path d="M46 8v8M46 62v8M15 39h8M69 39h8M24 17l6 6M62 55l6 6M24 61l6-6M62 23l6-6" fill="none" stroke-width="3" stroke-linecap="round" style="stroke:var(--solar)"></path></g><circle cx="46" cy="39" r="15" style="fill:var(--solar);filter:drop-shadow(0 0 10px var(--solar))"></circle>` : ""}
+      ${moon ? `<path d="M60 18a24 24 0 1 0 22 32 20 20 0 0 1-22-32z" style="fill:var(--text);opacity:.85"></path>` : ""}
+      ${cloud ? `<g class="cloud"><path d="M50 80h46a14 14 0 0 0 0-28 20 20 0 0 0-38-4 16 16 0 0 0-8 32z" style="fill:${dark ? "rgba(255,255,255,0.82)" : "#fff"};filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))"></path></g>` : ""}
+      ${rain || snow ? [62, 76, 90].map((x, k) => `<circle class="drop" cx="${x}" cy="86" r="${snow ? 2.6 : 2}" style="fill:${snow ? "var(--text)" : "var(--cool)"};--dl:${k * -0.35}s"></circle>`).join("") : ""}
+    </svg>`;
+  }
+
+  const ANIM_CSS = `
+  .ai{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--ai);line-height:0;transition:color .4s}
+  .ai svg{overflow:visible;display:block}
+  .ai svg *{transform-box:view-box}
+  .ai-rays path{opacity:0;transition:opacity .5s}
+  .ai-light.on .ai-rays path{opacity:var(--ro);animation:agRay 2.8s ease-in-out infinite}
+  .ai-light .ai-bulb{transition:fill .5s,filter .6s}
+  .ai-light.on .ai-bulb{fill:color-mix(in srgb,var(--ai) 38%,transparent);filter:drop-shadow(0 0 var(--glow) var(--ai))}
+  .ai-ring{stroke-dasharray:0 100;opacity:0;transition:stroke-dasharray .7s cubic-bezier(.2,.8,.2,1),opacity .4s;transform-origin:12px 12px}
+  .ai-power.on .ai-ring,.ai-run.on .ai-ring{stroke-dasharray:30 70;opacity:1;animation:agSpin 2.6s linear infinite}
+  .ai-run.on .ai-ring{animation-duration:1.1s}
+  .ai-power.on svg{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--ai) 70%,transparent))}
+  .ai-spin{transform-origin:12px 12px}
+  .ai-fan.on .ai-spin{animation:agSpin var(--spd,1s) linear infinite}
+  .ai-climate.ai-cool .ai-spin{animation:agSpin 9s linear infinite}
+  .ai-flame{transform-origin:12px 21px;animation:agFlick 1.1s ease-in-out infinite alternate;fill:color-mix(in srgb,var(--ai) 30%,transparent)}
+  .ai-bobp{animation:agBob 1.8s ease-in-out infinite;fill:color-mix(in srgb,var(--ai) 25%,transparent)}
+  .ai-eqb{transform-origin:center 20px;animation:agEq var(--d) ease-in-out infinite;animation-delay:var(--dl)}
+  .ai-shackle{transition:transform .45s cubic-bezier(.3,1.7,.5,1)}
+  .ai-lock.unl .ai-shackle{transform:translateY(-3px)}
+  .ai-lock.moving svg{animation:agShake .45s ease-in-out infinite}
+  .ai-shut{transform-origin:12px 4px;transform:scaleY(var(--cv,1));transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+  .ai-arrow{animation:agBob 1s ease-in-out infinite}
+  .ai-leaf{transform-origin:6.5px 12px;transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
+  .ai-door.on .ai-leaf{transform:scaleX(.55)}
+  .ai-leaf2{transform-origin:19px 12px;transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
+  .ai-window.on .ai-leaf2{transform:scaleX(.35)}
+  .ai-ripple .rp{opacity:0;transform-origin:12px 12px}
+  .ai-ripple.on .rp{animation:agRip 1.8s ease-out infinite;animation-delay:var(--dl)}
+  .ai-alert.on svg{animation:agPulse 1.1s ease-in-out infinite}
+  .ai-alert.on path:first-child{fill:color-mix(in srgb,var(--ai) 25%,transparent)}
+  .ai-fillr{transform-origin:12px 17.6px;transform:scaleY(var(--lv,.5));transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+  .ai-fillr2{transform-origin:12px 20px;transform:scaleY(var(--lv,.5));transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+  .ai-bolt .ai-bp{transition:fill .4s}
+  .ai-bolt.on .ai-bp{fill:color-mix(in srgb,var(--ai) 35%,transparent);animation:agFlick2 2.4s ease-in-out infinite}
+  .ai .ai-star{transform-box:fill-box;transform-origin:center;animation:agTw 2.6s ease-in-out infinite;animation-delay:var(--dl)}
+  .ai-vacuum.on .ai-spin{animation:agSpin 1.4s linear infinite}
+  .ai-pin{animation:agBob 1.8s ease-in-out infinite}
+  .ai-sunr{transform-origin:9px 9px;animation:agSpin 22s linear infinite}
+  .ai-sensor .ai-sunr,.ai-wx.on .ai-sunr{transform-origin:12px 12px}
+  .ai-cl{animation:agFloat 6s ease-in-out infinite}
+  .ai-line{stroke-dasharray:1;stroke-dashoffset:1;animation:agDraw 1.6s cubic-bezier(.3,.7,.2,1) forwards}
+  @keyframes agRay{0%,100%{opacity:var(--ro)}50%{opacity:calc(var(--ro) * .35)}}
+  @keyframes agFlick{0%{transform:scale(1,1)}100%{transform:scale(.9,1.09)}}
+  @keyframes agShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
+  @keyframes agBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes agRip{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+  @keyframes agPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+  @keyframes agFlick2{0%,44%,56%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes agTw{0%,100%{transform:scale(.62);opacity:.55}50%{transform:scale(1.08);opacity:1}}
+  @keyframes agDraw{to{stroke-dashoffset:0}}
+  @keyframes agSpin{to{transform:rotate(360deg)}}
+  @keyframes agEq{0%,100%{transform:scaleY(.22)}50%{transform:scaleY(1)}}
+  @keyframes agFloat{0%,100%{transform:translateX(0)}50%{transform:translateX(9px)}}
+  `;
+
+  /* ================================================================ glass pop-up */
+  const POP_CSS = `
+  :host{display:contents}
+  dialog.pop{position:fixed;inset:0;margin:auto;width:min(440px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 40px);padding:0;border:0;background:transparent;color:var(--text);overflow:visible;font-family:'Figtree',var(--ha-font-family-body,system-ui),-apple-system,sans-serif}
+  dialog.pop:focus{outline:none}
+  dialog.pop::backdrop{background:var(--scrim,rgba(4,6,14,.45));backdrop-filter:blur(7px) saturate(120%);-webkit-backdrop-filter:blur(7px) saturate(120%);animation:agFade .35s ease both}
+  dialog.pop.closing::backdrop{animation:agFadeOut .3s ease both}
+  .sheet{position:relative;display:flex;flex-direction:column;gap:18px;max-height:calc(100dvh - 40px);overflow:hidden auto;overscroll-behavior:contain;padding:18px 20px 20px;border-radius:32px;
+    background:color-mix(in srgb,var(--ground) 64%,transparent);backdrop-filter:blur(calc(var(--blur) + 14px)) saturate(170%);-webkit-backdrop-filter:blur(calc(var(--blur) + 14px)) saturate(170%);
+    border:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hi),0 40px 90px -30px rgba(0,0,0,.7);transform-origin:center}
+  .sheet:focus{outline:none}
+  .sheet>*:not(.halo){position:relative;z-index:1}
+  .halo{position:absolute;left:-25%;right:-25%;top:-140px;height:340px;z-index:0;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--ai) 34%,transparent),transparent);opacity:.35;transition:opacity .8s,background .8s}
+  .halo.on{opacity:.9;animation:agBreath 6s ease-in-out infinite}
+  .grab{display:none;width:44px;height:5px;border-radius:9px;background:var(--track);margin:-8px auto -6px;flex:none}
+  @media (max-width:600px){
+    dialog.pop{margin:auto 0 0;width:100vw;max-height:92dvh}
+    .sheet{border-radius:30px 30px 0 0;max-height:92dvh;padding-bottom:calc(22px + env(safe-area-inset-bottom));border-bottom:0}
+    .grab{display:block}
+  }
+  .ph{display:flex;align-items:center;gap:14px;touch-action:none}
+  .pic{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--ai) 16%,transparent);border:1px solid color-mix(in srgb,var(--ai) 38%,transparent);transition:background .5s,border-color .5s}
+  .pt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .pt b{font-size:18px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pt span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xb{width:44px;height:44px;border-radius:99px;display:flex;align-items:center;justify-content:center;flex:none}
+  .hero{display:flex;align-items:center;justify-content:center;gap:22px;min-height:100px;flex-wrap:wrap}
+  .hero .ai svg{stroke-width:1.15}
+  .slab{position:relative;width:120px;height:250px;border-radius:38px;overflow:hidden;background:var(--off);border:1px solid var(--faint);touch-action:none;cursor:ns-resize;box-shadow:inset 0 1px 0 var(--hi);flex:none;outline:none}
+  .slab:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--ai) 60%,transparent)}
+  .slab>i{position:absolute;left:0;right:0;bottom:0;height:var(--v);background:linear-gradient(to top,color-mix(in srgb,var(--ai) 92%,transparent),color-mix(in srgb,var(--ai) 62%,transparent));box-shadow:0 0 50px color-mix(in srgb,var(--ai) 55%,transparent);transition:height .5s cubic-bezier(.2,.8,.2,1)}
+  .slab.drag>i{transition:none}
+  .slab.tog{cursor:pointer}
+  .slab .sv{position:absolute;left:0;right:0;top:20px;text-align:center;font-size:26px;pointer-events:none}
+  .slab .sic{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);pointer-events:none}
+  .slab .sic .ai{color:rgba(255,255,255,.95);filter:drop-shadow(0 1px 3px rgba(0,0,0,.35))}
+  .side{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .cbtn{width:60px;height:60px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:var(--off);border:1px solid var(--faint);color:var(--muted);transition:background .35s,color .35s,border-color .35s,transform .2s}
+  .cbtn:active{transform:scale(.94)}
+  .cbtn.on{background:var(--ai);border-color:var(--ai);color:var(--on-acc);box-shadow:0 12px 34px -12px var(--ai)}
+  .cbtn.big{width:72px;height:72px;border-radius:99px}
+  .clabel{font-size:12px;color:var(--muted)}
+  .grp{display:flex;flex-direction:column;gap:10px}
+  .lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .chips2{display:flex;flex-wrap:wrap;gap:8px}
+  .chipb{min-height:40px;padding:0 15px;border-radius:99px;font-size:14px;font-weight:600;background:var(--off);border:1px solid var(--faint);color:var(--muted);transition:background .3s,color .3s,border-color .3s}
+  .chipb.on{background:color-mix(in srgb,var(--ai) 20%,transparent);border-color:color-mix(in srgb,var(--ai) 60%,transparent);color:var(--text)}
+  .swr{display:flex;flex-wrap:wrap;gap:10px}
+  .sw2{width:38px;height:38px;border-radius:99px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);transition:transform .2s}
+  .sw2:active{transform:scale(.9)}
+  .rng{display:flex;flex-direction:column;gap:6px}
+  .rng input{width:100%}
+  input.ct::-webkit-slider-runnable-track{background:linear-gradient(90deg,#ff9d4d,#ffe7c4 45%,#e8f1ff 70%,#a9cbff)}
+  input.ct::-moz-range-track{background:linear-gradient(90deg,#ff9d4d,#ffe7c4 45%,#e8f1ff 70%,#a9cbff)}
+  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:16px;background:var(--off);border:1px solid var(--faint);min-width:0}
+  .stat span{font-size:12px;color:var(--muted)}
+  .stat b{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+  .chart{position:relative;height:120px;border-radius:18px;overflow:hidden;background:var(--off);border:1px solid var(--faint)}
+  .chart svg{position:absolute;inset:0;width:100%;height:100%}
+  .chart .ln{fill:none;stroke:var(--ai);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:agDraw 1.5s cubic-bezier(.3,.7,.2,1) .15s forwards}
+  .chart .ar{opacity:0;animation:agFade 1s ease .7s forwards}
+  .chart .dotn{fill:var(--ai);stroke:var(--ground);stroke-width:2;opacity:0;animation:agFade .4s ease 1.5s forwards}
+  .empty{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:var(--muted)}
+  .tl{display:flex;height:16px;border-radius:99px;overflow:hidden;background:var(--off);border:1px solid var(--faint)}
+  .tl i{height:100%;transform-origin:left;animation:agGrow .9s cubic-bezier(.2,.8,.2,1) both}
+  .bigv{display:flex;align-items:baseline;justify-content:center;gap:6px}
+  .bigv .disp{font-size:58px;letter-spacing:-.04em;line-height:1}
+  .bigv span{font-size:18px;color:var(--muted)}
+  .pfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px;border-top:1px solid var(--faint);font-size:13px;color:var(--muted)}
+  .link{min-height:40px;padding:0 14px;border-radius:99px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+  .stag>*:not(.halo){animation:agIn .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--j,0) * 55ms + 90ms)}
+  .orbw{position:relative;width:150px;height:150px;flex:none}
+  .orb2{position:absolute;inset:0;border-radius:99px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--ai) 70%,#fff 10%),color-mix(in srgb,var(--ai) 55%,transparent));color:var(--on-acc);box-shadow:0 20px 60px -18px var(--ai),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .2s}
+  .orb2:active{transform:scale(.95)}
+  .orbw .wave{position:absolute;inset:0;border-radius:99px;border:2px solid var(--ai);opacity:0;pointer-events:none}
+  .orbw.burst .wave{animation:agBurst 1s ease-out both}
+  .orbw.burst .wave:nth-child(2){animation-delay:.18s}
+  .art2{width:100%;aspect-ratio:16/10;border-radius:24px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--ai) 16%,transparent) center/cover no-repeat;border:1px solid color-mix(in srgb,var(--ai) 35%,transparent);color:var(--ai);overflow:hidden}
+  .mtt{display:flex;flex-direction:column;gap:4px;text-align:center}
+  .mtt b{font-size:19px}
+  .mtt span{font-size:14px;color:var(--muted)}
+  .prog{height:6px;border-radius:99px;background:var(--track);overflow:hidden}
+  .prog i{display:block;height:100%;border-radius:99px;background:var(--ai);transition:width 1s linear}
+  .ptime{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .mctl{display:flex;align-items:center;justify-content:center;gap:18px}
+  .vol{display:flex;align-items:center;gap:12px}
+  .vol input{flex:1;min-width:0}
+  .ring2{position:relative;width:210px;height:210px;flex:none}
+  .ring2 svg{transform:rotate(135deg)}
+  .ring2 circle{fill:none;stroke-width:12;stroke-linecap:round}
+  .ring2 .rf{transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1),stroke .4s}
+  .ring2 .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .ring2 .disp{font-size:52px;letter-spacing:-.04em;line-height:1}
+  .stepper2{display:flex;align-items:center;justify-content:center;gap:16px}
+  .fc{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .fcd{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:16px;background:var(--off);border:1px solid var(--faint);font-size:12px;color:var(--muted);min-width:0}
+  .fcd b{font-size:15px;color:var(--text)}
+  .attrs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .shutter{position:relative;width:150px;height:200px;border-radius:22px;overflow:hidden;background:linear-gradient(color-mix(in srgb,var(--cool) 25%,transparent),color-mix(in srgb,var(--solar) 18%,transparent));border:1px solid var(--border);flex:none}
+  .shutter .sl{position:absolute;left:0;right:0;top:0;height:var(--cp);background:repeating-linear-gradient(to bottom,color-mix(in srgb,var(--text) 22%,var(--ground)) 0 13px,color-mix(in srgb,var(--text) 12%,var(--ground)) 13px 16px);transition:height 1s cubic-bezier(.2,.8,.2,1);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .lockbig{width:150px;height:150px;border-radius:99px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--ai) 14%,transparent);border:1.5px solid color-mix(in srgb,var(--ai) 45%,transparent);box-shadow:0 0 60px -10px color-mix(in srgb,var(--ai) 50%,transparent)}
+  .bigicon{width:150px;height:150px;border-radius:99px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--ai) 12%,transparent);border:1.5px solid color-mix(in srgb,var(--ai) 35%,transparent)}
+  .bigicon.on{box-shadow:0 0 0 10px color-mix(in srgb,var(--ai) 7%,transparent),0 0 60px -6px color-mix(in srgb,var(--ai) 60%,transparent)}
+  .err{font-size:13px;color:var(--alert)}
+  @keyframes agFade{from{opacity:0}to{opacity:1}}
+  @keyframes agFadeOut{from{opacity:1}to{opacity:0}}
+  @keyframes agBreath{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.12);opacity:1}}
+  @keyframes agGrow{from{transform:scaleX(0)}to{transform:none}}
+  @keyframes agBurst{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.6);opacity:0}}
+  `;
+
+  class AuroraGlassPopup extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this._hist = {};
+      this._pend = {};
+      this._drag = null;
+    }
+    static get() {
+      let p = document.querySelector("aurora-glass-popup");
+      if (!p) { p = document.createElement("aurora-glass-popup"); document.body.appendChild(p); }
+      return p;
+    }
+    // Owners (cards) push every hass update; only the card that opened the pop-up drives it.
+    static sync(owner, hass) {
+      const p = document.querySelector("aurora-glass-popup");
+      if (p && p._o && p._o.owner === owner) p.hass = hass;
+    }
+    set hass(h) { this._hass = h; this._schedule(); }
+
+    get _lang() { return this._o?.lang || "en"; }
+    _t(k, v) { return tr(this._lang, k, v); }
+    _st() { return this._hass?.states?.[this._ent]; }
+    _call(d, s, data) { this._hass?.callService(d, s, data); }
+    _num(v, dgt = 1) { try { return Number(v).toLocaleString(this._lang, { minimumFractionDigits: dgt, maximumFractionDigits: dgt }); } catch (e) { return Number(v).toFixed(dgt); } }
+
+    _build() {
+      this.shadowRoot.innerHTML = `<style>${CSS}${ANIM_CSS}${POP_CSS}</style><dialog class="pop" aria-modal="true"><div class="sheet" role="document" tabindex="-1" autofocus></div></dialog>`;
+      this._dlg = this.shadowRoot.querySelector("dialog");
+      this._sheet = this.shadowRoot.querySelector(".sheet");
+      const sr = this.shadowRoot;
+      this._dlg.addEventListener("cancel", (e) => { e.preventDefault(); this.close(); });
+      this._dlg.addEventListener("click", (e) => { if (e.target === this._dlg) this.close(); });
+      sr.addEventListener("click", (e) => this._onClick(e));
+      sr.addEventListener("change", (e) => this._onChange(e));
+      sr.addEventListener("input", (e) => this._onInputLive(e));
+      sr.addEventListener("pointerdown", (e) => this._onDown(e));
+      sr.addEventListener("pointermove", (e) => this._onMove(e));
+      sr.addEventListener("pointerup", (e) => this._onUp(e));
+      sr.addEventListener("pointercancel", (e) => this._onUp(e, true));
+      sr.addEventListener("keydown", (e) => this._onKey(e));
+    }
+
+    /* o: { owner, hass, entity, name, origin (DOMRect), vars, motion, lang, scrim } */
+    open(o) {
+      if (!this._dlg) this._build();
+      if (this._dlg.open) { this._finishClose(); }
+      this._o = o;
+      this._hass = o.hass;
+      this._ent = o.entity;
+      this._pend = {};
+      this._fc = null;
+      this._dlg.setAttribute("style", `${o.vars};--scrim:${o.scrim || "rgba(4,6,14,.45)"}`);
+      this._dlg.classList.toggle("still", !o.motion);
+      this._first = true;
+      this._render();
+      this._dlg.showModal();
+      this._sheet.scrollTop = 0;
+      this._animateIn();
+      this._first = false;
+      setTimeout(() => this._sheet?.classList.remove("stag"), 1400);
+      clearInterval(this._tick);
+      this._tick = setInterval(() => this._render(), 1000);
+      this._subForecast();
+      this._loadHist();
+    }
+
+    _reduced() { return !this._o?.motion || matchMedia("(prefers-reduced-motion: reduce)").matches; }
+    _mobile() { return matchMedia("(max-width:600px)").matches; }
+
+    _animateIn() {
+      const sh = this._sheet;
+      if (this._reduced() || !sh.animate) return;
+      if (this._mobile()) { sh.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: 460, easing: "cubic-bezier(.2,.9,.25,1)" }); return; }
+      const r = sh.getBoundingClientRect(), o = this._o.origin;
+      if (o && o.width) {
+        const dx = o.left + o.width / 2 - (r.left + r.width / 2), dy = o.top + o.height / 2 - (r.top + r.height / 2);
+        const s = clamp(Math.min(o.width / r.width, o.height / r.height), 0.12, 1);
+        sh.animate([{ transform: `translate(${dx}px,${dy}px) scale(${s})`, opacity: 0, borderRadius: "28px" }, { opacity: 1, offset: 0.3 }, { transform: "none", opacity: 1 }],
+          { duration: 540, easing: "cubic-bezier(.2,.95,.3,1.1)" });
+      } else sh.animate([{ transform: "scale(.9)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, easing: "cubic-bezier(.2,.9,.3,1.15)" });
+    }
+
+    close() {
+      if (!this._dlg || !this._dlg.open || this._closing) return;
+      this._closing = true;
+      clearInterval(this._tick);
+      if (this._unsub) { try { this._unsub(); } catch (e) { /* closed */ } this._unsub = null; }
+      const sh = this._sheet;
+      if (this._reduced() || !sh.animate) return this._finishClose();
+      this._dlg.classList.add("closing");
+      let a;
+      const cur = sh.style.transform || "none";
+      if (this._mobile()) a = sh.animate([{ transform: cur }, { transform: "translateY(105%)" }], { duration: 300, easing: "cubic-bezier(.4,0,.8,.6)" });
+      else {
+        const r = sh.getBoundingClientRect(), o = this._o?.origin;
+        if (o && o.width) {
+          const dx = o.left + o.width / 2 - (r.left + r.width / 2), dy = o.top + o.height / 2 - (r.top + r.height / 2);
+          const s = clamp(Math.min(o.width / r.width, o.height / r.height), 0.12, 1);
+          a = sh.animate([{ transform: "none", opacity: 1 }, { opacity: 1, offset: 0.6 }, { transform: `translate(${dx}px,${dy}px) scale(${s})`, opacity: 0 }], { duration: 320, easing: "cubic-bezier(.4,0,.6,1)" });
+        } else a = sh.animate([{ transform: "none", opacity: 1 }, { transform: "scale(.94)", opacity: 0 }], { duration: 240, easing: "ease-in" });
+      }
+      const tok = (this._tok = (this._tok || 0) + 1);
+      this._closeAnim = a;
+      a.onfinish = () => { if (this._tok === tok) this._finishClose(); };
+    }
+    _finishClose() {
+      this._tok = (this._tok || 0) + 1;
+      if (this._closeAnim) { try { this._closeAnim.cancel(); } catch (e) { /* done */ } this._closeAnim = null; }
+      clearInterval(this._tick);
+      if (this._unsub) { try { this._unsub(); } catch (e) { /* closed */ } this._unsub = null; }
+      if (this._dlg?.open) this._dlg.close();
+      this._dlg?.classList.remove("closing");
+      if (this._sheet) this._sheet.style.transform = "";
+      this._closing = false;
+      this._o = null;
+      this._drag = null;
+    }
+
+    _schedule() {
+      if (this._raf || !this._o) return;
+      this._raf = requestAnimationFrame(() => { this._raf = 0; this._render(); });
+    }
+
+    _render() {
+      if (!this._o || !this._sheet) return;
+      const st = this._st();
+      const tpl = document.createElement("template");
+      tpl.innerHTML = `<div>${this._html(st)}</div>`;
+      const next = tpl.content.firstElementChild;
+      [...next.children].forEach((c, j) => c.style.setProperty("--j", j));
+      next.className = `sheet${this._first ? " stag" : this._sheet.classList.contains("stag") ? " stag" : ""}`;
+      next.setAttribute("style", `--ai:${aiColor(st)}${this._sheet.style.transform ? `;transform:${this._sheet.style.transform}` : ""}`);
+      next.setAttribute("role", "document");
+      next.setAttribute("tabindex", "-1");
+      next.setAttribute("autofocus", "");
+      morph(this._sheet, next, this.shadowRoot.activeElement);
+    }
+
+    /* ----- markup */
+    _html(st) {
+      const t = (k, v) => this._t(k, v);
+      const name = this._o.name || st?.attributes?.friendly_name || this._ent;
+      const area = st ? areaOf(this._hass, this._ent) : "";
+      const sub = st ? [stateText(this._hass, st, this._lang), area].filter(Boolean).join(" · ") : this._ent;
+      const head = `<div class="grab" data-swipe="1"></div>
+        <div class="ph" data-swipe="1"><div class="pic">${st ? animIcon(st, 30, 1.7, this._o.icon) : ""}</div>
+        <div class="pt"><b>${esc(name)}</b><span>${esc(sub)}</span></div>
+        <button class="xb glass2" data-act="native" aria-label="${t("more_details")}" title="${t("more_details")}">${svgIcon(ICON.dots, 22, 2.6)}</button>
+        <button class="xb glass2" data-act="close" aria-label="${t("close")}" title="${t("close")}">${svgIcon(ICON.x, 18, 2)}</button></div>`;
+      if (!st) return `<div class="halo"></div>${head}<div class="err">${esc(t("not_found", { e: this._ent }))}</div>`;
+      const d = domainOf(this._ent);
+      const fn = this[`_p_${d}`] || (RUN_DOMAINS.includes(d) ? this._p_run : null) || (d === "input_boolean" || d === "automation" || d === "siren" || d === "humidifier" ? this._p_switch : null) || (d === "person" ? this._p_device_tracker : null) || this._p_default;
+      let body = "";
+      try { body = fn.call(this, st, t); } catch (e) { body = `<div class="err">${esc(e.message)}</div>`; }
+      const foot = `<div class="pfoot"><span>${esc(t("changed", { t: relTime(st.last_changed, this._lang) }))}</span><button class="link glass2" data-act="native">${esc(t("more_details"))}</button></div>`;
+      return `<div class="halo ${isOn(st) ? "on" : ""}" aria-hidden="true"></div>${head}${body}${foot}`;
+    }
+
+    _val(key, fallback) {
+      if (this._drag && this._drag.key === key) return this._drag.v;
+      const p = this._pend[key];
+      if (p && Date.now() < p.until) return p.v;
+      return fallback;
+    }
+    _slab(key, v, label, toggle, icon = "") {
+      const dragging = this._drag && this._drag.key === key;
+      return `<div class="slab ${toggle ? "tog" : ""} ${dragging ? "drag" : ""}" data-slab="${key}" data-k="slab-${key}" ${toggle ? `role="switch" aria-checked="${v > 0}"` : `role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${v}"`} tabindex="0" style="--v:${v}%"><i></i><span class="sv disp">${esc(label)}</span><span class="sic">${icon}</span></div>`;
+    }
+    _chips(items, act, cur, label) {
+      if (!items || !items.length) return "";
+      return `<div class="grp"><span class="lbl">${esc(label)}</span><div class="chips2">${items.slice(0, 12).map((m) => {
+        const v = typeof m === "object" ? m.v : m, l = typeof m === "object" ? m.l : pretty(m);
+        return `<button class="chipb ${v === cur ? "on" : ""}" data-act="${act}" data-v="${esc(v)}" aria-pressed="${v === cur}">${esc(l)}</button>`;
+      }).join("")}</div></div>`;
+    }
+    _loc(key, fb) { const s = this._hass?.localize?.(key); return s || fb; }
+
+    _p_light(st, t) {
+      const a = st.attributes, on = st.state === "on";
+      const modes = a.supported_color_modes || [];
+      const dimmable = modes.some((m) => m !== "onoff");
+      const bri = this._val("bri", on ? Math.max(1, Math.round((a.brightness ?? 255) / 2.55)) : 0);
+      const slab = dimmable ? this._slab("bri", bri, bri ? `${bri}%` : t("off"), false, animIcon(st, 28, 1.6)) : this._slab("toggle", on ? 100 : 0, t(on ? "on" : "off"), true, animIcon(st, 28, 1.6));
+      const side = `<div class="side"><button class="cbtn ${on ? "on" : ""}" data-act="toggle" aria-pressed="${on}" aria-label="${t(on ? "turn_off" : "turn_on")}">${svgIcon(ICON.power, 26, 2)}</button><span class="clabel">${t(on ? "on" : "off")}</span></div>`;
+      let extras = "";
+      if (modes.includes("color_temp")) {
+        const lo = a.min_color_temp_kelvin || 2000, hi = a.max_color_temp_kelvin || 6500;
+        const k = this._val("ct", a.color_temp_kelvin || Math.round((lo + hi) / 2));
+        extras += `<label class="rng"><span class="lbl">${t("color_temp")} · ${k} K</span><input class="ct" type="range" min="${lo}" max="${hi}" step="50" value="${k}" data-act="ct"></label>`;
+      }
+      if (modes.some((m) => ["hs", "rgb", "rgbw", "rgbww", "xy"].includes(m))) {
+        const hues = [[255, 177, 122], [255, 96, 64], [255, 64, 129], [190, 110, 255], [92, 120, 255], [64, 196, 255], [80, 224, 170], [255, 214, 90]];
+        extras += `<div class="grp"><span class="lbl">${t("color")}</span><div class="swr">${hues.map((c) => `<button class="sw2" style="--c:rgb(${c})" data-act="rgb" data-v="${c.join(",")}" aria-label="rgb ${c.join(" ")}"></button>`).join("")}</div></div>`;
+      }
+      if (on && Array.isArray(a.effect_list) && a.effect_list.length) extras += this._chips(a.effect_list.map((e) => ({ v: e, l: e })), "effect", a.effect, t("effect"));
+      return `<div class="hero">${slab}${side}</div>${extras}`;
+    }
+
+    _p_switch(st, t) {
+      const on = st.state === "on";
+      return `<div class="hero">${this._slab("toggle", on ? 100 : 0, t(on ? "on" : "off"), true, animIcon(st, 30, 1.6))}</div>`;
+    }
+
+    _p_fan(st, t) {
+      const a = st.attributes, on = st.state === "on", f = a.supported_features || 0;
+      const pct = this._val("pct", on ? (a.percentage ?? 100) : 0);
+      const big = `<div class="bigicon ${on ? "on" : ""}">${animIcon(st, 96, 1.1)}</div>`;
+      const slab = f & 1 ? this._slab("pct", pct, pct ? `${pct}%` : t("off"), false) : "";
+      const side = `<div class="side">${big}<div style="display:flex;gap:10px">
+        <button class="cbtn ${on ? "on" : ""}" data-act="toggle" aria-pressed="${on}" aria-label="${t(on ? "turn_off" : "turn_on")}">${svgIcon(ICON.power, 24, 2)}</button>
+        ${f & 2 ? `<button class="cbtn ${a.oscillating ? "on" : ""}" data-act="osc" aria-pressed="${!!a.oscillating}" aria-label="${t("oscillate")}" title="${t("oscillate")}">${svgIcon("M4 12a8 8 0 0 1 16 0M4 12l-1.5-2.5M4 12l2.5-1.5M20 12l1.5-2.5M20 12l-2.5-1.5", 24, 2)}</button>` : ""}
+        ${f & 4 ? `<button class="cbtn" data-act="dir" aria-label="${t("direction")}" title="${t(a.direction === "reverse" ? "reverse" : "forward")}">${svgIcon(a.direction === "reverse" ? "M17 7a7 7 0 1 0 2 5M17 3v4h4" : "M7 7a7 7 0 1 1-2 5M7 3v4H3", 24, 2)}</button>` : ""}
+        </div></div>`;
+      return `<div class="hero">${slab}${side}</div>${f & 8 ? this._chips(a.preset_modes, "preset", a.preset_mode, t("preset")) : ""}`;
+    }
+
+    _p_climate(st, t) {
+      const a = st.attributes, mode = st.state;
+      const action = a.hvac_action || (mode === "cool" ? "cooling" : mode === "heat" ? "heating" : mode === "off" ? "off" : "idle");
+      const lo = a.min_temp ?? 7, hi = a.max_temp ?? 35;
+      const target = this._val("temp", a.temperature);
+      const cur = a.current_temperature;
+      const c = /cool|dry/.test(action) ? "cool" : /heat/.test(action) ? "heat" : null;
+      const C = 2 * Math.PI * 88, ARC = C * 0.75;
+      const p = target != null ? clamp((target - lo) / (hi - lo), 0, 1) : 0;
+      const col = c ? `var(--${c})` : mode === "off" ? "var(--muted)" : "var(--acc)";
+      const step = a.target_temp_step || (a.temperature_unit === "°F" ? 1 : 0.5);
+      const capt = action === "cooling" ? t("cooling") : action === "heating" ? t("heating") : mode === "off" ? t("off") : t("idle");
+      const ring = `<div class="ring2"><svg viewBox="0 0 210 210" width="210" height="210" aria-hidden="true">
+          <circle cx="105" cy="105" r="88" style="stroke:var(--track);stroke-dasharray:${ARC.toFixed(1)} ${C.toFixed(1)}"></circle>
+          <circle class="rf" cx="105" cy="105" r="88" style="stroke:${col};stroke-dasharray:${(mode === "off" || target == null ? 0 : ARC * p).toFixed(1)} ${C.toFixed(1)};filter:drop-shadow(0 0 10px color-mix(in srgb, ${col} 55%, transparent))"></circle></svg>
+          <div class="in"><span class="muted" style="font-size:13px">${esc(capt)}</span><span class="disp">${target != null ? this._num(target, step < 1 ? 1 : 0) + "°" : cur != null ? this._num(cur, 1) + "°" : "—"}</span>
+          <span class="muted" style="font-size:13px">${cur != null && target != null ? `${this._num(cur, 1)}° ${a.current_humidity != null ? "· " + Math.round(a.current_humidity) + "%" : ""}` : ""}</span></div></div>`;
+      const stepper = target != null ? `<div class="stepper2"><button class="cbtn big" data-act="temp" data-d="${-step}" aria-label="−" style="font-size:28px">−</button><button class="cbtn big" data-act="temp" data-d="${step}" aria-label="+" style="font-size:28px">+</button></div>` : "";
+      let strip = "";
+      if (c === "cool") strip = [0, 1, 2, 3, 4, 5].map((k) => `<i class="air" style="top:${6 + k * 5}px;--d:${2 + (k % 3) * 0.35}s;--dl:${k * -0.45}s"></i>`).join("");
+      if (c === "heat") strip = [0, 1, 2, 3, 4, 5].map((k) => `<i class="heatb" style="left:${8 + k * 16}%;--d:${2.4 + (k % 2) * 0.5}s;--dl:${k * -0.5}s"></i>`).join("");
+      const lab = (m) => this._loc(`component.climate.entity_component._.state.${m}`, pretty(m));
+      const modes = (a.hvac_modes || []).map((m) => ({ v: m, l: lab(m) }));
+      return `<div class="hero" style="flex-direction:column;gap:14px">${ring}${stepper}</div>
+        <div class="strip" aria-hidden="true">${strip}</div>
+        ${this._chips(modes, "hvac", mode, t("mode"))}
+        ${this._chips(a.fan_modes, "fanmode", a.fan_mode, t("fan_mode"))}
+        ${this._chips(a.preset_modes, "cpreset", a.preset_mode, t("preset"))}`;
+    }
+
+    _p_media_player(st, t) {
+      const a = st.attributes, f = a.supported_features || 0, playing = st.state === "playing";
+      const pic = a.entity_picture ? `background-image:url('${esc(a.entity_picture).replace(/'/g, "%27")}')` : "";
+      const eq = [0.9, 1.15, 0.75, 1.3, 1.0, 0.85, 1.2].map((dd, k) => `<i style="--d:${dd}s;--dl:${k * -0.17}s"></i>`).join("");
+      const title = a.media_title || (INACTIVE.has(st.state) ? t("nothing_playing") : a.source || pretty(st.state));
+      const subt = [a.media_artist, a.media_album_name].filter(Boolean).join(" · ") || a.app_name || "";
+      let prog = "";
+      if (a.media_duration && a.media_position != null) {
+        const upd = Date.parse(a.media_position_updated_at || st.last_updated);
+        const pos = clamp(a.media_position + (playing && isFinite(upd) ? (Date.now() - upd) / 1000 : 0), 0, a.media_duration);
+        const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, "0")}`;
+        prog = `<div class="grp" style="gap:6px"><div class="prog"><i style="width:${(pos / a.media_duration * 100).toFixed(2)}%"></i></div><div class="ptime"><span>${mmss(pos)}</span><span>${mmss(a.media_duration)}</span></div></div>`;
+      }
+      const vol = this._val("vol", Math.round((a.volume_level ?? 0) * 100));
+      const ctl = `<div class="mctl">
+        ${f & 16 ? `<button class="cbtn" data-act="prev" aria-label="${t("previous")}">${svgIcon(ICON.prev, 22, 2)}</button>` : ""}
+        <button class="cbtn big on" data-act="playpause" aria-label="${t(playing ? "pause" : "play")}"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${playing ? "M7 5h3v14H7zM14 5h3v14h-3z" : "M8 5l11 7-11 7z"}"></path></svg></button>
+        ${f & 32 ? `<button class="cbtn" data-act="next" aria-label="${t("next")}">${svgIcon(ICON.next, 22, 2)}</button>` : ""}</div>`;
+      const volRow = f & 4 ? `<div class="vol">${f & 8 ? `<button class="xb glass2" data-act="mute" aria-label="${t("mute")}" aria-pressed="${!!a.is_volume_muted}">${svgIcon(a.is_volume_muted ? ICON.mute : ICON.vol, 20, 1.9)}</button>` : ""}<input type="range" min="0" max="100" value="${vol}" data-act="vol" aria-label="${t("volume")}"><span style="width:40px;text-align:right;font-size:13px;font-variant-numeric:tabular-nums">${vol}%</span></div>` : "";
+      const src = f & 2048 && Array.isArray(a.source_list) ? this._chips(a.source_list.map((s) => ({ v: s, l: s })), "source", a.source, t("source")) : "";
+      return `<div class="art2" style="${pic}">${pic ? "" : `<div class="eq ${playing ? "on" : ""}" style="height:54px" aria-hidden="true">${eq}</div>`}</div>
+        <div class="mtt"><b>${esc(title)}</b><span>${esc(subt)}</span></div>${prog}${ctl}${volRow}${src}`;
+    }
+
+    _p_cover(st, t) {
+      const a = st.attributes, f = a.supported_features ?? 15;
+      const pos = this._val("pos", a.current_position ?? (st.state === "open" ? 100 : 0));
+      const shutter = `<div class="shutter" aria-hidden="true"><div class="sl" style="--cp:${100 - pos}%"></div></div>`;
+      const slab = f & 4 ? this._slab("pos", pos, `${pos}%`, false) : "";
+      const btns = `<div class="side">
+        ${f & 1 ? `<button class="cbtn ${st.state === "opening" ? "on" : ""}" data-act="cover_open" aria-label="${t("cover_open")}">${svgIcon(ICON.up, 24, 2.2)}</button>` : ""}
+        ${f & 8 ? `<button class="cbtn" data-act="cover_stop" aria-label="${t("stop")}">${svgIcon(ICON.stopsq, 20, 2)}</button>` : ""}
+        ${f & 2 ? `<button class="cbtn ${st.state === "closing" ? "on" : ""}" data-act="cover_close" aria-label="${t("cover_close")}">${svgIcon(ICON.down, 24, 2.2)}</button>` : ""}</div>`;
+      return `<div class="hero">${shutter}${slab}${btns}</div>`;
+    }
+
+    _p_lock(st, t) {
+      const locked = st.state === "locked", f = st.attributes.supported_features || 0;
+      return `<div class="hero" style="flex-direction:column;gap:18px"><div class="lockbig">${animIcon(st, 84, 1.2)}</div>
+        <div style="display:flex;gap:12px"><button class="pill ${locked ? "glass2" : "on"}" data-act="${locked ? "unlock" : "lock"}" style="min-width:150px;justify-content:center">${esc(t(locked ? "unlock_act" : "lock_act"))}</button>
+        ${f & 1 ? `<button class="pill glass2" data-act="lock_open">${esc(t("open_act"))}</button>` : ""}</div></div>`;
+    }
+
+    _p_run(st, t) {
+      const d = domainOf(this._ent);
+      return `<div class="hero"><div class="orbw ${this._burst ? "burst" : ""}" data-k="orb-${this._burstN || 0}"><span class="wave"></span><span class="wave"></span>
+        <button class="orb2" data-act="run" aria-label="${t("run")}">${svgIcon(d === "scene" ? ICON.scenes : "M9 6.5v11l9-5.5z", 44, 1.8)}</button></div></div>
+        <div style="text-align:center" class="muted">${esc(this._burst ? t("ran") : t("tap_to_run"))}</div>`;
+    }
+
+    _p_binary_sensor(st, t) {
+      const on = st.state === "on";
+      return `<div class="hero" style="flex-direction:column;gap:14px"><div class="bigicon ${on ? "on" : ""}">${animIcon(st, 84, 1.2)}</div></div>${this._timeline(st, t)}`;
+    }
+
+    _p_sensor(st, t) {
+      const a = st.attributes, n = parseFloat(st.state);
+      const numeric = isFinite(n) && (a.unit_of_measurement || a.state_class || /^-?\d+(\.\d+)?$/.test(st.state));
+      if (!numeric) return `<div class="hero"><div class="bigicon">${animIcon(st, 84, 1.2)}</div></div>`;
+      const prec = this._hass?.entities?.[this._ent]?.display_precision ?? (Math.abs(n) >= 100 ? 0 : 1);
+      const big = `<div class="bigv"><span class="disp">${esc(this._num(n, prec))}</span><span>${esc(a.unit_of_measurement || "")}</span></div>`;
+      return `${big}${this._chart(st, t, prec)}`;
+    }
+
+    _p_weather(st, t) {
+      const a = st.attributes;
+      const dark = !!PRESETS[this._o.preset || "midnight"]?.dark;
+      const label = this._loc(`component.weather.entity_component._.state.${st.state}`, WX_LABEL[st.state] || pretty(st.state));
+      const unit = a.temperature_unit || "°";
+      const stats = [
+        a.humidity != null ? [t("humidity", { h: "" }).replace(/\s*%?$/, "").trim() || "Humidity", `${Math.round(a.humidity)}%`] : null,
+        a.wind_speed != null ? [t("wind"), `${this._num(a.wind_speed, 0)} ${a.wind_speed_unit || ""}`] : null,
+        a.pressure != null ? [t("pressure"), `${this._num(a.pressure, 0)} ${a.pressure_unit || ""}`] : null
+      ].filter(Boolean);
+      const fc = (this._fc?.list || []).slice(0, 5).map((x) => {
+        let day = "";
+        try { day = new Date(x.datetime).toLocaleDateString(this._lang, this._fc.type === "hourly" ? { hour: "2-digit" } : { weekday: "short" }); } catch (e) { day = ""; }
+        return `<div class="fcd"><span>${esc(day)}</span>${weatherArt(x.condition, dark, 38, 28)}<b>${x.temperature != null ? this._num(x.temperature, 0) + "°" : ""}</b><span>${x.templow != null ? this._num(x.templow, 0) + "°" : ""}</span></div>`;
+      }).join("");
+      return `<div class="hero">${weatherArt(st.state, dark, 150, 112)}<div style="display:flex;flex-direction:column;gap:4px"><span class="disp" style="font-size:56px;line-height:1">${a.temperature != null ? this._num(a.temperature, 0) + (unit.startsWith("°") ? "°" : unit) : "—"}</span><span class="muted">${esc(label)}</span></div></div>
+        ${stats.length ? `<div class="stats">${stats.map(([k, v]) => `<div class="stat"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
+        ${fc ? `<div class="grp"><span class="lbl">${t("forecast")}</span><div class="fc">${fc}</div></div>` : ""}`;
+    }
+
+    _p_device_tracker(st, t) {
+      return `<div class="hero"><div class="bigicon ${st.state === "home" ? "on" : ""}">${animIcon(st, 84, 1.2)}</div></div>${this._timeline(st, t)}`;
+    }
+
+    _p_vacuum(st, t) {
+      const on = st.state === "cleaning";
+      return `<div class="hero" style="flex-direction:column;gap:16px"><div class="bigicon ${on ? "on" : ""}">${animIcon(st, 84, 1.2)}</div>
+        <button class="pill ${on ? "on" : "glass2"}" data-act="toggle">${esc(on ? pretty("return to base") : t("run"))}</button></div>`;
+    }
+
+    _p_default(st, t) {
+      const toggle = ["on", "off"].includes(st.state);
+      const attrs = Object.entries(st.attributes).filter(([k, v]) => !["friendly_name", "icon", "supported_features", "entity_picture", "attribution", "device_class", "unit_of_measurement", "state_class"].includes(k) && (typeof v === "string" || typeof v === "number" || typeof v === "boolean")).slice(0, 8);
+      return `<div class="hero"><div class="bigicon ${isOn(st) ? "on" : ""}">${animIcon(st, 84, 1.2)}</div>${toggle ? `<div class="side"><button class="cbtn ${st.state === "on" ? "on" : ""}" data-act="toggle">${svgIcon(ICON.power, 24, 2)}</button></div>` : ""}</div>
+        ${attrs.length ? `<div class="attrs">${attrs.map(([k, v]) => `<div class="stat"><span>${esc(pretty(k))}</span><b>${esc(String(v))}</b></div>`).join("")}</div>` : ""}`;
+    }
+
+    /* ----- history */
+    async _loadHist() {
+      const id = this._ent, d = domainOf(id);
+      if (!["sensor", "binary_sensor", "device_tracker", "person"].includes(d) || !this._hass?.callApi) return;
+      const c = this._hist[id];
+      if (c && Date.now() - c.at < 60000) return;
+      const end = new Date(), start = new Date(end.getTime() - 24 * 3600e3);
+      this._hist[id] = { at: Date.now(), loading: true, pts: c?.pts || [] };
+      try {
+        const r = await this._hass.callApi("GET", `history/period/${start.toISOString()}?filter_entity_id=${encodeURIComponent(id)}&end_time=${encodeURIComponent(end.toISOString())}&minimal_response&no_attributes`);
+        const rows = (Array.isArray(r) && r[0]) || [];
+        this._hist[id] = { at: Date.now(), start: start.getTime(), pts: rows.map((x) => ({ t: Date.parse(x.last_changed || x.last_updated) || (x.lu ? x.lu * 1000 : NaN), s: x.state ?? x.s })).filter((x) => isFinite(x.t)) };
+      } catch (e) {
+        this._hist[id] = { at: Date.now(), start: start.getTime(), pts: [], err: true };
+      }
+      this._schedule();
+    }
+
+    _chart(st, t, prec) {
+      const h = this._hist[this._ent];
+      const n = parseFloat(st.state);
+      const pts = (h?.pts || []).map((p) => ({ t: p.t, v: parseFloat(p.s) })).filter((p) => isFinite(p.v));
+      if (!h || h.loading) return `<div class="grp"><span class="lbl">${t("last_24h")}</span><div class="chart"></div></div>`;
+      if (pts.length < 2) return `<div class="grp"><span class="lbl">${t("last_24h")}</span><div class="chart"><div class="empty">${t("no_history")}</div></div></div>`;
+      const now = Date.now();
+      pts.push({ t: now, v: isFinite(n) ? n : pts[pts.length - 1].v });
+      const t0 = Math.max(h.start || pts[0].t, pts[0].t), W = 300, H = 120, pad = 10;
+      let lo = Math.min(...pts.map((p) => p.v)), hi = Math.max(...pts.map((p) => p.v));
+      if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+      const X = (tt) => ((tt - t0) / (now - t0)) * W, Y = (v) => H - pad - ((v - lo) / (hi - lo)) * (H - pad * 2);
+      // step line (sensors hold their value until the next change)
+      let dPath = `M${X(pts[0].t).toFixed(1)} ${Y(pts[0].v).toFixed(1)}`;
+      for (let i = 1; i < pts.length; i++) dPath += `H${X(pts[i].t).toFixed(1)}V${Y(pts[i].v).toFixed(1)}`;
+      const area = `${dPath}V${H}H${X(pts[0].t).toFixed(1)}Z`;
+      // time-weighted average
+      let sum = 0, dur = 0;
+      for (let i = 0; i < pts.length - 1; i++) { const dt = pts[i + 1].t - pts[i].t; sum += pts[i].v * dt; dur += dt; }
+      const avg = dur ? sum / dur : n;
+      const u = st.attributes.unit_of_measurement || "";
+      const fmt = (v) => `${this._num(v, prec)}${u ? " " + u : ""}`;
+      const realLo = Math.min(...pts.map((p) => p.v)), realHi = Math.max(...pts.map((p) => p.v));
+      return `<div class="grp"><span class="lbl">${t("last_24h")}</span><div class="chart" data-k="chart-${this._ent}-${pts.length}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="agg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--ai)" stop-opacity=".38"></stop><stop offset="1" stop-color="var(--ai)" stop-opacity="0"></stop></linearGradient></defs>
+          <path class="ar" d="${area}" fill="url(#agg)"></path><path class="ln" d="${dPath}" pathLength="1" vector-effect="non-scaling-stroke"></path></svg></div>
+        <div class="stats"><div class="stat"><span>${t("min")}</span><b>${esc(fmt(realLo))}</b></div><div class="stat"><span>${t("avg")}</span><b>${esc(fmt(avg))}</b></div><div class="stat"><span>${t("max")}</span><b>${esc(fmt(realHi))}</b></div></div></div>`;
+    }
+
+    _timeline(st, t) {
+      const h = this._hist[this._ent];
+      if (!h || h.loading || !h.pts.length) return `<div class="grp"><span class="lbl">${t("last_24h")}</span><div class="tl"></div>${h && !h.loading ? `<span class="muted" style="font-size:13px">${t("no_history")}</span>` : ""}</div>`;
+      const now = Date.now(), t0 = h.start || h.pts[0].t;
+      const pts = h.pts.slice();
+      const segs = pts.map((p, i) => {
+        const a = Math.max(p.t, t0), b = i + 1 < pts.length ? pts[i + 1].t : now;
+        const active = p.s === "on" || p.s === "home" || p.s === "open" || p.s === "unlocked";
+        return `<i style="width:${(Math.max(0, b - a) / (now - t0) * 100).toFixed(3)}%;background:${active ? "var(--ai)" : "transparent"};animation-delay:${(i * 0.02).toFixed(2)}s" title="${esc(p.s)}"></i>`;
+      }).join("");
+      const lab = (k) => { try { return new Date(k).toLocaleTimeString(this._lang, { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
+      return `<div class="grp"><span class="lbl">${t("last_24h")}</span><div class="tl" data-k="tl-${pts.length}">${segs}</div><div class="ptime"><span>${lab(t0)}</span><span>${lab(now)}</span></div></div>`;
+    }
+
+    _subForecast() {
+      if (this._unsub) { try { this._unsub(); } catch (e) { /* closed */ } this._unsub = null; }
+      const st = this._st();
+      if (!st || domainOf(this._ent) !== "weather" || !this._hass?.connection?.subscribeMessage) return;
+      const f = st.attributes.supported_features || 0;
+      const type = f & 1 ? "daily" : f & 4 ? "twice_daily" : f & 2 ? "hourly" : null;
+      if (!type) return;
+      const ent = this._ent;
+      this._hass.connection.subscribeMessage((m) => { if (this._ent === ent) { this._fc = { type, list: m.forecast || [] }; this._schedule(); } },
+        { type: "weather/subscribe_forecast", forecast_type: type, entity_id: ent })
+        .then((u) => { if (this._o && this._ent === ent) this._unsub = u; else u(); }).catch(() => { /* no forecast */ });
+    }
+
+    /* ----- events */
+    _onClick(e) {
+      if (this._swallow) { this._swallow = false; return; }
+      const el = e.target.closest?.("[data-act]");
+      if (!el) return;
+      const st = this._st(), id = this._ent, act = el.dataset.act, v = el.dataset.v;
+      const a = st?.attributes || {};
+      switch (act) {
+        case "close": return this.close();
+        case "native": {
+          const owner = this._o?.owner || this;
+          this._finishClose();
+          const ev = new Event("hass-more-info", { bubbles: true, composed: true });
+          ev.detail = { entityId: id };
+          return owner.dispatchEvent(ev);
+        }
+        case "toggle": return toggleCall(this._hass, st);
+        case "rgb": return this._call("light", "turn_on", { entity_id: id, rgb_color: v.split(",").map(Number) });
+        case "effect": return this._call("light", "turn_on", { entity_id: id, effect: v });
+        case "osc": return this._call("fan", "oscillate", { entity_id: id, oscillating: !a.oscillating });
+        case "dir": return this._call("fan", "set_direction", { entity_id: id, direction: a.direction === "reverse" ? "forward" : "reverse" });
+        case "preset": return this._call("fan", "set_preset_mode", { entity_id: id, preset_mode: v });
+        case "hvac": return this._call("climate", "set_hvac_mode", { entity_id: id, hvac_mode: v });
+        case "fanmode": return this._call("climate", "set_fan_mode", { entity_id: id, fan_mode: v });
+        case "cpreset": return this._call("climate", "set_preset_mode", { entity_id: id, preset_mode: v });
+        case "temp": {
+          const base = this._val("temp", a.temperature);
+          if (base == null) return;
+          const tt = clamp(Math.round((base + Number(el.dataset.d)) * 10) / 10, a.min_temp ?? 7, a.max_temp ?? 35);
+          this._pend.temp = { v: tt, until: Date.now() + 4000 };
+          clearTimeout(this._tempT);
+          this._tempT = setTimeout(() => this._call("climate", "set_temperature", { entity_id: id, temperature: tt }), 650);
+          return this._render();
+        }
+        case "playpause": return this._call("media_player", "media_play_pause", { entity_id: id });
+        case "prev": return this._call("media_player", "media_previous_track", { entity_id: id });
+        case "next": return this._call("media_player", "media_next_track", { entity_id: id });
+        case "mute": return this._call("media_player", "volume_mute", { entity_id: id, is_volume_muted: !a.is_volume_muted });
+        case "source": return this._call("media_player", "select_source", { entity_id: id, source: v });
+        case "cover_open": return this._call("cover", "open_cover", { entity_id: id });
+        case "cover_close": return this._call("cover", "close_cover", { entity_id: id });
+        case "cover_stop": return this._call("cover", "stop_cover", { entity_id: id });
+        case "lock": return this._call("lock", "lock", { entity_id: id });
+        case "unlock": return this._call("lock", "unlock", { entity_id: id });
+        case "lock_open": return this._call("lock", "open", { entity_id: id });
+        case "run": {
+          runCall(this._hass, st);
+          this._burst = true;
+          this._burstN = (this._burstN || 0) + 1;
+          clearTimeout(this._burstT);
+          this._burstT = setTimeout(() => { this._burst = false; this._render(); }, 1600);
+          return this._render();
+        }
+      }
+    }
+
+    _onInputLive(e) {
+      const el = e.target;
+      if (el?.dataset?.act === "vol") { const s = el.parentElement.querySelector("span"); if (s) s.textContent = `${el.value}%`; this._pend.vol = { v: Number(el.value), until: Date.now() + 3000 }; }
+      if (el?.dataset?.act === "ct") { this._pend.ct = { v: Number(el.value), until: Date.now() + 3000 }; const l = el.parentElement.querySelector(".lbl"); if (l) l.textContent = `${this._t("color_temp")} · ${el.value} K`; }
+    }
+    _onChange(e) {
+      const el = e.target, id = this._ent;
+      if (el?.dataset?.act === "ct") this._call("light", "turn_on", { entity_id: id, color_temp_kelvin: Number(el.value) });
+      if (el?.dataset?.act === "vol") this._call("media_player", "volume_set", { entity_id: id, volume_level: Number(el.value) / 100 });
+    }
+
+    _slabValue(el, y) {
+      const r = el.getBoundingClientRect();
+      return clamp(Math.round(((r.bottom - y) / r.height) * 100), 0, 100);
+    }
+    _onDown(e) {
+      const slab = e.target.closest?.("[data-slab]");
+      if (slab) {
+        this._drag = { key: slab.dataset.slab, el: slab, y0: e.clientY, moved: false, v: this._slabValue(slab, e.clientY), toggle: slab.classList.contains("tog"), pid: e.pointerId };
+        try { slab.setPointerCapture(e.pointerId); } catch (er) { /* ok */ }
+        return;
+      }
+      const sw = e.target.closest?.("[data-swipe]");
+      if (sw && this._mobile() && !e.target.closest("button")) {
+        this._swipe = { y0: e.clientY, dy: 0, pid: e.pointerId };
+        try { sw.setPointerCapture(e.pointerId); } catch (er) { /* ok */ }
+      }
+    }
+    _onMove(e) {
+      const d = this._drag;
+      if (d && e.pointerId === d.pid) {
+        if (Math.abs(e.clientY - d.y0) > 4) d.moved = true;
+        if (d.toggle || !d.moved) return;
+        d.v = this._slabValue(d.el, e.clientY);
+        d.el.classList.add("drag");
+        d.el.style.setProperty("--v", `${d.v}%`);
+        const sv = d.el.querySelector(".sv");
+        if (sv) sv.textContent = d.v ? `${d.v}%` : this._t("off");
+        return;
+      }
+      const s = this._swipe;
+      if (s && e.pointerId === s.pid) {
+        s.dy = Math.max(0, e.clientY - s.y0);
+        this._sheet.style.transform = s.dy ? `translateY(${s.dy}px)` : "";
+      }
+    }
+    _onUp(e, cancel) {
+      const d = this._drag;
+      if (d && e.pointerId === d.pid) {
+        this._drag = null;
+        d.el.classList.remove("drag");
+        if (cancel) return this._render();
+        const st = this._st();
+        if (d.toggle) { if (!d.moved) toggleCall(this._hass, st); this._swallow = true; setTimeout(() => { this._swallow = false; }, 50); return; }
+        const v = d.moved ? d.v : this._slabValue(d.el, e.clientY);
+        this._commitSlab(d.key, v);
+        this._swallow = true;
+        setTimeout(() => { this._swallow = false; }, 50);
+        return;
+      }
+      const s = this._swipe;
+      if (s && e.pointerId === s.pid) {
+        this._swipe = null;
+        if (s.dy > 110 && !cancel) return this.close();
+        if (s.dy && this._sheet.animate) this._sheet.animate([{ transform: `translateY(${s.dy}px)` }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(.2,.9,.3,1.2)" });
+        this._sheet.style.transform = "";
+      }
+    }
+    _commitSlab(key, v) {
+      const id = this._ent;
+      this._pend[key] = { v, until: Date.now() + 3000 };
+      if (key === "bri") v ? this._call("light", "turn_on", { entity_id: id, brightness_pct: v }) : this._call("light", "turn_off", { entity_id: id });
+      if (key === "pct") v ? this._call("fan", "set_percentage", { entity_id: id, percentage: v }) : this._call("fan", "turn_off", { entity_id: id });
+      if (key === "pos") this._call("cover", "set_cover_position", { entity_id: id, position: v });
+      this._render();
+    }
+    _onKey(e) {
+      const slab = e.target.closest?.("[data-slab]");
+      if (!slab) return;
+      if (slab.classList.contains("tog")) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleCall(this._hass, this._st()); } return; }
+      const delta = { ArrowUp: 5, ArrowRight: 5, ArrowDown: -5, ArrowLeft: -5, PageUp: 20, PageDown: -20 }[e.key];
+      if (delta == null) return;
+      e.preventDefault();
+      const key = slab.dataset.slab;
+      const cur = Number(slab.getAttribute("aria-valuenow")) || 0;
+      const v = clamp(cur + delta, 0, 100);
+      this._pend[key] = { v, until: Date.now() + 3000 };
+      this._render();
+      clearTimeout(this._keyT);
+      this._keyT = setTimeout(() => this._commitSlab(key, v), 450);
+    }
+  }
+  if (!customElements.get("aurora-glass-popup")) customElements.define("aurora-glass-popup", AuroraGlassPopup);
+
+  // Opens the glass pop-up (or HA's own dialog) for an entity, themed like the card that asked.
+  function openEntityPopup(owner, entity, { origin, name, icon, mode, theme, blur, motion, lang } = {}) {
+    if (!entity) return;
+    if (mode === "none") return;
+    if (mode === "native") {
+      const ev = new Event("hass-more-info", { bubbles: true, composed: true });
+      ev.detail = { entityId: entity };
+      return owner.dispatchEvent(ev);
+    }
+    const th = theme || resolveTheme("auto", "peach", owner.hass);
+    AuroraGlassPopup.get().open({
+      owner, hass: owner.hass, entity, name, icon, origin, lang, motion: motion !== false, preset: th.id,
+      vars: themeVars(th, blur ?? 24), scrim: th.T.dark ? "rgba(4,6,14,.45)" : "rgba(40,46,72,.22)"
+    });
+  }
+
   /* ------------------------------------------------------------------ card */
   class AuroraGlassCard extends HTMLElement {
     constructor() {
@@ -344,7 +1338,7 @@
       this._schedule();
     }
 
-    set hass(h) { this._hass = h; this._schedule(); }
+    set hass(h) { this._hass = h; AuroraGlassPopup.sync(this, h); this._schedule(); }
     get hass() { return this._hass; }
     getCardSize() { return 12; }
     getGridOptions() { return { columns: "full" }; }
@@ -414,16 +1408,20 @@
       ev.detail = { entityId };
       this.dispatchEvent(ev);
     }
+    // Long-press / right-click / tapping a chip, node or widget icon: the glass pop-up (or HA's dialog, per `popup:`).
+    _popup(entityId, el) {
+      if (!entityId) return;
+      const names = {};
+      this._widgets.forEach((w) => asList(w.entities).map(entOf).forEach((x) => { if (x.entity && x.name) names[x.entity] = x.name; }));
+      asList(this._config.chips).map(entOf).forEach((x) => { if (x.entity && x.name) names[x.entity] = x.name; });
+      openEntityPopup(this, entityId, {
+        origin: el?.getBoundingClientRect?.(), name: names[entityId], mode: this._config.popup || "aurora",
+        theme: this._theme(), blur: this._p.blur, motion: this._p.motion, lang: this._lang
+      });
+    }
 
     /* ----- theme */
-    _theme() {
-      let id = this._p.preset;
-      if (id === "auto" || !PRESETS[id]) id = this._hass?.themes?.darkMode === false ? "dawn" : "midnight";
-      const T = PRESETS[id];
-      const A = ACCENTS[this._p.accent] || ACCENTS.peach;
-      const S = T.dark ? SEM_DARK : SEM_LIGHT;
-      return { id, T, A, S };
-    }
+    _theme() { return resolveTheme(this._p.preset, this._p.accent, this._hass); }
     _vars() {
       const { T, A, S } = this._theme();
       const v = {
@@ -448,6 +1446,7 @@
     }
     _applyDashTheme() {
       const on = this._config.dashboard_theme !== false && !this.preview;
+      this._applyDocDialogs(on && this.isConnected);
       const host = on && this.isConnected ? this._dashHost() : null;
       if (this._themed && this._themed !== host) this._clearDashTheme();
       if (!host) return;
@@ -471,7 +1470,43 @@
       this._themeSig = sig;
       this._themeKeys = Object.keys(vars);
     }
+    // HA's own dialogs (more-info, settings) are outside the dashboard, so their glass look is set on the
+    // document while this card is on screen, and the previous values are put back when it leaves.
+    _applyDocDialogs(on) {
+      const root = document.documentElement;
+      if (!on) {
+        if (window.__agDialogOwner === this) {
+          const prev = this._docPrev || {};
+          Object.keys(prev).forEach((k) => (prev[k] ? root.style.setProperty(k, prev[k]) : root.style.removeProperty(k)));
+          window.__agDialogOwner = null;
+        }
+        this._docPrev = null;
+        this._docSig = null;
+        return;
+      }
+      const { T } = this._theme();
+      const glass = hexA(T.ground, T.dark ? 0.66 : 0.74);
+      const v = {
+        "--ha-dialog-surface-background": glass, "--ha-bottom-sheet-surface-background": glass,
+        "--ha-dialog-surface-backdrop-filter": `blur(${this._p.blur + 14}px) saturate(170%)`,
+        "--ha-dialog-scrim-backdrop-filter": "blur(7px)", "--dialog-backdrop-filter": "blur(7px)",
+        "--mdc-dialog-scrim-color": T.dark ? "rgba(4,6,14,0.45)" : "rgba(40,46,72,0.22)",
+        "--ha-dialog-border-radius": "30px", "--ha-bottom-sheet-border-radius": "30px",
+        "--dialog-box-shadow": `inset 0 1px 0 ${T.hi}, 0 40px 90px -30px rgba(0,0,0,0.7)`
+      };
+      const sig = JSON.stringify(v);
+      if (window.__agDialogOwner === this && this._docSig === sig) return;
+      if (window.__agDialogOwner && window.__agDialogOwner !== this && window.__agDialogOwner.isConnected) return;   // another Aurora card already themes them
+      if (window.__agDialogOwner !== this) {
+        this._docPrev = {};
+        Object.keys(v).forEach((k) => { this._docPrev[k] = root.style.getPropertyValue(k); });
+        window.__agDialogOwner = this;
+      }
+      Object.keys(v).forEach((k) => root.style.setProperty(k, v[k]));
+      this._docSig = sig;
+    }
     _clearDashTheme() {
+      this._applyDocDialogs(false);
       if (this._themed) (this._themeKeys || []).forEach((k) => this._themed.style.removeProperty(k));
       this._themed = null;
       this._themeSig = null;
@@ -487,7 +1522,7 @@
       if (!this._config || !this.shadowRoot) return;
       const sr = this.shadowRoot;
       if (!this._root) {
-        sr.innerHTML = `<style>${CSS}</style><div class="root"></div>`;
+        sr.innerHTML = `<style>${CSS}${ANIM_CSS}</style><div class="root"></div>`;
         this._root = sr.querySelector(".root");
         sr.addEventListener("click", (e) => this._onClick(e));
         sr.addEventListener("input", (e) => this._onInput(e, false));
@@ -598,7 +1633,7 @@
               <button class="glass2" data-act="hide" data-w="${esc(w.id)}" aria-label="${this._t("remove")}">${svgIcon(ICON.minus, 16, 2)}</button></div>`
           : `<div class="meta">${esc(meta || "")}</div>`;
         return `<section class="w glass ${size}" data-k="${esc(w.id)}" style="--i:${i}" aria-label="${esc(this._title(w))}">
-          <div class="wh"><div class="wt"><div class="ic">${svgIcon(w.icon_path || ICON[w.type] || ICON.energy)}</div><h2>${esc(this._title(w))}</h2></div>${ctl}</div>${body}</section>`;
+          <div class="wh"><div class="wt">${(() => { const ie = w.entity || w.lock; const ico = svgIcon(w.icon_path || ICON[w.type] || ICON.energy); return ie && !this._p.editing ? `<button class="ic" data-act="more" data-e="${esc(ie)}" aria-label="${esc(this._t("more_details"))}">${ico}</button>` : `<div class="ic">${ico}</div>`; })()}<h2>${esc(this._title(w))}</h2></div>${ctl}</div>${body}</section>`;
       }).join("");
     }
 
@@ -671,7 +1706,7 @@
         const pct = on ? (s.attributes.brightness != null ? `${bri}%` : this._t("on")) : this._t("off");
         const area = l.subtitle ?? (s.attributes.area || "");
         return `<button class="tile ${on ? "on" : ""} ${l.entity === focusId && list.length > 1 ? "focus" : ""}" data-k="${esc(l.entity)}" data-act="light" data-e="${esc(l.entity)}" data-w="${esc(w.id)}" aria-pressed="${on}" style="--glow:${14 + bri * 0.3}px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div class="bulb">${svgIcon(ICON.lights, 18, 1.9)}</div><div class="ts" style="font-variant-numeric:tabular-nums">${esc(pct)}</div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div class="bulb">${animIcon(s.entity_id ? s : { ...s, entity_id: l.entity }, 20, 1.9)}</div><div class="ts" style="font-variant-numeric:tabular-nums">${esc(pct)}</div></div>
           <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><div class="tn">${esc(l.name || s.attributes.friendly_name)}</div><div class="ts">${esc(area)}</div></div>
           <div class="bar"><i style="width:${bri}%"></i></div></button>`;
       }).join("");
@@ -841,17 +1876,7 @@
       if (!s) return this._missing(w.entity);
       const a = s.attributes;
       const cond = s.state;
-      const sun = ["sunny", "partlycloudy", "windy", "exceptional"].includes(cond);
-      const moon = cond === "clear-night";
-      const cloud = !["sunny", "clear-night"].includes(cond);
-      const rain = ["rainy", "pouring", "lightning-rainy", "snowy-rainy"].includes(cond);
-      const snow = ["snowy", "snowy-rainy"].includes(cond);
-      const art = `<svg width="96" height="72" viewBox="0 0 120 90" aria-hidden="true" style="flex:none;overflow:visible">
-        ${sun ? `<g class="rays"><path d="M46 8v8M46 62v8M15 39h8M69 39h8M24 17l6 6M62 55l6 6M24 61l6-6M62 23l6-6" fill="none" stroke-width="3" stroke-linecap="round" style="stroke:var(--solar)"></path></g><circle cx="46" cy="39" r="15" style="fill:var(--solar);filter:drop-shadow(0 0 10px var(--solar))"></circle>` : ""}
-        ${moon ? `<path d="M60 18a24 24 0 1 0 22 32 20 20 0 0 1-22-32z" style="fill:var(--text);opacity:.85"></path>` : ""}
-        ${cloud ? `<g class="cloud"><path d="M50 80h46a14 14 0 0 0 0-28 20 20 0 0 0-38-4 16 16 0 0 0-8 32z" style="fill:${this._theme().T.dark ? "rgba(255,255,255,0.82)" : "#fff"};filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))"></path></g>` : ""}
-        ${rain || snow ? [62, 76, 90].map((x, k) => `<circle class="drop" cx="${x}" cy="86" r="${snow ? 2.6 : 2}" style="fill:${snow ? "var(--text)" : "var(--cool)"};--dl:${k * -0.35}s"></circle>`).join("") : ""}
-      </svg>`;
+      const art = weatherArt(cond, this._theme().T.dark);
       const unit = a.temperature_unit || "°";
       const label = this._loc(`component.weather.entity_component._.state.${cond}`, WX_LABEL[cond] || pretty(cond));
       const hum = a.humidity != null ? ` · ${this._t("humidity", { h: Math.round(a.humidity) })}` : "";
@@ -866,13 +1891,13 @@
       const el = e.target.closest?.("[data-e]");
       clearTimeout(this._lp);
       if (!el || this._p.editing) return;
-      this._lp = setTimeout(() => { this._suppress = true; this._moreInfo(el.dataset.e); }, 550);
+      this._lp = setTimeout(() => { this._suppress = true; this._popup(el.dataset.e, el); }, 550);
     }
     _onContext(e) {
       const el = e.target.closest?.("[data-e]");
       if (!el || !el.dataset.e) return;
       e.preventDefault();
-      this._moreInfo(el.dataset.e);
+      this._popup(el.dataset.e, el);
     }
 
     _onClick(e) {
@@ -908,7 +1933,7 @@
       if (this._p.editing) return;
       const st = this._st(ent);
       switch (act) {
-        case "more": if (ent) this._moreInfo(ent); return;
+        case "more": if (ent) this._popup(ent, el); return;
         case "light": {
           // Tiles can be lights, switches or input_booleans: use each entity's own toggle service.
           this._focus[wid] = ent;
@@ -974,7 +1999,10 @@
       modes: "Mode buttons (empty = automatic)", active_hours: "Keep a scene marked active for (hours)", temperature: "Temperature sensor",
       lock: "Lock", lock_name: "Lock name", sensors: "Door and window sensors", move_up: "Move up", move_down: "Move down", delete: "Delete",
       loading: "Loading Home Assistant editor components…", no_lights: "No lights yet.", no_scenes: "No scenes yet.", no_chips: "No chips yet.",
-      device_note: "Tip: the Customize button on the dashboard changes the layout only on that device. Settings here apply everywhere."
+      device_note: "Tip: the Customize button on the dashboard changes the layout only on that device. Settings here apply everywhere.",
+      popup: "Hold a tile (or tap a chip, energy node or widget icon) to open", popup_aurora: "Aurora Glass pop-up", popup_native: "Home Assistant's dialog", popup_none: "Nothing",
+      layout: "Layout", layout_tile: "Tile", layout_row: "Row", tap_action: "Tap", hold_action: "Hold", act_auto: "Automatic (toggle or run, else pop-up)", act_toggle: "Toggle",
+      act_popup: "Aurora Glass pop-up", act_native: "Home Assistant's dialog", act_none: "Nothing", icon: "Icon (optional)", show_state: "Show the state", glass: "Glass background", auto: "Auto"
     },
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
@@ -986,7 +2014,10 @@
       modes: "Butoane moduri (gol = automat)", active_hours: "Păstrează scena activă timp de (ore)", temperature: "Senzor temperatură",
       lock: "Încuietoare", lock_name: "Nume încuietoare", sensors: "Senzori uși și ferestre", move_up: "Mută sus", move_down: "Mută jos", delete: "Șterge",
       loading: "Se încarcă editorul Home Assistant…", no_lights: "Nicio lumină încă.", no_scenes: "Nicio scenă încă.", no_chips: "Niciun indicator încă.",
-      device_note: "Sfat: butonul Personalizează de pe tablou schimbă aranjarea doar pe acel dispozitiv. Setările de aici se aplică peste tot."
+      device_note: "Sfat: butonul Personalizează de pe tablou schimbă aranjarea doar pe acel dispozitiv. Setările de aici se aplică peste tot.",
+      popup: "Ține apăsat pe un element (sau atinge un indicator, un nod sau iconița unui widget) pentru", popup_aurora: "Fereastra Aurora Glass", popup_native: "Fereastra Home Assistant", popup_none: "Nimic",
+      layout: "Aspect", layout_tile: "Pătrat", layout_row: "Rând", tap_action: "Atingere", hold_action: "Ținere apăsată", act_auto: "Automat (comută sau rulează, altfel fereastră)", act_toggle: "Comută",
+      act_popup: "Fereastra Aurora Glass", act_native: "Fereastra Home Assistant", act_none: "Nimic", icon: "Iconiță (opțional)", show_state: "Afișează starea", glass: "Fundal de sticlă", auto: "Auto"
     }
   };
   const MDI = {
@@ -997,7 +2028,7 @@
     chev: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"
   };
   const opt = (values, labels) => values.map((v) => ({ value: v, label: labels ? labels[v] || v : v }));
-  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, customize: true, dashboard_theme: true, language: "auto" };
+  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, customize: true, dashboard_theme: true, language: "auto", popup: "aurora" };
 
   function cleanCfg(v) {
     if (Array.isArray(v)) return v.map(cleanCfg).filter((x) => x !== undefined);
@@ -1086,6 +2117,7 @@
           { name: "customize", selector: { boolean: {} } }
         ] },
         { name: "dashboard_theme", selector: { boolean: {} } },
+        { name: "popup", selector: { select: { mode: "dropdown", options: opt(["aurora", "native", "none"], { aurora: this._l("popup_aurora"), native: this._l("popup_native"), none: this._l("popup_none") }) } } },
         { type: "grid", name: "", schema: [
           { name: "title", selector: { text: {} } },
           { name: "language", selector: { select: { mode: "dropdown", options: opt(["auto", "en", "ro"], { auto: this._l("auto"), en: "English", ro: "Română" }) } } }
@@ -1366,10 +2398,220 @@
     return { widgets };
   }
 
+  /* ================================================================ entity card */
+  const ENT_CSS = `
+  :host{display:block;height:100%}
+  .ec{position:relative;width:100%;height:100%;min-height:var(--minh,120px);display:flex;flex-direction:column;justify-content:space-between;gap:12px;padding:16px;border-radius:var(--ha-card-border-radius,24px);
+    color:var(--text);font-family:'Figtree',var(--ha-font-family-body,system-ui),-apple-system,sans-serif;text-align:left;overflow:hidden;isolation:isolate;
+    transition:background .5s,border-color .5s,box-shadow .5s,transform .18s cubic-bezier(.3,1.5,.6,1)}
+  .ec.glass{background:var(--glass);backdrop-filter:blur(var(--blur)) saturate(170%);-webkit-backdrop-filter:blur(var(--blur)) saturate(170%);border:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hi),0 24px 50px -30px var(--shadow)}
+  .ec.flat{background:transparent;border:1px solid transparent}
+  .ec:active{transform:scale(.97)}
+  .ec.on{background:color-mix(in srgb,var(--ai) var(--acc-t),var(--glass));border-color:color-mix(in srgb,var(--ai) 45%,transparent);box-shadow:inset 0 1px 0 var(--hi),0 16px 44px -18px color-mix(in srgb,var(--ai) 60%,transparent)}
+  .ec::after{content:"";position:absolute;inset:-40%;z-index:-1;background:radial-gradient(circle at 20% 15%,color-mix(in srgb,var(--ai) 30%,transparent),transparent 45%);opacity:0;transition:opacity .8s}
+  .ec.on::after{opacity:1;animation:agBreath 7s ease-in-out infinite}
+  .ec.pulse{animation:agPop .55s cubic-bezier(.3,1.6,.5,1)}
+  .eh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .eic{width:46px;height:46px;flex:none;border-radius:16px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--ai) 16%,transparent);transition:background .5s}
+  .ec.on .eic{background:color-mix(in srgb,var(--ai) 26%,transparent)}
+  .eval{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .en{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .en b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .en span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ebig{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;font-weight:600;font-size:26px;letter-spacing:-.03em;color:var(--text)}
+  .bar{height:4px;border-radius:99px;overflow:hidden;background:var(--track)}
+  .bar i{display:block;height:100%;border-radius:99px;background:var(--ai);transition:width .5s}
+  .ec.row{flex-direction:row;align-items:center;min-height:var(--minh,64px);padding:10px 12px 10px 10px;gap:12px}
+  .ec.row .en{flex:1}
+  .tg{flex:none;width:50px;height:30px;border-radius:99px;padding:3px;display:flex;justify-content:flex-start;background:var(--track);transition:background .25s;border:0;cursor:pointer}
+  .tg.on{justify-content:flex-end;background:var(--ai)}
+  .tg i{width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+  .tg.on i{background:#141622}
+  .ripple{position:absolute;border-radius:50%;pointer-events:none;background:color-mix(in srgb,var(--ai) 45%,transparent);transform:scale(0);animation:agRipple .6s ease-out forwards;z-index:-1}
+  @keyframes agPop{0%{transform:scale(1)}40%{transform:scale(1.035)}100%{transform:scale(1)}}
+  @keyframes agRipple{to{transform:scale(1);opacity:0}}
+  @keyframes agBreath{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.12);opacity:1}}
+  `;
+
+  class AuroraGlassEntityCard extends HTMLElement {
+    constructor() { super(); this.attachShadow({ mode: "open" }); }
+    static getConfigElement() { return document.createElement("aurora-glass-entity-editor"); }
+    static getStubConfig(hass) {
+      const ids = Object.keys(hass?.states || {});
+      const pref = ["light.", "switch.", "fan.", "climate.", "cover.", "lock.", "media_player.", "input_boolean.", "sensor."];
+      for (const p of pref) { const f = ids.find((id) => id.startsWith(p)); if (f) return { entity: f }; }
+      return { entity: ids[0] || "sun.sun" };
+    }
+    setConfig(c) {
+      if (!c || !c.entity) throw new Error("aurora-glass-entity: choose an entity");
+      this._config = { layout: "tile", tap_action: "auto", hold_action: "popup", glass: true, show_state: true, ...c };
+      this._schedule();
+    }
+    set hass(h) { this._hass = h; AuroraGlassPopup.sync(this, h); this._schedule(); }
+    get hass() { return this._hass; }
+    getCardSize() { return this._config?.layout === "row" ? 1 : 2; }
+    getGridOptions() { return this._config?.layout === "row" ? { columns: 6, rows: 1, min_columns: 3, min_rows: 1 } : { columns: 3, rows: 2, min_columns: 2, min_rows: 2 }; }
+    connectedCallback() { loadFonts(); this._schedule(); }
+
+    get _lang() { return trLang(this._hass, this._config?.language); }
+    _theme() { return resolveTheme(this._config.preset, this._config.accent, this._hass); }
+    _schedule() { if (this._raf) return; this._raf = requestAnimationFrame(() => { this._raf = 0; this._render(); }); }
+
+    _render() {
+      if (!this._config || !this.shadowRoot) return;
+      const sr = this.shadowRoot;
+      if (!this._root) {
+        sr.innerHTML = `<style>${CSS}${ANIM_CSS}${ENT_CSS}</style><div class="host"></div>`;
+        this._root = sr.querySelector(".host");
+        sr.addEventListener("click", (e) => this._onClick(e));
+        sr.addEventListener("contextmenu", (e) => { e.preventDefault(); this._hold(); });
+        sr.addEventListener("pointerdown", (e) => this._onDown(e));
+        ["pointerup", "pointercancel", "pointerleave"].forEach((t) => sr.addEventListener(t, () => clearTimeout(this._lp)));
+      }
+      const c = this._config, id = c.entity, st = this._hass?.states?.[id];
+      const th = this._theme();
+      const lang = this._lang;
+      const d = domainOf(id);
+      const on = isOn(st);
+      if (st && this._lastState !== undefined && this._lastState !== st.state && c.motion !== false) {
+        this._pulse = true;
+        clearTimeout(this._pulseT);
+        this._pulseT = setTimeout(() => { this._pulse = false; this._schedule(); }, 600);
+      }
+      this._lastState = st?.state;
+      const name = c.name || st?.attributes?.friendly_name || id;
+      let html;
+      if (!st) html = `<div class="ec glass"><div class="err" style="color:var(--alert);font-size:13px">${esc(tr(lang, "not_found", { e: id }))}</div></div>`;
+      else {
+        const stTxt = stateText(this._hass, st, lang);
+        const a = st.attributes;
+        const area = c.subtitle ?? areaOf(this._hass, id);
+        const numeric = d === "sensor" && isFinite(parseFloat(st.state));
+        const bri = d === "light" && on && a.brightness != null ? Math.round(a.brightness / 2.55) : null;
+        const pct = bri ?? (d === "fan" && on && a.percentage != null ? a.percentage : d === "cover" && a.current_position != null ? a.current_position : null);
+        const canToggle = TOGGLE_DOMAINS.includes(d) && !["climate", "media_player", "vacuum", "cover"].includes(d);
+        const cls = `ec ${c.glass === false ? "flat" : "glass"} ${c.layout === "row" ? "row" : ""} ${on ? "on" : ""} ${this._pulse ? "pulse" : ""}`;
+        const icon = `<div class="eic">${animIcon(st, c.layout === "row" ? 24 : 26, 1.8, c.icon)}</div>`;
+        if (c.layout === "row") {
+          html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">${icon}
+            <div class="en"><b>${esc(name)}</b>${c.show_state !== false ? `<span>${esc([stTxt, area].filter(Boolean).join(" · "))}</span>` : ""}</div>
+            ${canToggle ? `<button class="tg ${st.state === "on" ? "on" : ""}" data-act="toggle" role="switch" aria-checked="${st.state === "on"}" aria-label="${esc(name)}"><i></i></button>` : numeric ? `<span class="ebig" style="font-size:20px">${esc(stTxt)}</span>` : ""}</div>`;
+        } else {
+          html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
+            <div class="eh">${icon}${c.show_state !== false && !numeric ? `<span class="eval">${esc(pct != null ? pct + "%" : stTxt)}</span>` : ""}</div>
+            <div class="en">${numeric && c.show_state !== false ? `<span class="ebig">${esc(stTxt)}</span>` : ""}<b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div>
+            ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}</div>`;
+        }
+      }
+      const tpl = document.createElement("template");
+      tpl.innerHTML = `<div>${html}</div>`;
+      const next = tpl.content.firstElementChild;
+      next.className = `host ${c.motion === false ? "still" : ""}`;
+      next.setAttribute("style", `${themeVars(th, c.blur ?? 24)};--ai:${aiColor(st)};height:100%;${c.min_height ? `--minh:${esc(c.min_height)}` : ""}`);
+      morph(this._root, next, sr.activeElement);
+    }
+
+    _act(kind) {
+      const c = this._config, st = this._hass?.states?.[c.entity];
+      const d = domainOf(c.entity);
+      let a = kind === "tap" ? c.tap_action : c.hold_action;
+      if (a === "auto") a = RUN_DOMAINS.includes(d) ? "run" : TOGGLE_DOMAINS.includes(d) && !["climate", "media_player", "vacuum"].includes(d) ? "toggle" : "popup";
+      if (a === "toggle") return toggleCall(this._hass, st);
+      if (a === "run") return runCall(this._hass, st);
+      if (a === "popup" || a === "native" || a === "more-info") {
+        const el = this.shadowRoot.querySelector(".ec");
+        return openEntityPopup(this, c.entity, { origin: el?.getBoundingClientRect(), name: c.name, icon: c.icon, mode: a === "popup" ? "aurora" : "native", theme: this._theme(), blur: c.blur ?? 24, motion: c.motion !== false, lang: this._lang });
+      }
+    }
+    _hold() { this._act("hold"); }
+    _ripple(e) {
+      const card = this.shadowRoot.querySelector(".ec");
+      if (!card || this._config.motion === false) return;
+      const r = card.getBoundingClientRect(), size = Math.max(r.width, r.height) * 1.4;
+      const sp = document.createElement("span");
+      sp.className = "ripple";
+      sp.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - r.left - size / 2}px;top:${e.clientY - r.top - size / 2}px`;
+      card.appendChild(sp);
+      setTimeout(() => sp.remove(), 650);
+    }
+    _onDown(e) {
+      clearTimeout(this._lp);
+      if (!e.target.closest?.(".ec")) return;
+      this._lp = setTimeout(() => { this._suppress = true; this._hold(); }, 520);
+    }
+    _onClick(e) {
+      if (this._suppress) { this._suppress = false; return; }
+      if (!e.target.closest?.(".ec")) return;
+      this._ripple(e);
+      if (e.target.closest("[data-act='toggle']")) return toggleCall(this._hass, this._hass?.states?.[this._config.entity]);
+      this._act("tap");
+    }
+  }
+
+  class AuroraGlassEntityEditor extends HTMLElement {
+    constructor() { super(); this.attachShadow({ mode: "open" }); }
+    setConfig(c) {
+      const incoming = JSON.stringify(c || {});
+      if (this._config && incoming === this._lastFired) return;
+      this._config = JSON.parse(incoming);
+      this._render();
+    }
+    set hass(h) { const first = !this._hass; this._hass = h; if (this._form) this._form.hass = h; if (first) this._render(); }
+    connectedCallback() { ensureHaComponents().then(() => { this._ready = true; this._render(); }); }
+    get _lang() { const l = (this._hass?.locale?.language || "en").split("-")[0]; return ED_LABELS[l] ? l : "en"; }
+    _l(k) { return ED_LABELS[this._lang][k] ?? ED_LABELS.en[k] ?? I18N[this._lang]?.[k] ?? I18N.en[k] ?? k; }
+    _render() {
+      if (!this._config || !this.shadowRoot) return;
+      if (!this._ready || !customElements.get("ha-form") || !this._hass) { this.shadowRoot.innerHTML = `<div style="color:var(--secondary-text-color)">${esc(this._l("loading"))}</div>`; return; }
+      const presetLabels = { auto: this._l("auto") }; Object.keys(PRESETS).forEach((k) => { presetLabels[k] = PRESETS[k].name; });
+      const accentLabels = {}; Object.keys(ACCENTS).forEach((k) => { accentLabels[k] = ACCENTS[k].name; });
+      const acts = (list) => opt(list, { auto: this._l("act_auto"), toggle: this._l("act_toggle"), popup: this._l("act_popup"), native: this._l("act_native"), none: this._l("act_none") });
+      const schema = [
+        { name: "entity", required: true, selector: { entity: {} } },
+        { type: "grid", name: "", schema: [{ name: "name", selector: { text: {} } }, { name: "icon", selector: { icon: {} } }] },
+        { type: "grid", name: "", schema: [
+          { name: "layout", selector: { select: { mode: "dropdown", options: opt(["tile", "row"], { tile: this._l("layout_tile"), row: this._l("layout_row") }) } } },
+          { name: "subtitle", selector: { text: {} } }] },
+        { type: "grid", name: "", schema: [
+          { name: "tap_action", selector: { select: { mode: "dropdown", options: acts(["auto", "toggle", "popup", "native", "none"]) } } },
+          { name: "hold_action", selector: { select: { mode: "dropdown", options: acts(["popup", "native", "none"]) } } }] },
+        { type: "grid", name: "", schema: [
+          { name: "preset", selector: { select: { mode: "dropdown", options: opt(["auto", ...Object.keys(PRESETS)], presetLabels) } } },
+          { name: "accent", selector: { select: { mode: "dropdown", options: opt(Object.keys(ACCENTS), accentLabels) } } }] },
+        { type: "grid", name: "", schema: [{ name: "show_state", selector: { boolean: {} } }, { name: "glass", selector: { boolean: {} } }, { name: "motion", selector: { boolean: {} } }] }
+      ];
+      const DEF = { layout: "tile", tap_action: "auto", hold_action: "popup", preset: "auto", accent: "peach", show_state: true, glass: true, motion: true };
+      const data = { ...DEF, ...this._config };
+      this.shadowRoot.innerHTML = "";
+      const f = document.createElement("ha-form");
+      f.hass = this._hass;
+      f.schema = schema;
+      f.data = data;
+      f.computeLabel = (s) => this._l(s.name);
+      f.addEventListener("value-changed", (ev) => {
+        ev.stopPropagation();
+        const v = { ...ev.detail.value };
+        f.data = v;
+        const cfg = { type: this._config.type || "custom:aurora-glass-entity" };
+        Object.keys(v).forEach((k) => { if (v[k] === "" || v[k] == null || DEF[k] === v[k]) return; cfg[k] = v[k]; });
+        this._config = { ...cfg };
+        this._lastFired = JSON.stringify(cfg);
+        this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: cfg }, bubbles: true, composed: true }));
+      });
+      this._form = f;
+      this.shadowRoot.appendChild(f);
+    }
+  }
+  if (!customElements.get("aurora-glass-entity-editor")) customElements.define("aurora-glass-entity-editor", AuroraGlassEntityEditor);
+  if (!customElements.get("aurora-glass-entity")) customElements.define("aurora-glass-entity", AuroraGlassEntityCard);
+
   if (!customElements.get("aurora-glass-card")) customElements.define("aurora-glass-card", AuroraGlassCard);
   window.customCards = window.customCards || [];
   if (!window.customCards.some((c) => c.type === "aurora-glass-card")) {
     window.customCards.push({ type: "aurora-glass-card", name: "Aurora Glass", description: "Frosted-glass, customizable dashboard with state animations", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+  }
+  if (!window.customCards.some((c) => c.type === "aurora-glass-entity")) {
+    window.customCards.push({ type: "aurora-glass-entity", name: "Aurora Glass Entity", description: "One entity as an animated glass tile, with the Aurora Glass pop-up", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
   console.info(`%c AURORA-GLASS-CARD %c v${VERSION} `, "background:#ffb27a;color:#1c140c;font-weight:700", "background:#080c18;color:#f2f4fb");
 })();
