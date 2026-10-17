@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" font-family="Figtree, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect width="880" height="300" rx="24" fill="#080c18"/>
+  <!-- light tile -->
+  <rect x="32" y="40" width="210" height="150" rx="20" fill="rgba(255,178,122,.16)" stroke="rgba(255,178,122,.5)"/>
+  <circle cx="64" cy="76" r="18" fill="#ffb27a"/>
+  <path d="M60 84h8M61 88h6M64 64a8 8 0 0 0-4.6 14.5c.8.7 1.3 1.6 1.3 2.6h6.6c0-1 .5-1.9 1.3-2.6A8 8 0 0 0 64 64z" fill="none" stroke="#1c140c" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="222" y="80" fill="rgba(255,255,255,.8)" font-size="13" text-anchor="end">70%</text>
+  <text x="52" y="134" fill="#f2f4fb" font-size="16" font-weight="700">Ceiling spots</text>
+  <text x="52" y="154" fill="rgba(255,255,255,.75)" font-size="13">Living room</text>
+  <rect x="52" y="170" width="170" height="4" rx="2" fill="rgba(255,255,255,.14)"/><rect x="52" y="170" width="119" height="4" rx="2" fill="#ffb27a"/>
+  <!-- scene tile -->
+  <rect x="268" y="40" width="210" height="110" rx="20" fill="#ffb27a"/>
+  <text x="288" y="76" fill="#1c140c" font-size="16" font-weight="700">Evening</text>
+  <circle cx="456" cy="71" r="4" fill="#1c140c"/>
+  <text x="288" y="102" fill="#3b2a1c" font-size="13">Soft 30% lights,</text>
+  <text x="288" y="120" fill="#3b2a1c" font-size="13">AC to 23°</text>
+  <!-- yaml -->
+  <rect x="510" y="40" width="340" height="220" rx="16" fill="#0b0f1c" stroke="rgba(255,255,255,.1)"/>
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13">
+    <text x="530" y="70"><tspan fill="#aeb6cb">- </tspan><tspan fill="#ffb27a">type</tspan><tspan fill="#aeb6cb">: lights</tspan></text>
+    <text x="546" y="92"><tspan fill="#ffb27a">entities</tspan><tspan fill="#aeb6cb">:</tspan></text>
+    <text x="562" y="114"><tspan fill="#aeb6cb">- </tspan><tspan fill="#ffb27a">entity</tspan><tspan fill="#aeb6cb">: light.ceiling</tspan></text>
+    <text x="578" y="136"><tspan fill="#6fe0b0">name</tspan><tspan fill="#aeb6cb">: Ceiling spots</tspan></text>
+    <text x="578" y="158"><tspan fill="#7cc4ff">subtitle</tspan><tspan fill="#aeb6cb">: Living room</tspan></text>
+    <text x="530" y="192"><tspan fill="#aeb6cb">- </tspan><tspan fill="#ffb27a">type</tspan><tspan fill="#aeb6cb">: scenes</tspan></text>
+    <text x="546" y="214"><tspan fill="#ffb27a">entities</tspan><tspan fill="#aeb6cb">:</tspan></text>
+    <text x="562" y="236"><tspan fill="#aeb6cb">- { </tspan><tspan fill="#ffb27a">entity</tspan><tspan fill="#aeb6cb">: scene.evening, </tspan><tspan fill="#c4a7ff">description</tspan><tspan fill="#aeb6cb">: … }</tspan></text>
+  </g>
+  <!-- key tags, coloured like the YAML keys -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    <rect x="176" y="120" width="50" height="18" rx="9" fill="#6fe0b0"/><text x="201" y="133" fill="#08231a">name</text>
+    <rect x="168" y="144" width="66" height="18" rx="9" fill="#7cc4ff"/><text x="201" y="157" fill="#08182a">subtitle</text>
+    <rect x="384" y="126" width="84" height="18" rx="9" fill="#c4a7ff"/><text x="426" y="139" fill="#1b1030">description</text>
+  </g>
+  <g font-size="12" fill="#aeb6cb">
+    <text x="32" y="222">Leave <tspan fill="#6fe0b0">name</tspan> out to use the entity's own name.</text>
+    <text x="32" y="242">A plain line like <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#ffcfa8">- light.ceiling</tspan> also works.</text>
+    <text x="32" y="262">Switches and input_booleans can be tiles too.</text>
+  </g>
+</svg>
