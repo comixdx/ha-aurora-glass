@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.5.0
+ * Aurora Glass Card for Home Assistant — v0.5.1
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
@@ -8,7 +8,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.5.0";
+  const VERSION = "0.5.1";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -56,7 +56,8 @@
       fan_mode: "Fan", cover_open: "Open", cover_close: "Close", stop: "Stop", position: "Position", lock_act: "Lock", unlock_act: "Unlock", open_act: "Open",
       run: "Run", ran: "Done", last_24h: "Last 24 hours", min: "Min", avg: "Average", max: "Max", forecast: "Forecast", volume: "Volume", mute: "Mute",
       source: "Source", no_history: "No history yet", wind: "Wind", pressure: "Pressure", previous: "Previous", next: "Next", hold_hint: "Hold any tile for details",
-      opening: "Opening", closing: "Closing", open: "Open", closed: "Closed", detected: "Detected", clear: "Clear", home_state: "Home", away: "Away", mode: "Mode"
+      opening: "Opening", closing: "Closing", open: "Open", closed: "Closed", detected: "Detected", clear: "Clear", home_state: "Home", away: "Away", mode: "Mode",
+      updated: "Updated {t}", no_location: "Set your home location in Settings → System → General, or enter latitude and longitude in the widget"
     },
     ro: {
       good_morning: "Bună dimineața", good_afternoon: "Bună ziua", good_evening: "Bună seara",
@@ -77,7 +78,8 @@
       fan_mode: "Ventilator", cover_open: "Deschide", cover_close: "Închide", stop: "Stop", position: "Poziție", lock_act: "Încuie", unlock_act: "Descuie", open_act: "Deschide",
       run: "Rulează", ran: "Gata", last_24h: "Ultimele 24 de ore", min: "Min", avg: "Medie", max: "Max", forecast: "Prognoză", volume: "Volum", mute: "Fără sunet",
       source: "Sursă", no_history: "Încă nu există istoric", wind: "Vânt", pressure: "Presiune", previous: "Anterior", next: "Următor", hold_hint: "Ține apăsat pe orice element pentru detalii",
-      opening: "Se deschide", closing: "Se închide", open: "Deschis", closed: "Închis", detected: "Detectat", clear: "Liber", home_state: "Acasă", away: "Plecat", mode: "Mod"
+      opening: "Se deschide", closing: "Se închide", open: "Deschis", closed: "Închis", detected: "Detectat", clear: "Liber", home_state: "Acasă", away: "Plecat", mode: "Mod",
+      updated: "Actualizat {t}", no_location: "Setează locația casei în Setări → Sistem → General sau introdu latitudinea și longitudinea în widget"
     }
   };
 
@@ -609,6 +611,63 @@
   @keyframes agFloat{0%,100%{transform:translateX(0)}50%{transform:translateX(9px)}}
   `;
 
+  /* ------------------------------------------------ built-in weather service (Open-Meteo) */
+  // Free, no account or API key. Used when a weather widget has `source: open_meteo`.
+  const OM_ID = "weather.aurora_open_meteo";
+  const OM_CACHE = {};
+  const OM_LISTENERS = new Set();
+  function omCondition(code, day) {
+    if (code === 0) return day ? "sunny" : "clear-night";
+    if (code === 1 || code === 2) return day ? "partlycloudy" : "clear-night";
+    if (code === 3) return "cloudy";
+    if (code === 45 || code === 48) return "fog";
+    if (code === 65 || code === 82) return "pouring";
+    if (code === 66 || code === 67) return "snowy-rainy";
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snowy";
+    if (code >= 95) return "lightning-rainy";
+    if ((code >= 51 && code <= 64) || code === 80 || code === 81) return "rainy";
+    return "cloudy";
+  }
+  function omPlace(hass, w) {
+    const lat = Number(w.latitude ?? hass?.config?.latitude), lon = Number(w.longitude ?? hass?.config?.longitude);
+    if (!isFinite(lat) || !isFinite(lon)) return null;
+    const imperial = hass?.config?.unit_system?.temperature === "°F";
+    return { lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100, imperial, name: w.location_name || hass?.config?.location_name || "Home" };
+  }
+  const omKey = (p) => `${p.lat},${p.lon},${p.imperial ? "i" : "m"}`;
+  function omFetch(p) {
+    const k = omKey(p), c = OM_CACHE[k];
+    if (c && (c.loading || Date.now() - c.at < 15 * 60e3)) return c;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,pressure_msl,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto${p.imperial ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""}`;
+    OM_CACHE[k] = { ...(c || {}), loading: true, at: c?.at || 0 };
+    fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`Open-Meteo ${r.status}`)))).then((j) => {
+      OM_CACHE[k] = { at: Date.now(), data: j };
+    }).catch((e) => {
+      OM_CACHE[k] = { at: Date.now() - 13 * 60e3, data: c?.data, error: e.message };   // retry in ~2 minutes
+    }).finally(() => OM_LISTENERS.forEach((fn) => fn()));
+    return OM_CACHE[k];
+  }
+  // A weather "state" shaped like a Home Assistant weather entity, so the widget and the pop-up treat both alike.
+  function omState(hass, w) {
+    const p = omPlace(hass, w);
+    if (!p) return null;
+    const c = omFetch(p), j = c.data;
+    if (!j || !j.current) return { entity_id: OM_ID, state: "unknown", attributes: { friendly_name: p.name, attribution: "Open-Meteo", aurora_loading: !c.error, aurora_error: c.error }, last_changed: new Date().toISOString() };
+    const cur = j.current;
+    const st = {
+      entity_id: OM_ID, state: omCondition(cur.weather_code, !!cur.is_day),
+      attributes: {
+        friendly_name: p.name, attribution: "Open-Meteo", temperature: cur.temperature_2m, humidity: cur.relative_humidity_2m,
+        wind_speed: cur.wind_speed_10m, wind_speed_unit: p.imperial ? "mph" : "km/h", pressure: cur.pressure_msl, pressure_unit: "hPa",
+        temperature_unit: p.imperial ? "°F" : "°C", supported_features: 0
+      },
+      last_changed: new Date(c.at).toISOString(), last_updated: new Date(c.at).toISOString()
+    };
+    const d = j.daily || {};
+    st.aurora_forecast = (d.time || []).map((t, i) => ({ datetime: `${t}T12:00:00`, condition: omCondition(d.weather_code[i], true), temperature: d.temperature_2m_max[i], templow: d.temperature_2m_min[i] }));
+    return st;
+  }
+
   /* ================================================================ glass pop-up */
   const POP_CSS = `
   :host{display:contents}
@@ -743,7 +802,7 @@
 
     get _lang() { return this._o?.lang || "en"; }
     _t(k, v) { return tr(this._lang, k, v); }
-    _st() { return this._hass?.states?.[this._ent]; }
+    _st() { return this._o?.getState ? this._o.getState() : this._hass?.states?.[this._ent]; }
     _call(d, s, data) { this._hass?.callService(d, s, data); }
     _num(v, dgt = 1) { try { return Number(v).toLocaleString(this._lang, { minimumFractionDigits: dgt, maximumFractionDigits: dgt }); } catch (e) { return Number(v).toFixed(dgt); } }
 
@@ -869,14 +928,16 @@
       const head = `<div class="grab" data-swipe="1"></div>
         <div class="ph" data-swipe="1"><div class="pic">${st ? animIcon(st, 30, 1.7, this._o.icon) : ""}</div>
         <div class="pt"><b>${esc(name)}</b><span>${esc(sub)}</span></div>
-        <button class="xb glass2" data-act="native" aria-label="${t("more_details")}" title="${t("more_details")}">${svgIcon(ICON.dots, 22, 2.6)}</button>
+        ${this._o.virtual ? "" : `<button class="xb glass2" data-act="native" aria-label="${t("more_details")}" title="${t("more_details")}">${svgIcon(ICON.dots, 22, 2.6)}</button>`}
         <button class="xb glass2" data-act="close" aria-label="${t("close")}" title="${t("close")}">${svgIcon(ICON.x, 18, 2)}</button></div>`;
       if (!st) return `<div class="halo"></div>${head}<div class="err">${esc(t("not_found", { e: this._ent }))}</div>`;
       const d = domainOf(this._ent);
       const fn = this[`_p_${d}`] || (RUN_DOMAINS.includes(d) ? this._p_run : null) || (d === "input_boolean" || d === "automation" || d === "siren" || d === "humidifier" ? this._p_switch : null) || (d === "person" ? this._p_device_tracker : null) || this._p_default;
       let body = "";
       try { body = fn.call(this, st, t); } catch (e) { body = `<div class="err">${esc(e.message)}</div>`; }
-      const foot = `<div class="pfoot"><span>${esc(t("changed", { t: relTime(st.last_changed, this._lang) }))}</span><button class="link glass2" data-act="native">${esc(t("more_details"))}</button></div>`;
+      const foot = this._o.virtual
+        ? `<div class="pfoot"><span>${esc(t("updated", { t: relTime(st.last_changed, this._lang) }))}</span><span>${esc(st.attributes.attribution || "")}</span></div>`
+        : `<div class="pfoot"><span>${esc(t("changed", { t: relTime(st.last_changed, this._lang) }))}</span><button class="link glass2" data-act="native">${esc(t("more_details"))}</button></div>`;
       return `<div class="halo ${isOn(st) ? "on" : ""}" aria-hidden="true"></div>${head}${body}${foot}`;
     }
 
@@ -1042,9 +1103,10 @@
         a.wind_speed != null ? [t("wind"), `${this._num(a.wind_speed, 0)} ${a.wind_speed_unit || ""}`] : null,
         a.pressure != null ? [t("pressure"), `${this._num(a.pressure, 0)} ${a.pressure_unit || ""}`] : null
       ].filter(Boolean);
-      const fc = (this._fc?.list || []).slice(0, 5).map((x) => {
+      const fcType = st.aurora_forecast ? "daily" : this._fc?.type;
+      const fc = (st.aurora_forecast || this._fc?.list || []).slice(0, 5).map((x) => {
         let day = "";
-        try { day = new Date(x.datetime).toLocaleDateString(this._lang, this._fc.type === "hourly" ? { hour: "2-digit" } : { weekday: "short" }); } catch (e) { day = ""; }
+        try { day = new Date(x.datetime).toLocaleDateString(this._lang, fcType === "hourly" ? { hour: "2-digit" } : { weekday: "short" }); } catch (e) { day = ""; }
         return `<div class="fcd"><span>${esc(day)}</span>${weatherArt(x.condition, dark, 38, 28)}<b>${x.temperature != null ? this._num(x.temperature, 0) + "°" : ""}</b><span>${x.templow != null ? this._num(x.templow, 0) + "°" : ""}</span></div>`;
       }).join("");
       return `<div class="hero">${weatherArt(st.state, dark, 150, 112)}<div style="display:flex;flex-direction:column;gap:4px"><span class="disp" style="font-size:56px;line-height:1">${a.temperature != null ? this._num(a.temperature, 0) + (unit.startsWith("°") ? "°" : unit) : "—"}</span><span class="muted">${esc(label)}</span></div></div>
@@ -1133,7 +1195,7 @@
     _subForecast() {
       if (this._unsub) { try { this._unsub(); } catch (e) { /* closed */ } this._unsub = null; }
       const st = this._st();
-      if (!st || domainOf(this._ent) !== "weather" || !this._hass?.connection?.subscribeMessage) return;
+      if (!st || this._o?.virtual || domainOf(this._ent) !== "weather" || !this._hass?.connection?.subscribeMessage) return;
       const f = st.attributes.supported_features || 0;
       const type = f & 1 ? "daily" : f & 4 ? "twice_daily" : f & 2 ? "hourly" : null;
       if (!type) return;
@@ -1346,9 +1408,11 @@
     connectedCallback() {
       loadFonts();
       this._clock = setInterval(() => this._schedule(), 30000);
+      this._omL = this._omL || (() => this._schedule());
+      OM_LISTENERS.add(this._omL);
       this._schedule();
     }
-    disconnectedCallback() { clearInterval(this._clock); this._clearDashTheme(); }
+    disconnectedCallback() { clearInterval(this._clock); OM_LISTENERS.delete(this._omL); this._clearDashTheme(); }
 
     /* ----- prefs (per device, per card) */
     get _key() { return `aurora-glass:${this._config.id || location.pathname}`; }
@@ -1411,6 +1475,15 @@
     // Long-press / right-click / tapping a chip, node or widget icon: the glass pop-up (or HA's dialog, per `popup:`).
     _popup(entityId, el) {
       if (!entityId) return;
+      if (entityId === OM_ID) {
+        const w = this._widgets.find((x) => x.type === "weather" && x.source === "open_meteo");
+        if (!w) return;
+        return AuroraGlassPopup.get().open({
+          owner: this, hass: this._hass, entity: OM_ID, origin: el?.getBoundingClientRect?.(), lang: this._lang, motion: this._p.motion,
+          preset: this._theme().id, vars: themeVars(this._theme(), this._p.blur), virtual: true, getState: () => omState(this._hass, w),
+          scrim: this._theme().T.dark ? "rgba(4,6,14,.45)" : "rgba(40,46,72,.22)"
+        });
+      }
       const names = {};
       this._widgets.forEach((w) => asList(w.entities).map(entOf).forEach((x) => { if (x.entity && x.name) names[x.entity] = x.name; }));
       asList(this._config.chips).map(entOf).forEach((x) => { if (x.entity && x.name) names[x.entity] = x.name; });
@@ -1871,8 +1944,17 @@
       return { body: lockHtml + lines, meta };
     }
 
+    _wxProvider(w) {
+      if (w.source === "open_meteo") return "Open-Meteo";
+      const e = this._hass?.entities?.[w.entity];
+      const p = e?.platform;
+      const names = { met: "Met.no", openweathermap: "OpenWeatherMap", accuweather: "AccuWeather", open_meteo: "Open-Meteo", pirateweather: "Pirate Weather", tomorrowio: "Tomorrow.io", metoffice: "Met Office", nws: "NWS", buienradar: "Buienradar", meteo_france: "Météo-France", smhi: "SMHI", ipma: "IPMA", aemet: "AEMET", dwd_weather: "DWD", template: "Template" };
+      return p ? names[p] || pretty(p) : "";
+    }
     _w_weather(w) {
-      const s = this._st(w.entity);
+      const om = w.source === "open_meteo";
+      const s = om ? omState(this._hass, w) : this._st(w.entity);
+      if (om && !s) return { body: `<div class="err">${esc(this._t("no_location"))}</div>`, meta: "Open-Meteo" };
       if (!s) return this._missing(w.entity);
       const a = s.attributes;
       const cond = s.state;
@@ -1881,8 +1963,8 @@
       const label = this._loc(`component.weather.entity_component._.state.${cond}`, WX_LABEL[cond] || pretty(cond));
       const hum = a.humidity != null ? ` · ${this._t("humidity", { h: Math.round(a.humidity) })}` : "";
       return {
-        body: `<button class="wx" data-act="more" data-e="${esc(w.entity)}">${art}<div style="display:flex;flex-direction:column;gap:2px;text-align:left"><span class="disp big">${a.temperature != null ? this._num(a.temperature, 0) + (unit.startsWith("°") ? "°" : unit) : "—"}</span><span class="muted" style="font-size:13px">${esc(label)}${esc(hum)}</span></div></button>`,
-        meta: w.subtitle || ""
+        body: `<button class="wx" data-act="more" data-e="${esc(om ? OM_ID : w.entity)}">${art}<div style="display:flex;flex-direction:column;gap:2px;text-align:left"><span class="disp big">${a.temperature != null ? this._num(a.temperature, 0) + (unit.startsWith("°") ? "°" : unit) : "—"}</span><span class="muted" style="font-size:13px">${esc(s.state === "unknown" && om ? (s.attributes.aurora_error || "…") : label)}${esc(hum)}</span></div></button>`,
+        meta: w.subtitle || this._wxProvider(w)
       };
     }
 
@@ -2002,7 +2084,9 @@
       device_note: "Tip: the Customize button on the dashboard changes the layout only on that device. Settings here apply everywhere.",
       popup: "Hold a tile (or tap a chip, energy node or widget icon) to open", popup_aurora: "Aurora Glass pop-up", popup_native: "Home Assistant's dialog", popup_none: "Nothing",
       layout: "Layout", layout_tile: "Tile", layout_row: "Row", tap_action: "Tap", hold_action: "Hold", act_auto: "Automatic (toggle or run, else pop-up)", act_toggle: "Toggle",
-      act_popup: "Aurora Glass pop-up", act_native: "Home Assistant's dialog", act_none: "Nothing", icon: "Icon (optional)", show_state: "Show the state", glass: "Glass background", auto: "Auto"
+      act_popup: "Aurora Glass pop-up", act_native: "Home Assistant's dialog", act_none: "Nothing", icon: "Icon (optional)", show_state: "Show the state", glass: "Glass background", auto: "Auto",
+      source: "Weather service", src_entity: "A Home Assistant weather entity (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (built in, free, no account)",
+      latitude: "Latitude (empty = home)", longitude: "Longitude (empty = home)", location_name: "Place name (optional)"
     },
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
@@ -2017,7 +2101,9 @@
       device_note: "Sfat: butonul Personalizează de pe tablou schimbă aranjarea doar pe acel dispozitiv. Setările de aici se aplică peste tot.",
       popup: "Ține apăsat pe un element (sau atinge un indicator, un nod sau iconița unui widget) pentru", popup_aurora: "Fereastra Aurora Glass", popup_native: "Fereastra Home Assistant", popup_none: "Nimic",
       layout: "Aspect", layout_tile: "Pătrat", layout_row: "Rând", tap_action: "Atingere", hold_action: "Ținere apăsată", act_auto: "Automat (comută sau rulează, altfel fereastră)", act_toggle: "Comută",
-      act_popup: "Fereastra Aurora Glass", act_native: "Fereastra Home Assistant", act_none: "Nimic", icon: "Iconiță (opțional)", show_state: "Afișează starea", glass: "Fundal de sticlă", auto: "Auto"
+      act_popup: "Fereastra Aurora Glass", act_native: "Fereastra Home Assistant", act_none: "Nimic", icon: "Iconiță (opțional)", show_state: "Afișează starea", glass: "Fundal de sticlă", auto: "Auto",
+      source: "Serviciu meteo", src_entity: "O entitate meteo din Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (inclus, gratuit, fără cont)",
+      latitude: "Latitudine (gol = casa)", longitude: "Longitudine (gol = casa)", location_name: "Numele locului (opțional)"
     }
   };
   const MDI = {
@@ -2125,7 +2211,7 @@
         { name: "min_height", selector: { text: {} } }
       ];
     }
-    _widgetSchema(type) {
+    _widgetSchema(type, w = {}) {
       const sizes = { type: "grid", name: "", schema: [
         { name: "type", selector: { select: { mode: "dropdown", options: WIDGET_TYPES.map((t) => ({ value: t, label: this._typeName(t) })) } } },
         { name: "size", selector: { select: { mode: "dropdown", options: opt(["S", "M", "L", "XL"]) } } }
@@ -2150,7 +2236,13 @@
           { name: "temperature", selector: { entity: { domain: "sensor" } } }, subtitle];
         case "security": return [sizes, title, { type: "grid", name: "", schema: [{ name: "lock", selector: { entity: { domain: "lock" } } }, { name: "lock_name", selector: { text: {} } }] },
           { name: "sensors", selector: { entity: { multiple: true, domain: "binary_sensor" } } }];
-        case "weather": return [sizes, title, { name: "entity", selector: { entity: { domain: "weather" } } }, subtitle];
+        case "weather": return [sizes, title,
+          { name: "source", selector: { select: { mode: "dropdown", options: [{ value: "entity", label: this._l("src_entity") }, { value: "open_meteo", label: this._l("src_om") }] } } },
+          ...(w.source === "open_meteo"
+            ? [{ type: "grid", name: "", schema: [{ name: "latitude", selector: { number: { min: -90, max: 90, step: 0.01, mode: "box" } } }, { name: "longitude", selector: { number: { min: -180, max: 180, step: 0.01, mode: "box" } } }] },
+              { name: "location_name", selector: { text: {} } }]
+            : [{ name: "entity", selector: { entity: { domain: "weather" } } }]),
+          subtitle];
         default: return [sizes, title];
       }
     }
@@ -2287,9 +2379,12 @@
         sec.s.insertBefore(tools, sec.s.querySelector(".chev"));
         const data = { size: "M", ...w };
         if (w.type === "security") data.sensors = asList(w.sensors).map((x) => entOf(x).entity).filter(Boolean);
-        sec.body.appendChild(this._form(this._widgetSchema(w.type), data, (v) => {
+        if (w.type === "weather") data.source = w.source || "entity";
+        sec.body.appendChild(this._form(this._widgetSchema(w.type, w), data, (v) => {
           const typeChanged = v.type !== w.type;
+          const sourceChanged = w.type === "weather" && (v.source || "entity") !== (w.source || "entity");
           const next = { ...w, ...v };
+          if (next.source === "entity") delete next.source;
           if (typeChanged) {
             const keep = { type: v.type, size: v.size, title: v.title };
             if (w.id) keep.id = w.id;
@@ -2301,7 +2396,7 @@
           if (label) label.textContent = `${this._typeName(c.widgets[i].type)}${c.widgets[i].title ? " · " + c.widgets[i].title : ""}`;
           const badge = sec.s.querySelector(".badge");
           if (badge) badge.textContent = c.widgets[i].size || "M";
-          if (typeChanged) this._render();
+          if (typeChanged || sourceChanged) this._render();
         }));
         if (w.type === "lights") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "entities", "lights", "no_lights", "add_light"); sec.body.appendChild(box); }
         if (w.type === "scenes") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "entities", "scenes", "no_scenes", "add_scene"); sec.body.appendChild(box); }
@@ -2393,8 +2488,7 @@
     const opens = of("binary_sensor").filter((id) => ["door", "window", "opening", "garage_door"].includes(st[id].attributes.device_class)).slice(0, 6);
     if (lock || opens.length) { const s = { type: "security", size: "S" }; if (lock) s.lock = lock; if (opens.length) s.sensors = opens; widgets.push(s); }
     const wx = of("weather")[0];
-    if (wx) widgets.push({ type: "weather", size: "S", entity: wx });
-    if (!widgets.length) widgets.push({ type: "weather", size: "S", entity: "weather.home" });
+    widgets.push(wx ? { type: "weather", size: "S", entity: wx } : { type: "weather", size: "S", source: "open_meteo" });
     return { widgets };
   }
 
