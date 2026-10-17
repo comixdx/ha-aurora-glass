@@ -30,7 +30,7 @@ That's it. The glass look is applied to the whole dashboard by the card itself, 
   - type (energy flow, lights, climate, scenes, now playing, fan, floor heating, security, weather) and size S / M / L / XL;
   - Home Assistant's own entity pickers for every sensor and device;
   - lights and scenes get their own rows with name, subtitle or description;
-  - energy has two switches for inverters (such as GoodWe) whose battery sensor is positive when discharging or whose grid sensor is positive when exporting.
+  - energy flow shows solar, grid, battery, the inverter in the middle and the load; pick the inverter's power, status (e.g. GoodWe work mode) and temperature sensors to show them on the inverter node, and use the two switches for inverters (such as GoodWe) whose battery sensor is positive when discharging or whose grid sensor is positive when exporting.
 
 ## Customize mode (on the dashboard)
 
@@ -66,8 +66,8 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 
 | type | Keys |
 |---|---|
-| `energy` | `solar_power`, `home_power` (optional), `battery_power`, `battery_soc`, `grid_power`, `invert_battery`, `invert_grid`. W or kW. Battery + = charging, grid + = import, unless inverted. |
-| `lights` | `entities`: entity or `{entity, name, subtitle}`. Tap toggles; the slider dims the last tapped light. |
+| `energy` | Five nodes with the inverter in the middle: solar, grid and battery connect to the inverter, the inverter feeds the load. `solar_power`, `grid_power`, `battery_power`, `battery_soc`, `home_power` (load, optional), `inverter_power`, `inverter_status`, `inverter_temperature` (all three optional), `invert_battery`, `invert_grid`. W or kW. Battery + = charging, grid + = import, unless inverted. |
+| `lights` | `entities`: lights, switches or input_booleans, as an entity id or `{entity, name, subtitle}`. Tap toggles; the slider dims the last tapped light. |
 | `climate` | `entity`, `modes` (up to 4, e.g. `[cool, heat, dry, off]`). +/− taps are bundled into one command. |
 | `scenes` | `entities`: `scene.*`, `script.*`, `button.*` or `{entity, name, description}`. The most recently run scene is marked active (`active_hours`, default 12). |
 | `media` | `entity`, `subtitle`. |
