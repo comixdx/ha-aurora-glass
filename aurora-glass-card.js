@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.3.0
+ * Aurora Glass Card for Home Assistant — v0.4.1
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
@@ -7,7 +7,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.3.0";
+  const VERSION = "0.4.1";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -43,7 +43,7 @@
       reset: "Reset layout", move_earlier: "Move earlier", move_later: "Move later", change_size: "Change size", remove: "Remove from board",
       energy: "Energy flow", lights: "Lights", climate: "Climate", scenes: "Scenes", media: "Now playing", fan: "Fan",
       floor: "Floor heating", security: "Security", weather: "Weather",
-      live: "Live", n_of_m_on: "{n} of {m} on", solar: "Solar", home: "Home", exporting: "Exporting to grid", importing: "From grid",
+      live: "Live", n_of_m_on: "{n} of {m} on", solar: "Solar", home: "Home", inverter: "Inverter", load: "Load", exporting: "Exporting to grid", importing: "From grid",
       grid_idle: "Grid idle", charging: "Charging {v}", discharging: "Discharging {v}", battery_idle: "Battery idle",
       target: "target", cooling: "Cooling", heating: "Heating", idle: "Idle", tap_to_run: "Tap to run", active: "Active: {n}",
       nothing_playing: "Nothing playing", play: "Play", pause: "Pause", speed: "Speed {n}", tap_speed: "Tap to change speed",
@@ -58,7 +58,7 @@
       reset: "Resetează aranjarea", move_earlier: "Mută înainte", move_later: "Mută după", change_size: "Schimbă mărimea", remove: "Scoate de pe ecran",
       energy: "Flux energie", lights: "Lumini", climate: "Climatizare", scenes: "Scene", media: "Se redă", fan: "Ventilator",
       floor: "Încălzire în pardoseală", security: "Securitate", weather: "Vremea",
-      live: "Live", n_of_m_on: "{n} din {m} aprinse", solar: "Solar", home: "Casă", exporting: "Injectare în rețea", importing: "Din rețea",
+      live: "Live", n_of_m_on: "{n} din {m} aprinse", solar: "Solar", home: "Casă", inverter: "Invertor", load: "Consum", exporting: "Injectare în rețea", importing: "Din rețea",
       grid_idle: "Rețea inactivă", charging: "Se încarcă {v}", discharging: "Se descarcă {v}", battery_idle: "Baterie inactivă",
       target: "țintă", cooling: "Răcire", heating: "Încălzire", idle: "Inactiv", tap_to_run: "Atinge pentru a rula", active: "Activă: {n}",
       nothing_playing: "Nu se redă nimic", play: "Redă", pause: "Pauză", speed: "Viteza {n}", tap_speed: "Atinge pentru a schimba viteza",
@@ -82,6 +82,7 @@
     solar: "M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
     grid: "M8 21l4-18 4 18M6 9h12M5 14h14M9.5 14 12 21l2.5-7",
     home: "M3 11 12 4l9 7M5 10v10h14V10M10 20v-5h4v5",
+    inverter: "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM7 12c1.2-2.6 2.6-2.6 3.8 0s2.6 2.6 3.8 0 2.2-2.4 2.4-1.6",
     battery: "M7 6h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zM10 3h4M12 10l-2 4h4l-2 4",
     left: "M15 6l-6 6 6 6", right: "M9 6l6 6-6 6", minus: "M5 12h14", plus: "M12 5v14M5 12h14",
     sliders: "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4"
@@ -203,12 +204,12 @@
   .ctl button{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
   .err{font-size:13px;color:var(--alert)}
   /* energy */
-  .flowbox{position:relative;height:330px}
+  .flowbox{position:relative;height:380px}
   .flowbox svg.lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
   .trk{fill:none;stroke:var(--track);stroke-width:2}
   .flow{fill:none;stroke-width:6;stroke-linecap:round;stroke-dasharray:.1 14;transition:opacity .5s;animation:agDash var(--d,1.2s) linear infinite}
   .node{position:absolute;transform:translate(-50%,-36px);display:flex;flex-direction:column;align-items:center;gap:10px;z-index:1}
-  .bub{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--c);background:var(--fill,var(--glass2));backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 7%,transparent);transition:box-shadow .6s}
+  .bub{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--c);background:var(--fill,linear-gradient(var(--glass2),var(--glass2))),var(--ground);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 7%,transparent);transition:box-shadow .6s}
   .bub.big{width:84px;height:84px}
   .bub.act{box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 7%,transparent),0 0 34px color-mix(in srgb,var(--c) 40%,transparent)}
   .nv{display:flex;flex-direction:column;align-items:center;gap:1px;white-space:nowrap}
@@ -605,6 +606,7 @@
 
     /* ======================================================== widgets */
     _w_energy(w) {
+      // Five nodes, inverter in the middle: solar, grid and battery connect to it; it feeds the load.
       const solar = Math.max(0, this._kw(w.solar_power) ?? 0);
       let batt = this._kw(w.battery_power);            // + = charging (flip with invert_battery)
       if (batt != null && w.invert_battery) batt = -batt;
@@ -612,34 +614,46 @@
       if (grid != null && w.invert_grid) grid = -grid;
       let home = this._kw(w.home_power);
       if (home == null) home = Math.max(0, solar + (grid ?? 0) - (batt ?? 0));
+      let inv = this._kw(w.inverter_power);            // AC side of the inverter
+      if (inv == null) inv = Math.max(0, solar - (batt ?? 0));
       const socS = this._st(w.battery_soc);
       const soc = socS && isFinite(parseFloat(socS.state)) ? Math.round(parseFloat(socS.state)) : null;
+      const stS = this._st(w.inverter_status);
+      const tS = this._st(w.inverter_temperature);
+      const invTemp = tS && isFinite(parseFloat(tS.state)) ? `${this._num(parseFloat(tS.state), 0)}°` : "";
+      const invLabel = [stS && !["unknown", "unavailable"].includes(stS.state) ? stS.state : "", invTemp].filter(Boolean).join(" · ") || (w.inverter_name || this._t("inverter"));
+      const live = (kw) => kw != null && Math.abs(kw) > 0.03;
       const dur = (kw) => (Math.round(clamp(2.4 - Math.abs(kw) * 0.45, 0.45, 2.4) * 4) / 4).toFixed(2) + "s";
-      const flow = (c, kw, reverse) => {
-        const on = kw != null && Math.abs(kw) > 0.03;
-        return `stroke:var(--${c});opacity:${on ? 1 : 0};--d:${dur(kw || 0)};animation-direction:${reverse ? "reverse" : "normal"}`;
-      };
+      const flow = (c, kw, reverse) => `stroke:var(--${c});opacity:${live(kw) ? 1 : 0};--d:${dur(kw || 0)};animation-direction:${reverse ? "reverse" : "normal"}`;
       const kwTxt = (v) => `${this._num(Math.abs(v), Math.abs(v) < 10 ? 1 : 0)} kW`;
       const node = (x, y, c, icon, value, label, act, extra = "", big = false, e = "") =>
-        `<button class="node" style="left:${x}%;top:${y}%" data-act="more" data-e="${esc(e)}"><div class="bub ${big ? "big" : ""} ${act ? "act" : ""}" style="--c:var(--${c});${extra}">${svgIcon(ICON[icon], 26)}</div><div class="nv"><span class="disp">${esc(value)}</span><span class="muted">${esc(label)}</span></div></button>`;
+        `<button class="node" style="left:${x}%;top:${y}%" data-act="more" data-e="${esc(e)}"><div class="bub ${big ? "big" : ""} ${act ? "act" : ""}" style="--c:var(--${c});${extra}">${svgIcon(ICON[icon], big ? 30 : 26)}</div><div class="nv"><span class="disp">${esc(value)}</span><span class="muted">${esc(label)}</span></div></button>`;
       const hasGrid = grid != null, hasBatt = batt != null || soc != null;
-      const P1 = "M110 60 C 200 60, 220 150, 300 150", P2 = "M490 60 C 400 60, 380 150, 300 150", P3 = "M110 240 C 200 240, 220 150, 300 150";
-      const lines = `<svg class="lines" viewBox="0 0 600 330" preserveAspectRatio="none" aria-hidden="true">
-        <path class="trk" d="${P1}" vector-effect="non-scaling-stroke"></path>
-        ${hasGrid ? `<path class="trk" d="${P2}" vector-effect="non-scaling-stroke"></path>` : ""}
-        ${hasBatt ? `<path class="trk" d="${P3}" vector-effect="non-scaling-stroke"></path>` : ""}
-        <path class="flow" d="${P1}" vector-effect="non-scaling-stroke" style="${flow("solar", solar, false)}"></path>
-        ${hasGrid ? `<path class="flow" d="${P2}" vector-effect="non-scaling-stroke" style="${flow("grid", grid, grid < 0)}"></path>` : ""}
-        ${hasBatt ? `<path class="flow" d="${P3}" vector-effect="non-scaling-stroke" style="${flow("battery", batt, (batt || 0) > 0)}"></path>` : ""}
+      // viewBox 600 × 380. Inverter at (300,170); corners: solar, grid on top, battery, load at the bottom.
+      const P = {
+        solar: "M110 60 C 200 60, 230 170, 300 170",
+        grid: "M490 60 C 400 60, 370 170, 300 170",
+        battery: "M110 280 C 200 280, 230 170, 300 170",
+        load: "M300 170 C 370 170, 400 280, 490 280"
+      };
+      const path = (cls, d, style) => `<path class="${cls}" d="${d}" vector-effect="non-scaling-stroke"${style ? ` style="${style}"` : ""}></path>`;
+      const lines = `<svg class="lines" viewBox="0 0 600 380" preserveAspectRatio="none" aria-hidden="true">
+        ${path("trk", P.solar)}${hasGrid ? path("trk", P.grid) : ""}${hasBatt ? path("trk", P.battery) : ""}${path("trk", P.load)}
+        ${path("flow", P.solar, flow("solar", solar, false))}
+        ${hasGrid ? path("flow", P.grid, flow("grid", grid, grid < 0)) : ""}
+        ${hasBatt ? path("flow", P.battery, flow("battery", batt, (batt || 0) > 0)) : ""}
+        ${path("flow", P.load, flow("acc", home, false))}
       </svg>`;
       const fill = soc != null ? `--fill:linear-gradient(to top, color-mix(in srgb, var(--battery) 30%, transparent) ${soc}%, var(--glass2) ${soc}%)` : "";
+      const T = 15.79, M = 44.74, B = 73.68;   // 60, 170, 280 of 380
       const nodes = [
-        node(18.33, 18.18, "solar", "solar", kwTxt(solar), w.solar_name || this._t("solar"), solar > 0.03, "", false, w.solar_power),
-        hasGrid ? node(81.67, 18.18, "grid", "grid", kwTxt(grid), grid < -0.03 ? this._t("exporting") : grid > 0.03 ? this._t("importing") : this._t("grid_idle"), Math.abs(grid) > 0.03, "", false, w.grid_power) : "",
-        node(50, 45.45, "text", "home", kwTxt(home), this._t("home"), true, "", true, w.home_power || ""),
-        hasBatt ? node(18.33, 72.7, "battery", "battery", soc != null ? `${soc}%` : kwTxt(batt || 0),
+        node(18.33, T, "solar", "solar", kwTxt(solar), w.solar_name || this._t("solar"), solar > 0.03, "", false, w.solar_power),
+        hasGrid ? node(81.67, T, "grid", "grid", kwTxt(grid), grid < -0.03 ? this._t("exporting") : grid > 0.03 ? this._t("importing") : this._t("grid_idle"), live(grid), "", false, w.grid_power) : "",
+        node(50, M, "text", "inverter", kwTxt(inv), invLabel, live(inv), "", true, w.inverter_power || w.inverter_status || ""),
+        hasBatt ? node(18.33, B, "battery", "battery", soc != null ? `${soc}%` : kwTxt(batt || 0),
           (batt || 0) > 0.03 ? this._t("charging", { v: kwTxt(batt) }) : (batt || 0) < -0.03 ? this._t("discharging", { v: kwTxt(batt) }) : this._t("battery_idle"),
-          Math.abs(batt || 0) > 0.03, fill, false, w.battery_soc || w.battery_power) : ""
+          live(batt), fill, false, w.battery_soc || w.battery_power) : "",
+        node(81.67, B, "acc", "home", kwTxt(home), w.load_name || this._t("load"), live(home), "", false, w.home_power || "")
       ].join("");
       return { body: `<div class="flowbox">${lines}${nodes}</div>`, meta: this._t("live") };
     }
@@ -895,10 +909,14 @@
       const st = this._st(ent);
       switch (act) {
         case "more": if (ent) this._moreInfo(ent); return;
-        case "light":
+        case "light": {
+          // Tiles can be lights, switches or input_booleans: use each entity's own toggle service.
           this._focus[wid] = ent;
-          this._call("light", "toggle", { entity_id: ent });
+          const dom = ent.split(".")[0];
+          if (["light", "switch", "input_boolean", "fan"].includes(dom)) this._call(dom, "toggle", { entity_id: ent });
+          else this._call("homeassistant", "toggle", { entity_id: ent });
           return this._schedule();
+        }
         case "scene": {
           const dom = ent.split(".")[0];
           if (dom === "scene") this._call("scene", "turn_on", { entity_id: ent });
@@ -951,7 +969,7 @@
       preset: "Theme preset", accent: "Accent colour", blur: "Glass blur", motion: "Animations", background: "Draw the glass background", header: "Show header",
       customize: "Show the Customize button", dashboard_theme: "Apply the glass theme to the whole dashboard (no theme file needed)", title: "Title", top_title: "Title (empty = greeting)", min_height: "Minimum height (e.g. 100vh for a Panel view)", language: "Language",
       type: "Widget type", size: "Size", entity: "Entity", name: "Name", subtitle: "Subtitle", color: "Dot colour", decimals: "Decimals", description: "Description",
-      solar_power: "Solar power", home_power: "House consumption (optional, computed if empty)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
+      solar_power: "Solar power", home_power: "Load / house consumption (optional, computed if empty)", inverter_power: "Inverter output power (optional)", inverter_status: "Inverter status (optional, e.g. work mode)", inverter_temperature: "Inverter temperature (optional)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
       grid_power: "Grid power", invert_battery: "Battery sensor is positive when discharging (GoodWe)", invert_grid: "Grid sensor is positive when exporting (GoodWe)",
       modes: "Mode buttons (empty = automatic)", active_hours: "Keep a scene marked active for (hours)", temperature: "Temperature sensor",
       lock: "Lock", lock_name: "Lock name", sensors: "Door and window sensors", move_up: "Move up", move_down: "Move down", delete: "Delete",
@@ -963,7 +981,7 @@
       preset: "Temă", accent: "Culoare de accent", blur: "Estompare sticlă", motion: "Animații", background: "Fundal de sticlă", header: "Afișează antetul",
       customize: "Afișează butonul Personalizează", dashboard_theme: "Aplică tema de sticlă pe tot tabloul (fără fișier de temă)", title: "Titlu", top_title: "Titlu (gol = salut)", min_height: "Înălțime minimă (ex. 100vh pentru vizualizare Panou)", language: "Limbă",
       type: "Tip widget", size: "Mărime", entity: "Entitate", name: "Nume", subtitle: "Subtitlu", color: "Culoare punct", decimals: "Zecimale", description: "Descriere",
-      solar_power: "Putere solară", home_power: "Consum casă (opțional, calculat dacă e gol)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
+      solar_power: "Putere solară", home_power: "Consum / sarcină (opțional, calculat dacă e gol)", inverter_power: "Putere ieșire invertor (opțional)", inverter_status: "Stare invertor (opțional, ex. mod de lucru)", inverter_temperature: "Temperatură invertor (opțional)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
       grid_power: "Putere rețea", invert_battery: "Senzorul bateriei e pozitiv la descărcare (GoodWe)", invert_grid: "Senzorul rețelei e pozitiv la injectare (GoodWe)",
       modes: "Butoane moduri (gol = automat)", active_hours: "Păstrează scena activă timp de (ore)", temperature: "Senzor temperatură",
       lock: "Încuietoare", lock_name: "Nume încuietoare", sensors: "Senzori uși și ferestre", move_up: "Mută sus", move_down: "Mută jos", delete: "Șterge",
@@ -1084,8 +1102,10 @@
       const subtitle = { name: "subtitle", selector: { text: {} } };
       const power = (n) => ({ name: n, selector: { entity: { domain: "sensor" } } });
       switch (type) {
-        case "energy": return [sizes, title, power("solar_power"), power("home_power"),
-          { type: "grid", name: "", schema: [power("battery_power"), power("battery_soc")] }, power("grid_power"),
+        case "energy": return [sizes, title, power("solar_power"), power("grid_power"),
+          { type: "grid", name: "", schema: [power("battery_power"), power("battery_soc")] }, power("home_power"),
+          power("inverter_power"),
+          { type: "grid", name: "", schema: [{ name: "inverter_status", selector: { entity: { domain: "sensor" } } }, power("inverter_temperature")] },
           { name: "invert_battery", selector: { boolean: {} } }, { name: "invert_grid", selector: { boolean: {} } }];
         case "lights": return [sizes, title];
         case "climate": return [sizes, title, { name: "entity", selector: { entity: { domain: "climate" } } },
@@ -1103,7 +1123,7 @@
       }
     }
     _rowSchema(kind) {
-      if (kind === "lights") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: "light" } } }, { name: "name", selector: { text: {} } }, { name: "subtitle", selector: { text: {} } }] }];
+      if (kind === "lights") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["light", "switch", "input_boolean"] } } }, { name: "name", selector: { text: {} } }, { name: "subtitle", selector: { text: {} } }] }];
       if (kind === "scenes") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["scene", "script", "button", "input_button"] } } }, { name: "name", selector: { text: {} } }] }, { name: "description", selector: { text: {} } }];
       const colors = { "": this._l("accent"), cool: "Cool (blue)", heat: "Heat (orange)", solar: "Solar (yellow)", battery: "Battery (green)", grid: "Grid (violet)", alert: "Alert (red)" };
       return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: "sensor" } } }, { name: "name", selector: { text: {} } },
@@ -1320,6 +1340,11 @@
       const home = pick(power, /load|house|home|consum/); if (home) e.home_power = home;
       const soc = ids.find((id) => id.startsWith("sensor.") && st[id].attributes.device_class === "battery" && /batt|soc|charge/.test(nm(id)));
       if (soc) e.battery_soc = soc;
+      const sensors = ids.filter((id) => id.startsWith("sensor."));
+      const ist = sensors.find((id) => /work.?mode|inverter.*(status|state)|(status|state).*inverter/.test(nm(id)));
+      if (ist) e.inverter_status = ist;
+      const itemp = sensors.find((id) => st[id].attributes.device_class === "temperature" && /inverter|radiator|module|goodwe/.test(nm(id)));
+      if (itemp) e.inverter_temperature = itemp;
       widgets.push(e);
     }
     const lights = of("light").filter((id) => !st[id].attributes.entity_id).slice(0, 6);
