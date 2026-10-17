@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="400" viewBox="0 0 880 400" font-family="Figtree, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <radialGradient id="o1" cx="10%" cy="0%" r="60%"><stop offset="0" stop-color="#4552d8" stop-opacity=".55"/><stop offset="1" stop-color="#4552d8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="o2" cx="95%" cy="90%" r="60%"><stop offset="0" stop-color="#0f9e98" stop-opacity=".45"/><stop offset="1" stop-color="#0f9e98" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="880" height="400" rx="24" fill="#080c18"/>
+  <rect width="880" height="400" rx="24" fill="url(#o1)"/>
+  <rect width="880" height="400" rx="24" fill="url(#o2)"/>
+
+  <!-- dialog -->
+  <rect x="28" y="28" width="824" height="344" rx="20" fill="#141a2b" stroke="rgba(255,255,255,.14)"/>
+  <text x="56" y="66" fill="#f2f4fb" font-size="18" font-weight="600">Aurora Glass card configuration</text>
+  <!-- left: code editor -->
+  <rect x="48" y="88" width="430" height="240" rx="12" fill="#0b0f1c" stroke="rgba(255,255,255,.1)"/>
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13">
+    <text x="64" y="116" fill="#6f7790">1</text><text x="88" y="116"><tspan fill="#ffb27a">type</tspan><tspan fill="#aeb6cb">: custom:aurora-glass-card</tspan></text>
+    <text x="64" y="138" fill="#6f7790">2</text><text x="88" y="138"><tspan fill="#ffb27a">preset</tspan><tspan fill="#aeb6cb">: auto</tspan></text>
+    <text x="64" y="160" fill="#6f7790">3</text><text x="88" y="160"><tspan fill="#ffb27a">min_height</tspan><tspan fill="#aeb6cb">: 100vh</tspan></text>
+    <text x="64" y="182" fill="#6f7790">4</text><text x="88" y="182"><tspan fill="#ffb27a">widgets</tspan><tspan fill="#aeb6cb">:</tspan></text>
+    <text x="64" y="204" fill="#6f7790">5</text><text x="104" y="204"><tspan fill="#aeb6cb">- </tspan><tspan fill="#ffb27a">type</tspan><tspan fill="#aeb6cb">: energy</tspan></text>
+    <text x="64" y="226" fill="#6f7790">6</text><text x="120" y="226"><tspan fill="#ffb27a">size</tspan><tspan fill="#aeb6cb">: L</tspan></text>
+    <text x="64" y="248" fill="#6f7790">7</text><text x="120" y="248"><tspan fill="#ffb27a">solar_power</tspan><tspan fill="#aeb6cb">: sensor.pv_power</tspan></text>
+    <text x="64" y="270" fill="#6f7790">8</text><text x="104" y="270"><tspan fill="#aeb6cb">- </tspan><tspan fill="#ffb27a">type</tspan><tspan fill="#aeb6cb">: weather</tspan></text>
+    <text x="64" y="292" fill="#6f7790">9</text><text x="120" y="292"><tspan fill="#ffb27a">entity</tspan><tspan fill="#aeb6cb">: weather.home</tspan></text>
+  </g>
+  <!-- right: preview -->
+  <rect x="498" y="88" width="334" height="240" rx="14" fill="#0e1424" stroke="rgba(255,255,255,.1)"/>
+  <text x="518" y="118" fill="#aeb6cb" font-size="11">Saturday, 17 October · 14:05</text>
+  <text x="518" y="146" fill="#f2f4fb" font-size="24" font-weight="700">Good afternoon</text>
+  <rect x="518" y="164" width="294" height="92" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.14)"/>
+  <circle cx="568" cy="210" r="18" fill="#141a2b" stroke="#f6c84a" stroke-width="1.5"/>
+  <circle cx="668" cy="210" r="22" fill="#141a2b" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+  <circle cx="768" cy="210" r="18" fill="#141a2b" stroke="#b3a4ff" stroke-width="1.5"/>
+  <path d="M586 210 H646 M690 210 H750" stroke="#f6c84a" stroke-width="4" stroke-dasharray=".1 10" stroke-linecap="round"/>
+  <rect x="518" y="266" width="142" height="46" rx="12" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.14)"/>
+  <rect x="670" y="266" width="142" height="46" rx="12" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.14)"/>
+  <text x="532" y="294" fill="#f2f4fb" font-size="13" font-weight="600">Weather · 14°</text>
+  <text x="684" y="294" fill="#f2f4fb" font-size="13" font-weight="600">Lights · 2 on</text>
+  <!-- footer -->
+  <rect x="48" y="338" width="170" height="26" rx="13" fill="rgba(255,178,122,.16)" stroke="#ffb27a"/>
+  <text x="133" y="356" fill="#ffb27a" font-size="13" font-weight="600" text-anchor="middle">Show visual editor</text>
+  <text x="232" y="356" fill="#aeb6cb" font-size="12">← switch between YAML and the visual editor at any time</text>
+  <rect x="742" y="338" width="90" height="26" rx="13" fill="#ffb27a"/>
+  <text x="787" y="356" fill="#1c140c" font-size="13" font-weight="700" text-anchor="middle">Save</text>
+  <!-- badges -->
+  <g font-size="13" font-weight="800" text-anchor="middle">
+    <circle cx="48" cy="88" r="13" fill="#ffb27a"/><text x="48" y="93" fill="#1c140c">1</text>
+    <circle cx="498" cy="88" r="13" fill="#ffb27a"/><text x="498" y="93" fill="#1c140c">2</text>
+    <circle cx="742" cy="338" r="13" fill="#ffb27a"/><text x="742" y="343" fill="#1c140c">3</text>
+  </g>
+</svg>
