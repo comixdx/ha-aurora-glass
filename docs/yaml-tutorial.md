@@ -155,11 +155,34 @@ Tap a tile to toggle it. The slider under the light tiles dims the last light yo
 
 Every widget also accepts `title:` (replaces the heading) and `id:` (only needed if you use the same widget type twice and want each to keep its own place in Customize mode).
 
-## 8. A complete example
+## 8. Pop-ups and the entity card
+
+Holding a tile opens a glass pop-up with the entity's controls. To change that for the whole card:
+
+```yaml
+type: custom:aurora-glass-card
+popup: aurora      # aurora (default) | native = Home Assistant's dialog | none
+widgets:
+  - …
+```
+
+To put one entity anywhere on a dashboard as an animated glass tile, use the separate entity card:
+
+```yaml
+type: custom:aurora-glass-entity
+entity: fan.bedroom
+layout: tile         # or row (with an on/off switch on the right)
+tap_action: auto     # auto | toggle | popup | native | none
+hold_action: popup
+```
+
+`name`, `icon`, `subtitle`, `preset`, `accent`, `glass`, `show_state` and `motion` work like on the main card. In a Sections view, a tile takes 3 columns × 2 rows and a row takes 6 × 1; drag the corner to resize.
+
+## 9. A complete example
 
 [`examples/dashboard.yaml`](../examples/dashboard.yaml) is a full dashboard view with every widget. Paste it into the **Raw configuration editor** of an empty dashboard and replace the entity ids with yours.
 
-## 9. When something doesn't work
+## 10. When something doesn't work
 
 | What you see | Usually means |
 |---|---|
