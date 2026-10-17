@@ -4,6 +4,8 @@
 #     themes: !include_dir_merge_named themes
 # Then: Developer tools → Actions → frontend.reload_themes, and pick the theme in your profile.
 #
+# The themes also give Home Assistant's own dialogs (more-info, settings) the glass look.
+#
 # Optional: the Aurora Glass card already applies this look to its own dashboard
 # (editor switch "Apply the glass theme to the whole dashboard"). Use this file only if you
 # want the glass look on every dashboard and in the rest of the HA interface.
@@ -12,8 +14,13 @@ Aurora Glass:
   # Shared by both modes
   ha-card-border-radius: "28px"
   ha-card-border-width: "1px"
-  ha-dialog-border-radius: "28px"
+  ha-dialog-border-radius: "30px"
   mdc-shape-medium: "20px"
+  # Glass dialogs (more-info, settings, confirmations) and the phone bottom sheet
+  ha-dialog-surface-backdrop-filter: "blur(38px) saturate(170%)"
+  ha-dialog-scrim-backdrop-filter: "blur(7px)"
+  dialog-backdrop-filter: "blur(7px)"
+  ha-bottom-sheet-border-radius: "30px"
   state-climate-cool-color: "var(--ag-cool)"
   state-climate-heat-color: "var(--ag-heat)"
   energy-solar-color: "var(--ag-solar)"
@@ -48,6 +55,13 @@ Aurora Glass:
       ha-card-background: "rgba(255,255,255,0.07)"
       ha-card-border-color: "rgba(255,255,255,0.13)"
       ha-card-box-shadow: "inset 0 1px 0 rgba(255,255,255,.16), 0 30px 60px -32px rgba(0,0,0,.55)"
+      ha-dialog-surface-background: "rgba(8,12,24,0.66)"
+      ha-bottom-sheet-surface-background: "rgba(8,12,24,0.66)"
+      mdc-dialog-scrim-color: "rgba(4,6,14,0.45)"
+      dialog-box-shadow: "inset 0 1px 0 rgba(255,255,255,.16), 0 40px 90px -30px rgba(0,0,0,.7)"
+      state-switch-active-color: "#ffb27a"
+      state-input_boolean-active-color: "#ffb27a"
+      state-fan-active-color: "#6cb6ff"
       lovelace-background: >-
         radial-gradient(circle at 8% 0%, rgba(69,82,216,0.55), transparent 42%),
         radial-gradient(circle at 85% 35%, rgba(15,158,152,0.45), transparent 42%),
@@ -77,6 +91,13 @@ Aurora Glass:
       ha-card-background: "rgba(255,255,255,0.48)"
       ha-card-border-color: "rgba(255,255,255,0.85)"
       ha-card-box-shadow: "inset 0 1px 0 rgba(255,255,255,.95), 0 30px 60px -32px rgba(55,65,110,.28)"
+      ha-dialog-surface-background: "rgba(233,236,244,0.74)"
+      ha-bottom-sheet-surface-background: "rgba(233,236,244,0.74)"
+      mdc-dialog-scrim-color: "rgba(40,46,72,0.22)"
+      dialog-box-shadow: "inset 0 1px 0 rgba(255,255,255,.95), 0 40px 90px -30px rgba(55,65,110,.4)"
+      state-switch-active-color: "#ff9a52"
+      state-input_boolean-active-color: "#ff9a52"
+      state-fan-active-color: "#2b74cc"
       lovelace-background: >-
         radial-gradient(circle at 8% 0%, rgba(255,177,150,0.8), transparent 42%),
         radial-gradient(circle at 85% 35%, rgba(151,191,255,0.75), transparent 42%),
@@ -85,7 +106,19 @@ Aurora Glass:
 
 Aurora Glass Lagoon:
   ha-card-border-radius: "28px"
-  ha-dialog-border-radius: "28px"
+  ha-dialog-border-radius: "30px"
+  # Glass dialogs (more-info, settings, confirmations) and the phone bottom sheet
+  ha-dialog-surface-backdrop-filter: "blur(38px) saturate(170%)"
+  ha-dialog-scrim-backdrop-filter: "blur(7px)"
+  dialog-backdrop-filter: "blur(7px)"
+  ha-bottom-sheet-border-radius: "30px"
+  ha-dialog-surface-background: "rgba(3,19,26,0.66)"
+  ha-bottom-sheet-surface-background: "rgba(3,19,26,0.66)"
+  mdc-dialog-scrim-color: "rgba(4,6,14,0.45)"
+  dialog-box-shadow: "inset 0 1px 0 rgba(255,255,255,.14), 0 40px 90px -30px rgba(0,0,0,.7)"
+  state-switch-active-color: "#6fe0b0"
+  state-input_boolean-active-color: "#6fe0b0"
+  state-fan-active-color: "#6cb6ff"
   primary-color: "#6fe0b0"
   accent-color: "#6fe0b0"
   state-light-active-color: "#ffb27a"
@@ -118,7 +151,19 @@ Aurora Glass Lagoon:
 
 Aurora Glass Ember:
   ha-card-border-radius: "28px"
-  ha-dialog-border-radius: "28px"
+  ha-dialog-border-radius: "30px"
+  # Glass dialogs (more-info, settings, confirmations) and the phone bottom sheet
+  ha-dialog-surface-backdrop-filter: "blur(38px) saturate(170%)"
+  ha-dialog-scrim-backdrop-filter: "blur(7px)"
+  dialog-backdrop-filter: "blur(7px)"
+  ha-bottom-sheet-border-radius: "30px"
+  ha-dialog-surface-background: "rgba(20,11,9,0.66)"
+  ha-bottom-sheet-surface-background: "rgba(20,11,9,0.66)"
+  mdc-dialog-scrim-color: "rgba(4,6,14,0.45)"
+  dialog-box-shadow: "inset 0 1px 0 rgba(255,255,255,.14), 0 40px 90px -30px rgba(0,0,0,.7)"
+  state-switch-active-color: "#f3cf5e"
+  state-input_boolean-active-color: "#f3cf5e"
+  state-fan-active-color: "#6cb6ff"
   primary-color: "#f3cf5e"
   accent-color: "#f3cf5e"
   state-light-active-color: "#f3cf5e"
