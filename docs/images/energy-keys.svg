@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="510" viewBox="0 0 880 510" font-family="Figtree, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <radialGradient id="o1" cx="15%" cy="10%" r="55%"><stop offset="0" stop-color="#4552d8" stop-opacity=".5"/><stop offset="1" stop-color="#4552d8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="o2" cx="90%" cy="85%" r="55%"><stop offset="0" stop-color="#0f9e98" stop-opacity=".4"/><stop offset="1" stop-color="#0f9e98" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="880" height="510" rx="24" fill="#080c18"/>
+  <rect width="880" height="510" rx="24" fill="url(#o1)"/>
+  <rect width="880" height="510" rx="24" fill="url(#o2)"/>
+  <g transform="translate(0,48)">
+
+  <!-- tracks -->
+  <g fill="none" stroke-width="2" stroke="rgba(255,255,255,.14)">
+    <path d="M220 90 C 330 90, 360 230, 440 230"/>
+    <path d="M660 90 C 550 90, 520 230, 440 230"/>
+    <path d="M220 370 C 330 370, 360 230, 440 230"/>
+    <path d="M440 230 C 520 230, 550 370, 660 370"/>
+  </g>
+  <!-- flows -->
+  <g fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray=".1 14">
+    <path d="M220 90 C 330 90, 360 230, 440 230" stroke="#f6c84a"/>
+    <path d="M660 90 C 550 90, 520 230, 440 230" stroke="#b3a4ff"/>
+    <path d="M220 370 C 330 370, 360 230, 440 230" stroke="#5fdca6"/>
+    <path d="M440 230 C 520 230, 550 370, 660 370" stroke="#ffb27a"/>
+  </g>
+  <!-- nodes -->
+  <g stroke-width="2">
+    <circle cx="220" cy="90" r="34" fill="#121829" stroke="#f6c84a"/>
+    <circle cx="660" cy="90" r="34" fill="#121829" stroke="#b3a4ff"/>
+    <circle cx="440" cy="230" r="42" fill="#121829" stroke="rgba(255,255,255,.6)"/>
+    <circle cx="220" cy="370" r="34" fill="#121829" stroke="#5fdca6"/>
+    <circle cx="660" cy="370" r="34" fill="#121829" stroke="#ffb27a"/>
+  </g>
+  <g font-size="14" font-weight="700" text-anchor="middle">
+    <text x="220" y="95" fill="#f6c84a">SOLAR</text>
+    <text x="660" y="95" fill="#b3a4ff">GRID</text>
+    <text x="440" y="226" fill="#f2f4fb" font-size="13">INVERTER</text>
+    <text x="440" y="244" fill="#aeb6cb" font-size="11" font-weight="500">Normal · 41°</text>
+    <text x="220" y="375" fill="#5fdca6" font-size="13">BATTERY</text>
+    <text x="660" y="375" fill="#ffb27a">LOAD</text>
+  </g>
+  <!-- key labels -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13">
+    <text x="220" y="146" fill="#ffcfa8" text-anchor="middle">solar_power</text>
+    <text x="660" y="146" fill="#ffcfa8" text-anchor="middle">grid_power</text>
+    <text x="660" y="164" fill="#aeb6cb" text-anchor="middle" font-size="12">+ import · − export</text>
+    <text x="440" y="296" fill="#ffcfa8" text-anchor="middle">inverter_power</text>
+    <text x="440" y="314" fill="#ffcfa8" text-anchor="middle">inverter_status</text>
+    <text x="440" y="332" fill="#ffcfa8" text-anchor="middle">inverter_temperature</text>
+    <text x="220" y="426" fill="#ffcfa8" text-anchor="middle">battery_power · battery_soc</text>
+    <text x="220" y="444" fill="#aeb6cb" text-anchor="middle" font-size="12">+ charging · − discharging</text>
+    <text x="660" y="426" fill="#ffcfa8" text-anchor="middle">home_power</text>
+    <text x="660" y="444" fill="#aeb6cb" text-anchor="middle" font-size="12">optional — computed if empty</text>
+  </g>
+  </g>
+  <!-- legend -->
+  <g font-size="12" fill="#aeb6cb" text-anchor="middle">
+    <text x="440" y="36" fill="#f2f4fb" font-size="15" font-weight="700">Energy flow → YAML keys</text>
+    <text x="440" y="56">Dots run toward where the power goes, faster when more kW flows.</text>
+    <text x="440" y="74">Wrong direction? Flip it with <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#ffcfa8">invert_battery</tspan> / <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#ffcfa8">invert_grid</tspan> (GoodWe: both true).</text>
+  </g>
+</svg>
