@@ -150,7 +150,14 @@ Tap a tile to toggle it. The slider under the light tiles dims the last light yo
 
   - type: weather
     size: S
-    entity: weather.home
+    entity: weather.home             # any weather integration
+
+  - type: weather                    # or the built-in Open-Meteo service
+    size: S
+    source: open_meteo               # free, no account or API key
+    latitude: 44.43                  # optional, default = your home
+    longitude: 26.10
+    location_name: Bucharest         # optional
 ```
 
 Every widget also accepts `title:` (replaces the heading) and `id:` (only needed if you use the same widget type twice and want each to keep its own place in Customize mode).
