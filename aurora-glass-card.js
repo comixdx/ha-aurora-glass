@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.5.2
+ * Aurora Glass Card for Home Assistant — v0.5.3
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
@@ -8,7 +8,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.5.2";
+  const VERSION = "0.5.3";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -2032,7 +2032,9 @@
           if (!b) return;
           const ev = new Event("hass-action", { bubbles: true, composed: true });
           ev.detail = { config: { entity: b.entity, tap_action: b.tap_action || { action: "none" } }, action: "tap" };
-          return this.dispatchEvent(ev);
+          // after this tap has finished, so a pop-up it opens (e.g. Bubble Card) isn't closed by the same tap
+          setTimeout(() => this.dispatchEvent(ev), 150);
+          return;
         }
         case "light": {
           // Tiles can be lights, switches or input_booleans: use each entity's own toggle service.
