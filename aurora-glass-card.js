@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.5.1
+ * Aurora Glass Card for Home Assistant — v0.5.2
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
@@ -8,7 +8,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.5.1";
+  const VERSION = "0.5.2";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -191,6 +191,12 @@
   .dot{width:8px;height:8px;border-radius:99px;background:var(--c);box-shadow:0 0 10px var(--c)}
   .pill{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:99px;font-size:14px;font-weight:600;transition:background .3s,color .3s}
   .pill.on{background:var(--acc);color:#1c140c;border-color:var(--acc)}
+  header.has-hb{position:relative;padding-top:4px}
+  .hbs{position:absolute;top:-8px;right:0;display:flex;gap:8px;z-index:2}
+  header.has-hb .hello{padding-right:var(--hbw,0px)}
+  .hb{flex:none;width:36px;height:36px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--text);--mdc-icon-size:18px;transition:transform .2s}
+  .hb:active{transform:scale(.92)}
+  .hb ha-icon{display:flex}
   .panel{display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px 32px;padding:20px 24px;border-radius:26px;animation:agDrop .45s cubic-bezier(.2,.8,.2,1) both}
   .grp{display:flex;flex-direction:column;gap:10px}
   .lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -1647,7 +1653,12 @@
       }).join("");
       const edit = this._config.customize === false ? "" :
         `<button class="pill ${this._p.editing ? "on" : "glass2"}" data-act="edit" aria-pressed="${this._p.editing}">${svgIcon(ICON.sliders)}<span>${this._t(this._p.editing ? "done" : "customize")}</span></button>`;
-      return `<header><div class="hello"><div class="muted" style="font-size:14px;letter-spacing:.02em">${esc(date)} · ${esc(time)}</div><h1 class="disp">${esc(title)}</h1></div><div class="chips">${chips}${edit}</div></header>`;
+      // Small round buttons after Customize (e.g. logout, power menu); each runs a normal HA tap_action.
+      const isAdmin = !!this._hass?.user?.is_admin, uid = this._hass?.user?.id;
+      const hb = asList(this._config.header_buttons).map((b, i) => [b, i])
+        .filter(([b]) => b && (!b.admin_only || isAdmin) && (!b.users || asList(b.users).includes(uid)))
+        .map(([b, i]) => `<button class="hb glass2" data-act="hb" data-i="${i}" aria-label="${esc(b.name || b.icon || "")}" title="${esc(b.name || "")}"><ha-icon icon="${esc(b.icon || "mdi:gesture-tap")}"></ha-icon></button>`).join("");
+      return `<header class="${hb ? "has-hb" : ""}">${hb ? `<div class="hbs">${hb}</div>` : ""}<div class="hello"><div class="muted" style="font-size:14px;letter-spacing:.02em">${esc(date)} · ${esc(time)}</div><h1 class="disp">${esc(title)}</h1></div><div class="chips">${chips}${edit}</div></header>`;
     }
 
     _panel() {
@@ -2016,6 +2027,13 @@
       const st = this._st(ent);
       switch (act) {
         case "more": if (ent) this._popup(ent, el); return;
+        case "hb": {
+          const b = asList(this._config.header_buttons)[Number(el.dataset.i)];
+          if (!b) return;
+          const ev = new Event("hass-action", { bubbles: true, composed: true });
+          ev.detail = { config: { entity: b.entity, tap_action: b.tap_action || { action: "none" } }, action: "tap" };
+          return this.dispatchEvent(ev);
+        }
         case "light": {
           // Tiles can be lights, switches or input_booleans: use each entity's own toggle service.
           this._focus[wid] = ent;
