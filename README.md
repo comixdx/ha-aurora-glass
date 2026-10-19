@@ -4,9 +4,9 @@ A frosted-glass dashboard card whose animations follow real entity states: dots 
 
 ![The finished Aurora Glass dashboard: header with chips, energy flow, lights, climate and more](docs/images/shot-dashboard-result-v2.svg)
 
-**Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. The theme](#9-the-theme-for-all-of-home-assistant) · [10. The complete example](#10-the-complete-example)
+**Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. Home security](#9-home-security) · [10. The theme](#10-the-theme-for-all-of-home-assistant) · [11. The complete example](#11-the-complete-example)
 
-**Part 2 — with YAML:** [Where the YAML goes](#where-the-yaml-goes) · [The smallest card](#the-smallest-working-card) · [The parts of the card](#the-parts-of-the-card) · [Widget sizes](#widget-sizes) · [Energy flow](#energy-flow) · [Lights and scenes](#lights-and-scenes) · [The other widgets](#the-other-widgets) · [Pop-ups and the entity card](#pop-ups-and-the-entity-card-in-yaml) · [Widget cards](#widget-cards-in-yaml) · [All card options](#all-card-options) · [When something doesn't work](#when-something-doesnt-work)
+**Part 2 — with YAML:** [Where the YAML goes](#where-the-yaml-goes) · [The smallest card](#the-smallest-working-card) · [The parts of the card](#the-parts-of-the-card) · [Widget sizes](#widget-sizes) · [Energy flow](#energy-flow) · [Lights and scenes](#lights-and-scenes) · [The other widgets](#the-other-widgets) · [Pop-ups and the entity card](#pop-ups-and-the-entity-card-in-yaml) · [Security widgets](#security-widgets) · [Widget cards](#widget-cards-in-yaml) · [All card options](#all-card-options) · [When something doesn't work](#when-something-doesnt-work)
 
 ---
 
@@ -110,7 +110,7 @@ Hold any tile (or right-click it), or tap a header chip, an energy-flow node or 
 
 ![The climate pop-up: dial with − / +, modes, fan mode and presets](docs/images/shot-popup-climate.svg)
 
-**⋯** or *More details* opens Home Assistant's own dialog. In the editor, *Hold a tile … to open* lets you choose the Aurora Glass pop-up, Home Assistant's dialog or nothing. Home Assistant's own dialogs get the glass look too: automatically on dashboards with the Aurora Glass card, and everywhere when you use [the theme](#9-the-theme-for-all-of-home-assistant).
+**⋯** or *More details* opens Home Assistant's own dialog. In the editor, *Hold a tile … to open* lets you choose the Aurora Glass pop-up, Home Assistant's dialog or nothing. Home Assistant's own dialogs get the glass look too: automatically on dashboards with the Aurora Glass card, and everywhere when you use [the theme](#10-the-theme-for-all-of-home-assistant).
 
 **Weather service.** In the weather widget pick *Weather service*: a Home Assistant weather entity from any integration, or **Open-Meteo**, built into the card — no integration, account or API key, it uses your home location and also gives the pop-up a 5-day forecast.
 
@@ -134,7 +134,7 @@ Sensor tiles (temperature, humidity, power, …) read like a card: the icon and 
 
 Every widget is also a card of its own, for a **Sections** view where Home Assistant places and sizes each card.
 
-1. In a Sections view: **+ Add card** → search **Aurora Glass** → pick **Energy flow**, **Lights**, **Climate**, **Rooms**, **Scenes**, **Now playing**, **Fan**, **Floor heating**, **Security**, **Weather** or **Header** (greeting, date, chips and the round header buttons).
+1. In a Sections view: **+ Add card** → search **Aurora Glass** → pick **Energy flow**, **Lights**, **Climate**, **Rooms**, **Scenes**, **Now playing**, **Fan**, **Floor heating**, **Security**, **Weather**, **Header** or one of the [home security cards](#9-home-security) (greeting, date, chips and the round header buttons).
 2. It opens filled in with matching entities. The editor has the same fields as that widget in the big card, plus **Size** and an **Appearance** section (theme preset, accent, blur, animations, pop-up and language). The Header card also edits the chips and the header buttons (icon, name, admins only, tap action), and **Show the greeting** turns the "Good evening" line off.
 3. **Save**, then drag the cards where you want them and resize them by their corner.
 
@@ -153,7 +153,29 @@ They look and animate exactly like the widgets on the board, pop-ups included. T
 
 Small cards fit small screens: a card narrower than about 300 pixels (an S card on a phone) uses less padding, hides the small note in its header, puts its tiles in one column and shrinks the fan, the lock, the weather picture, the climate dial and the big numbers, so nothing is cut off.
 
-## 9. The theme for all of Home Assistant
+## 9. Home security
+
+Nine more cards for keeping an eye on the house. Each is a widget for the big card and a card of its own: **+ Add card** → search **Aurora Glass** → **Alarm**, **Safety**, **Doors & windows**, **Who's home**, **Activity**, **Camera**, **Doorbell**, **Device health** or **Leaving home**. The lists fill themselves from your Home Assistant when you leave them empty, so most of them work straight from the card picker.
+
+![The alarm panel, safety sensors, and doors and windows](docs/images/shot-security-1.svg)
+
+- **Alarm** — for an alarm panel (Alarmo, the manual alarm or your security integration). The shield shows the state: calm when disarmed, glowing when armed, pulsing during the exit and entry delays, flashing red when triggered. The buttons arm Home, Away, Night or Vacation (only the modes your alarm has) and disarm; when the alarm has a code, a glass keypad opens in the card.
+- **Safety** — smoke, gas, CO, heat and water-leak sensors. "All safe" while nothing is wrong; a sensor that goes off turns red, pulses and moves to the top.
+- **Doors & windows** — grouped by area, open ones first with how long they have been open, and the number open in the header.
+
+![Who's home, the activity of the last day, and the doorbell with its camera](docs/images/shot-security-2.svg)
+
+- **Who's home** — everyone's picture (or initials) with a green ring when home, and where they are since when. When everyone is out, **Secure the house** runs the script, scene or button you pick (tap twice to confirm).
+- **Activity** — the last 24 hours of motion and door sensors on one timeline each, the most recent first.
+- **Camera** — the camera's picture, refreshed every 30 seconds, with a **Motion** badge from a motion sensor you pick; tap it for Home Assistant's live stream.
+- **Doorbell** — the bell swings while it rings and shows the last ring; add the door camera to see who's there.
+
+![Device health and leaving home](docs/images/shot-security-3.svg)
+
+- **Device health** — sensors that are offline and batteries below 25% (change it with **Low battery below**), worst first. A security sensor with a flat battery can't warn you.
+- **Leaving home** — what's still on or open (lights, doors, windows, locks, garage doors, music) and a **Secure the house** button for your script, which needs a second tap to run.
+
+## 10. The theme for all of Home Assistant
 
 `themes/aurora_glass.yaml` puts the same look on every dashboard and on the rest of the interface: the sidebar, settings pages and dialogs. It has four themes: **Aurora Glass** (Midnight in dark mode, Dawn in light mode), **Aurora Glass Lagoon** and **Aurora Glass Ember**.
 
@@ -170,7 +192,7 @@ Small cards fit small screens: a card narrower than about 300 pixels (an S card 
 
 Not needed for the Aurora Glass dashboard itself.
 
-## 10. The complete example
+## 11. The complete example
 
 [`examples/dashboard.yaml`](examples/dashboard.yaml) is a whole dashboard: the Aurora Glass card with every widget, kiosk mode (guests get it full screen without the sidebar and header) and a small round power button next to the Customize button (`header_buttons`) that opens a glass menu in the middle of the screen with Restart, Reboot host and Shut down (with confirmation), visible only to the users you list. Kiosk mode needs kiosk-mode; the power menu needs Bubble Card.
 
@@ -388,6 +410,46 @@ Tap a tile to toggle it. The slider under the light tiles dims the last light yo
 
 Every widget also accepts `title:` (replaces the heading) and `id:` (only needed if you use the same widget type twice and want each to keep its own place in Customize mode).
 
+## Security widgets
+
+```yaml
+  - type: alarm
+    entity: alarm_control_panel.home
+    modes: [away, home, night]          # optional; default = what the alarm supports
+
+  - type: safety                        # entities: [...] optional, default = every smoke,
+                                        # gas, CO, heat, water-leak and safety sensor
+  - type: openings                      # entities: [...] optional, default = every door and window
+
+  - type: presence
+    people: [person.alex, person.maria] # optional, default = everyone
+    script: script.leave_home           # optional: "Secure the house" when everyone is out
+
+  - type: activity
+    size: L
+    entities: [binary_sensor.hallway_motion, binary_sensor.front_door]   # optional
+
+  - type: camera
+    entity: camera.front_door
+    motion_sensor: binary_sensor.front_door_motion   # optional
+
+  - type: doorbell
+    entity: event.front_doorbell        # an event, binary_sensor or sensor
+    camera: camera.front_door           # optional
+
+  - type: health
+    battery_below: 25                   # percent
+    entities: [...]                     # optional, default = every battery and every offline device
+
+  - type: leaving
+    script: script.leave_home           # optional
+    checks: [...]                       # optional, default = lights, doors, windows, locks, garage doors, players
+```
+
+Each is also a card of its own, `custom:aurora-glass-alarm`, `custom:aurora-glass-safety` and so on, with the same keys.
+
+![Security widgets](docs/images/shot-security-1.svg)
+
 ## Pop-ups and the entity card in YAML
 
 Holding a tile opens a glass pop-up with the entity's controls. To change that for the whole card:
@@ -494,6 +556,15 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | `fan` | `entity`. Tap cycles 33 / 66 / 100 % / off. |
 | `floor` | `entity` (climate, switch or input_boolean), `temperature`, `subtitle`. |
 | `security` | `lock`, `lock_name`, `sensors` (binary sensors; open ones pulse). |
+| `alarm` | `entity` (alarm panel), `modes` (`home`, `away`, `night`, `vacation`; default = what it supports). A glass keypad opens when the alarm has a code. |
+| `safety` | `entities`: binary sensors (default: every smoke, gas, CO, heat, water-leak, safety, problem and tamper sensor). |
+| `openings` | `entities`: binary sensors (default: every door, window, garage door and opening), grouped by area. |
+| `presence` | `people` (default: every person), `script` (a script, scene or button for **Secure the house** when everyone is out). |
+| `activity` | `entities`: binary sensors (default: motion, occupancy, doors and windows; up to 12). |
+| `camera` | `entity` (camera), `motion_sensor` (optional). |
+| `doorbell` | `entity` (an event, binary_sensor or sensor), `camera` (optional). |
+| `health` | `battery_below` (default 25), `entities` (default: every battery sensor and every offline device), `limit` (default 8). |
+| `leaving` | `script` (optional), `checks` (default: lights, doors, windows, locks, garage doors and players). |
 | `weather` | `entity` (any weather integration: Met.no, OpenWeatherMap, AccuWeather, …), **or** `source: open_meteo` for the built-in Open-Meteo service (free, no account), with optional `latitude`, `longitude` (default: your home) and `location_name`. |
 
 ## When something doesn't work

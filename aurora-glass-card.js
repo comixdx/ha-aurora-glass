@@ -1,7 +1,9 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.9.1
+ * Aurora Glass Card for Home Assistant — v1.0.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
- * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
+ * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather,
+ * and for home security: alarm panel, safety sensors, doors & windows, who's home, activity, camera, doorbell,
+ * device health and leaving home.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
  * Also: glass pop-ups for any entity (hold a tile), the custom:aurora-glass-entity card with animated icons
  * and custom:aurora-glass-room (a room's temperature and humidity in one tile).
@@ -10,7 +12,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.9.1";
+  const VERSION = "1.0.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -73,7 +75,19 @@
       desc_climate: "A thermostat with mode buttons", desc_rooms: "Temperature and humidity of each room", desc_scenes: "Scenes and scripts as tap-to-run rows", desc_media: "A media player with artwork and controls",
       desc_fan: "A fan with an animated icon", desc_floor: "A heated floor with its temperature", desc_security: "A lock and door and window sensors", desc_weather: "Current weather and forecast",
       desc_header: "Greeting, date, chips and header buttons", err_widgets: "add a `widgets:` list", err_widget_type: "widget {n} needs a type", err_entity: "choose an entity",
-      err_room: "choose a temperature sensor", err_config: "Invalid configuration"
+      err_room: "choose a temperature sensor", err_config: "Invalid configuration",
+      alarm: "Alarm", safety: "Safety", openings: "Doors & windows", presence: "Who's home",
+      activity: "Activity", camera: "Camera", doorbell: "Doorbell", health: "Device health",
+      leaving: "Leaving home", desc_alarm: "Arm and disarm your alarm, with a keypad when it needs a code", desc_safety: "Smoke, gas, CO and water leak sensors at a glance", desc_openings: "Doors and windows by room, open ones first",
+      desc_presence: "Who is home, with a button to secure the house", desc_activity: "Motion and doors over the last 24 hours", desc_camera: "A camera snapshot that opens the live stream", desc_doorbell: "The doorbell's last ring, with its camera",
+      desc_health: "Low batteries and offline devices", desc_leaving: "What's still on or open, and a button to secure the house", not_set_up: "Pick its entities in the editor.", all_safe: "All safe",
+      n_alerts: "{n} alerts", opened: "opened {t}", no_area: "Other", n_home: "{n} home",
+      nobody_home: "Everyone's out", secure_house: "Secure the house", confirm_tap: "Tap again to confirm", cam_motion: "Motion",
+      cam_unavailable: "Camera unavailable", ringing: "Ringing!", last_ring: "Last ring {t}", no_rings: "No rings yet",
+      all_healthy: "All devices are healthy", offline: "Offline", n_issues: "{n} issues", more_n: "+{n} more",
+      ready_to_leave: "Ready to leave: everything is off and closed", n_to_check: "{n} to check", enter_code: "Enter the code", arm_home: "Home",
+      arm_away: "Away", arm_night: "Night", arm_vacation: "Vacation", disarm: "Disarm",
+      n_alerts_one: "1 alert", n_issues_one: "1 issue"
     },
     ro: {
       good_morning: "Bună dimineața", good_afternoon: "Bună ziua", good_evening: "Bună seara",
@@ -106,7 +120,19 @@
       desc_climate: "Un termostat cu butoane de mod", desc_rooms: "Temperatura și umiditatea fiecărei camere", desc_scenes: "Scene și scripturi pornite cu o atingere", desc_media: "Un player media cu copertă și comenzi",
       desc_fan: "Un ventilator cu iconiță animată", desc_floor: "Încălzirea în pardoseală cu temperatura ei", desc_security: "O încuietoare și senzori de uși și ferestre", desc_weather: "Vremea acum și prognoza",
       desc_header: "Salut, dată, indicatori și butoane în antet", err_widgets: "adaugă o listă `widgets:`", err_widget_type: "widgetul {n} are nevoie de un tip", err_entity: "alege o entitate",
-      err_room: "alege un senzor de temperatură", err_config: "Configurație invalidă"
+      err_room: "alege un senzor de temperatură", err_config: "Configurație invalidă",
+      alarm: "Alarmă", safety: "Siguranță", openings: "Uși și ferestre", presence: "Cine e acasă",
+      activity: "Activitate", camera: "Cameră video", doorbell: "Sonerie", health: "Starea dispozitivelor",
+      leaving: "Plecare de acasă", desc_alarm: "Armează și dezarmează alarma, cu tastatură când cere cod", desc_safety: "Senzori de fum, gaz, CO și inundație dintr-o privire", desc_openings: "Uși și ferestre pe camere, cele deschise primele",
+      desc_presence: "Cine e acasă, cu un buton de securizare a casei", desc_activity: "Mișcare și uși în ultimele 24 de ore", desc_camera: "O imagine de la cameră care deschide transmisia live", desc_doorbell: "Ultima sonerie, cu imaginea camerei",
+      desc_health: "Baterii descărcate și dispozitive offline", desc_leaving: "Ce mai e pornit sau deschis și un buton de securizare a casei", not_set_up: "Alege entitățile în editor.", all_safe: "Totul în siguranță",
+      n_alerts: "{n} alerte", opened: "deschis {t}", no_area: "Altele", n_home: "{n} acasă",
+      nobody_home: "Nu e nimeni acasă", secure_house: "Securizează casa", confirm_tap: "Atinge din nou pentru confirmare", cam_motion: "Mișcare",
+      cam_unavailable: "Camera nu e disponibilă", ringing: "Sună!", last_ring: "Ultima sonerie {t}", no_rings: "Nicio sonerie încă",
+      all_healthy: "Toate dispozitivele sunt în regulă", offline: "Offline", n_issues: "{n} probleme", more_n: "încă {n}",
+      ready_to_leave: "Gata de plecare: totul e oprit și închis", n_to_check: "{n} de verificat", enter_code: "Introdu codul", arm_home: "Acasă",
+      arm_away: "Plecat", arm_night: "Noapte", arm_vacation: "Vacanță", disarm: "Dezarmează",
+      n_alerts_one: "1 alertă", n_issues_one: "1 problemă"
     },
     de: {
       good_morning: "Guten Morgen", good_afternoon: "Guten Tag", good_evening: "Guten Abend", customize: "Anpassen",
@@ -146,7 +172,19 @@
       desc_lights: "Lichter und Schalter zum Umschalten", desc_climate: "Ein Thermostat mit Modustasten", desc_rooms: "Temperatur und Luftfeuchte jedes Raums", desc_scenes: "Szenen und Skripte zum Antippen",
       desc_media: "Ein Mediaplayer mit Cover und Steuerung", desc_fan: "Ein Ventilator mit animiertem Symbol", desc_floor: "Eine Fußbodenheizung mit ihrer Temperatur", desc_security: "Ein Schloss sowie Tür- und Fenstersensoren",
       desc_weather: "Aktuelles Wetter und Vorhersage", desc_header: "Begrüßung, Datum, Chips und Kopfzeilen-Buttons", err_widgets: "füge eine `widgets:`-Liste hinzu", err_widget_type: "Widget {n} braucht einen Typ",
-      err_entity: "wähle eine Entität", err_room: "wähle einen Temperatursensor", err_config: "Ungültige Konfiguration"
+      err_entity: "wähle eine Entität", err_room: "wähle einen Temperatursensor", err_config: "Ungültige Konfiguration",
+      alarm: "Alarmanlage", safety: "Sicherheit", openings: "Türen & Fenster", presence: "Wer ist zu Hause",
+      activity: "Aktivität", camera: "Kamera", doorbell: "Türklingel", health: "Gerätezustand",
+      leaving: "Haus verlassen", desc_alarm: "Alarmanlage scharf- und unscharfschalten, mit Tastenfeld bei Code", desc_safety: "Rauch-, Gas-, CO- und Wassermelder auf einen Blick", desc_openings: "Türen und Fenster nach Raum, offene zuerst",
+      desc_presence: "Wer zu Hause ist, mit einem Knopf zum Absichern des Hauses", desc_activity: "Bewegung und Türen der letzten 24 Stunden", desc_camera: "Ein Kamerabild, das den Livestream öffnet", desc_doorbell: "Das letzte Klingeln, mit der Kamera",
+      desc_health: "Schwache Batterien und Geräte offline", desc_leaving: "Was noch an oder offen ist, und ein Knopf zum Absichern des Hauses", not_set_up: "Wähle die Entitäten im Editor.", all_safe: "Alles sicher",
+      n_alerts: "{n} Warnungen", opened: "geöffnet {t}", no_area: "Sonstige", n_home: "{n} zu Hause",
+      nobody_home: "Niemand ist zu Hause", secure_house: "Haus absichern", confirm_tap: "Zum Bestätigen erneut tippen", cam_motion: "Bewegung",
+      cam_unavailable: "Kamera nicht verfügbar", ringing: "Es klingelt!", last_ring: "Zuletzt geklingelt {t}", no_rings: "Noch nicht geklingelt",
+      all_healthy: "Alle Geräte sind in Ordnung", offline: "Offline", n_issues: "{n} Probleme", more_n: "+{n} weitere",
+      ready_to_leave: "Bereit zum Gehen: alles aus und geschlossen", n_to_check: "{n} zu prüfen", enter_code: "Code eingeben", arm_home: "Zu Hause",
+      arm_away: "Abwesend", arm_night: "Nacht", arm_vacation: "Urlaub", disarm: "Unscharf",
+      n_alerts_one: "1 Warnung", n_issues_one: "1 Problem"
     },
     fr: {
       good_morning: "Bonjour", good_afternoon: "Bon après-midi", good_evening: "Bonsoir", customize: "Personnaliser",
@@ -186,7 +224,19 @@
       desc_lights: "Lumières et interrupteurs à basculer", desc_climate: "Un thermostat avec boutons de mode", desc_rooms: "Température et humidité de chaque pièce", desc_scenes: "Scènes et scripts à lancer d'une touche",
       desc_media: "Un lecteur multimédia avec pochette et commandes", desc_fan: "Un ventilateur à l'icône animée", desc_floor: "Un plancher chauffant avec sa température", desc_security: "Une serrure et des capteurs de portes et fenêtres",
       desc_weather: "Météo actuelle et prévisions", desc_header: "Salutation, date, pastilles et boutons d'en-tête", err_widgets: "ajoutez une liste `widgets:`", err_widget_type: "le widget {n} a besoin d'un type",
-      err_entity: "choisissez une entité", err_room: "choisissez un capteur de température", err_config: "Configuration invalide"
+      err_entity: "choisissez une entité", err_room: "choisissez un capteur de température", err_config: "Configuration invalide",
+      alarm: "Alarme", safety: "Sécurité", openings: "Portes et fenêtres", presence: "Qui est là",
+      activity: "Activité", camera: "Caméra", doorbell: "Sonnette", health: "État des appareils",
+      leaving: "Départ", desc_alarm: "Armer et désarmer l'alarme, avec un clavier si un code est demandé", desc_safety: "Détecteurs de fumée, gaz, CO et fuite d'eau d'un coup d'œil", desc_openings: "Portes et fenêtres par pièce, les ouvertes d'abord",
+      desc_presence: "Qui est à la maison, avec un bouton pour sécuriser la maison", desc_activity: "Mouvements et portes des dernières 24 heures", desc_camera: "Une image de la caméra qui ouvre le direct", desc_doorbell: "Le dernier coup de sonnette, avec la caméra",
+      desc_health: "Piles faibles et appareils hors ligne", desc_leaving: "Ce qui est encore allumé ou ouvert, et un bouton pour sécuriser la maison", not_set_up: "Choisissez ses entités dans l'éditeur.", all_safe: "Tout est sûr",
+      n_alerts: "{n} alertes", opened: "ouvert {t}", no_area: "Autres", n_home: "{n} à la maison",
+      nobody_home: "Personne à la maison", secure_house: "Sécuriser la maison", confirm_tap: "Touchez à nouveau pour confirmer", cam_motion: "Mouvement",
+      cam_unavailable: "Caméra indisponible", ringing: "Ça sonne !", last_ring: "Dernière sonnerie {t}", no_rings: "Pas encore de sonnerie",
+      all_healthy: "Tous les appareils vont bien", offline: "Hors ligne", n_issues: "{n} problèmes", more_n: "+{n} autres",
+      ready_to_leave: "Prêt à partir : tout est éteint et fermé", n_to_check: "{n} à vérifier", enter_code: "Saisissez le code", arm_home: "Maison",
+      arm_away: "Absent", arm_night: "Nuit", arm_vacation: "Vacances", disarm: "Désarmer",
+      n_alerts_one: "1 alerte", n_issues_one: "1 problème"
     },
     es: {
       good_morning: "Buenos días", good_afternoon: "Buenas tardes", good_evening: "Buenas noches", customize: "Personalizar",
@@ -226,7 +276,19 @@
       desc_lights: "Luces e interruptores para encender y apagar", desc_climate: "Un termostato con botones de modo", desc_rooms: "Temperatura y humedad de cada habitación", desc_scenes: "Escenas y scripts que se ejecutan con un toque",
       desc_media: "Un reproductor con carátula y controles", desc_fan: "Un ventilador con icono animado", desc_floor: "Un suelo radiante con su temperatura", desc_security: "Una cerradura y sensores de puertas y ventanas",
       desc_weather: "Tiempo actual y previsión", desc_header: "Saludo, fecha, indicadores y botones del encabezado", err_widgets: "añade una lista `widgets:`", err_widget_type: "el widget {n} necesita un tipo",
-      err_entity: "elige una entidad", err_room: "elige un sensor de temperatura", err_config: "Configuración no válida"
+      err_entity: "elige una entidad", err_room: "elige un sensor de temperatura", err_config: "Configuración no válida",
+      alarm: "Alarma", safety: "Seguridad", openings: "Puertas y ventanas", presence: "Quién está en casa",
+      activity: "Actividad", camera: "Cámara", doorbell: "Timbre", health: "Estado de los dispositivos",
+      leaving: "Salir de casa", desc_alarm: "Arma y desarma la alarma, con teclado si pide un código", desc_safety: "Detectores de humo, gas, CO y fugas de agua de un vistazo", desc_openings: "Puertas y ventanas por habitación, las abiertas primero",
+      desc_presence: "Quién está en casa, con un botón para asegurar la casa", desc_activity: "Movimiento y puertas de las últimas 24 horas", desc_camera: "Una imagen de la cámara que abre el directo", desc_doorbell: "El último timbrazo, con su cámara",
+      desc_health: "Baterías bajas y dispositivos desconectados", desc_leaving: "Lo que sigue encendido o abierto, y un botón para asegurar la casa", not_set_up: "Elige sus entidades en el editor.", all_safe: "Todo seguro",
+      n_alerts: "{n} alertas", opened: "abierta {t}", no_area: "Otros", n_home: "{n} en casa",
+      nobody_home: "No hay nadie en casa", secure_house: "Asegurar la casa", confirm_tap: "Toca otra vez para confirmar", cam_motion: "Movimiento",
+      cam_unavailable: "Cámara no disponible", ringing: "¡Está sonando!", last_ring: "Último timbre {t}", no_rings: "Aún no ha sonado",
+      all_healthy: "Todos los dispositivos están bien", offline: "Desconectado", n_issues: "{n} problemas", more_n: "+{n} más",
+      ready_to_leave: "Listo para salir: todo apagado y cerrado", n_to_check: "{n} por revisar", enter_code: "Introduce el código", arm_home: "En casa",
+      arm_away: "Fuera", arm_night: "Noche", arm_vacation: "Vacaciones", disarm: "Desarmar",
+      n_alerts_one: "1 alerta", n_issues_one: "1 problema"
     },
     it: {
       good_morning: "Buongiorno", good_afternoon: "Buon pomeriggio", good_evening: "Buonasera", customize: "Personalizza",
@@ -266,7 +328,19 @@
       desc_lights: "Luci e interruttori da accendere e spegnere", desc_climate: "Un termostato con pulsanti di modalità", desc_rooms: "Temperatura e umidità di ogni stanza", desc_scenes: "Scene e script da avviare con un tocco",
       desc_media: "Un lettore multimediale con copertina e comandi", desc_fan: "Un ventilatore con icona animata", desc_floor: "Un riscaldamento a pavimento con la sua temperatura", desc_security: "Una serratura e sensori di porte e finestre",
       desc_weather: "Meteo attuale e previsioni", desc_header: "Saluto, data, indicatori e pulsanti dell'intestazione", err_widgets: "aggiungi un elenco `widgets:`", err_widget_type: "il widget {n} ha bisogno di un tipo",
-      err_entity: "scegli un'entità", err_room: "scegli un sensore di temperatura", err_config: "Configurazione non valida"
+      err_entity: "scegli un'entità", err_room: "scegli un sensore di temperatura", err_config: "Configurazione non valida",
+      alarm: "Allarme", safety: "Sicurezza", openings: "Porte e finestre", presence: "Chi è in casa",
+      activity: "Attività", camera: "Telecamera", doorbell: "Campanello", health: "Stato dei dispositivi",
+      leaving: "Uscita di casa", desc_alarm: "Inserisci e disinserisci l'allarme, con tastierino se serve un codice", desc_safety: "Rilevatori di fumo, gas, CO e perdite d'acqua a colpo d'occhio", desc_openings: "Porte e finestre per stanza, prima quelle aperte",
+      desc_presence: "Chi è in casa, con un pulsante per mettere in sicurezza la casa", desc_activity: "Movimento e porte nelle ultime 24 ore", desc_camera: "Un'immagine della telecamera che apre la diretta", desc_doorbell: "L'ultimo squillo del campanello, con la telecamera",
+      desc_health: "Batterie scariche e dispositivi offline", desc_leaving: "Cosa è ancora acceso o aperto, e un pulsante per mettere in sicurezza la casa", not_set_up: "Scegli le sue entità nell'editor.", all_safe: "Tutto sicuro",
+      n_alerts: "{n} allarmi", opened: "aperta {t}", no_area: "Altro", n_home: "{n} in casa",
+      nobody_home: "Non c'è nessuno in casa", secure_house: "Metti in sicurezza la casa", confirm_tap: "Tocca di nuovo per confermare", cam_motion: "Movimento",
+      cam_unavailable: "Telecamera non disponibile", ringing: "Sta suonando!", last_ring: "Ultimo squillo {t}", no_rings: "Ancora nessuno squillo",
+      all_healthy: "Tutti i dispositivi sono a posto", offline: "Offline", n_issues: "{n} problemi", more_n: "+{n} altri",
+      ready_to_leave: "Pronto per uscire: tutto spento e chiuso", n_to_check: "{n} da controllare", enter_code: "Inserisci il codice", arm_home: "In casa",
+      arm_away: "Fuori casa", arm_night: "Notte", arm_vacation: "Vacanza", disarm: "Disinserisci",
+      n_alerts_one: "1 allarme", n_issues_one: "1 problema"
     },
     nl: {
       good_morning: "Goedemorgen", good_afternoon: "Goedemiddag", good_evening: "Goedenavond", customize: "Aanpassen",
@@ -306,7 +380,19 @@
       desc_lights: "Lampen en schakelaars om te schakelen", desc_climate: "Een thermostaat met modusknoppen", desc_rooms: "Temperatuur en vochtigheid van elke kamer", desc_scenes: "Scènes en scripts om met één tik te starten",
       desc_media: "Een mediaspeler met hoes en bediening", desc_fan: "Een ventilator met geanimeerd pictogram", desc_floor: "Vloerverwarming met haar temperatuur", desc_security: "Een slot en sensoren voor deuren en ramen",
       desc_weather: "Het weer nu en de verwachting", desc_header: "Begroeting, datum, chips en knoppen in de koptekst", err_widgets: "voeg een `widgets:`-lijst toe", err_widget_type: "widget {n} heeft een type nodig",
-      err_entity: "kies een entiteit", err_room: "kies een temperatuursensor", err_config: "Ongeldige configuratie"
+      err_entity: "kies een entiteit", err_room: "kies een temperatuursensor", err_config: "Ongeldige configuratie",
+      alarm: "Alarm", safety: "Veiligheid", openings: "Deuren en ramen", presence: "Wie is er thuis",
+      activity: "Activiteit", camera: "Camera", doorbell: "Deurbel", health: "Staat van apparaten",
+      leaving: "Huis verlaten", desc_alarm: "Alarm in- en uitschakelen, met een toetsenblok als er een code nodig is", desc_safety: "Rook-, gas-, CO- en lekmelders in één oogopslag", desc_openings: "Deuren en ramen per kamer, open eerst",
+      desc_presence: "Wie er thuis is, met een knop om het huis te beveiligen", desc_activity: "Beweging en deuren van de laatste 24 uur", desc_camera: "Een camerabeeld dat de livestream opent", desc_doorbell: "De laatste keer dat er werd aangebeld, met de camera",
+      desc_health: "Bijna lege batterijen en offline apparaten", desc_leaving: "Wat nog aan of open is, en een knop om het huis te beveiligen", not_set_up: "Kies de entiteiten in de editor.", all_safe: "Alles veilig",
+      n_alerts: "{n} meldingen", opened: "geopend {t}", no_area: "Overig", n_home: "{n} thuis",
+      nobody_home: "Er is niemand thuis", secure_house: "Huis beveiligen", confirm_tap: "Tik nogmaals om te bevestigen", cam_motion: "Beweging",
+      cam_unavailable: "Camera niet beschikbaar", ringing: "Er wordt aangebeld!", last_ring: "Laatst aangebeld {t}", no_rings: "Nog niet aangebeld",
+      all_healthy: "Alle apparaten zijn in orde", offline: "Offline", n_issues: "{n} problemen", more_n: "+{n} meer",
+      ready_to_leave: "Klaar om te gaan: alles uit en dicht", n_to_check: "{n} te controleren", enter_code: "Voer de code in", arm_home: "Thuis",
+      arm_away: "Afwezig", arm_night: "Nacht", arm_vacation: "Vakantie", disarm: "Uitschakelen",
+      n_alerts_one: "1 melding", n_issues_one: "1 probleem"
     },
     pl: {
       good_morning: "Dzień dobry", good_afternoon: "Dzień dobry", good_evening: "Dobry wieczór", customize: "Dostosuj",
@@ -346,7 +432,19 @@
       desc_lights: "Światła i przełączniki do włączania", desc_climate: "Termostat z przyciskami trybów", desc_rooms: "Temperatura i wilgotność każdego pokoju", desc_scenes: "Sceny i skrypty uruchamiane jednym dotknięciem",
       desc_media: "Odtwarzacz z okładką i sterowaniem", desc_fan: "Wentylator z animowaną ikoną", desc_floor: "Ogrzewanie podłogowe z jego temperaturą", desc_security: "Zamek oraz czujniki drzwi i okien",
       desc_weather: "Bieżąca pogoda i prognoza", desc_header: "Powitanie, data, wskaźniki i przyciski nagłówka", err_widgets: "dodaj listę `widgets:`", err_widget_type: "widżet {n} potrzebuje typu",
-      err_entity: "wybierz encję", err_room: "wybierz czujnik temperatury", err_config: "Nieprawidłowa konfiguracja"
+      err_entity: "wybierz encję", err_room: "wybierz czujnik temperatury", err_config: "Nieprawidłowa konfiguracja",
+      alarm: "Alarm", safety: "Bezpieczeństwo", openings: "Drzwi i okna", presence: "Kto jest w domu",
+      activity: "Aktywność", camera: "Kamera", doorbell: "Dzwonek", health: "Stan urządzeń",
+      leaving: "Wyjście z domu", desc_alarm: "Uzbrajaj i rozbrajaj alarm, z klawiaturą, gdy potrzebny jest kod", desc_safety: "Czujniki dymu, gazu, CO i zalania w jednym miejscu", desc_openings: "Drzwi i okna według pomieszczeń, najpierw otwarte",
+      desc_presence: "Kto jest w domu, z przyciskiem zabezpieczenia domu", desc_activity: "Ruch i drzwi z ostatnich 24 godzin", desc_camera: "Obraz z kamery, który otwiera transmisję na żywo", desc_doorbell: "Ostatni dzwonek, z obrazem z kamery",
+      desc_health: "Słabe baterie i urządzenia offline", desc_leaving: "Co jest jeszcze włączone lub otwarte, i przycisk zabezpieczenia domu", not_set_up: "Wybierz encje w edytorze.", all_safe: "Wszystko bezpieczne",
+      n_alerts: "Alarmy: {n}", opened: "otwarte {t}", no_area: "Inne", n_home: "W domu: {n}",
+      nobody_home: "Nikogo nie ma w domu", secure_house: "Zabezpiecz dom", confirm_tap: "Dotknij ponownie, aby potwierdzić", cam_motion: "Ruch",
+      cam_unavailable: "Kamera niedostępna", ringing: "Dzwoni!", last_ring: "Ostatni dzwonek {t}", no_rings: "Jeszcze nikt nie dzwonił",
+      all_healthy: "Wszystkie urządzenia działają", offline: "Offline", n_issues: "Problemy: {n}", more_n: "+{n} więcej",
+      ready_to_leave: "Gotowe do wyjścia: wszystko wyłączone i zamknięte", n_to_check: "Do sprawdzenia: {n}", enter_code: "Wpisz kod", arm_home: "W domu",
+      arm_away: "Poza domem", arm_night: "Noc", arm_vacation: "Urlop", disarm: "Rozbrój",
+      n_alerts_one: "1 alarm", n_issues_one: "1 problem"
     },
     pt: {
       good_morning: "Bom dia", good_afternoon: "Boa tarde", good_evening: "Boa noite", customize: "Personalizar",
@@ -386,7 +484,19 @@
       desc_lights: "Luzes e interruptores para ligar e desligar", desc_climate: "Um termóstato com botões de modo", desc_rooms: "Temperatura e humidade de cada divisão", desc_scenes: "Cenas e scripts executados com um toque",
       desc_media: "Um leitor multimédia com capa e controlos", desc_fan: "Uma ventoinha com ícone animado", desc_floor: "Um piso radiante com a sua temperatura", desc_security: "Uma fechadura e sensores de portas e janelas",
       desc_weather: "Tempo atual e previsão", desc_header: "Saudação, data, indicadores e botões do cabeçalho", err_widgets: "adicione uma lista `widgets:`", err_widget_type: "o widget {n} precisa de um tipo",
-      err_entity: "escolha uma entidade", err_room: "escolha um sensor de temperatura", err_config: "Configuração inválida"
+      err_entity: "escolha uma entidade", err_room: "escolha um sensor de temperatura", err_config: "Configuração inválida",
+      alarm: "Alarme", safety: "Segurança", openings: "Portas e janelas", presence: "Quem está em casa",
+      activity: "Atividade", camera: "Câmara", doorbell: "Campainha", health: "Estado dos dispositivos",
+      leaving: "Sair de casa", desc_alarm: "Armar e desarmar o alarme, com teclado quando pede um código", desc_safety: "Detetores de fumo, gás, CO e fugas de água num relance", desc_openings: "Portas e janelas por divisão, primeiro as abertas",
+      desc_presence: "Quem está em casa, com um botão para proteger a casa", desc_activity: "Movimento e portas nas últimas 24 horas", desc_camera: "Uma imagem da câmara que abre o direto", desc_doorbell: "O último toque da campainha, com a câmara",
+      desc_health: "Baterias fracas e dispositivos offline", desc_leaving: "O que ainda está ligado ou aberto, e um botão para proteger a casa", not_set_up: "Escolha as entidades no editor.", all_safe: "Tudo seguro",
+      n_alerts: "{n} alertas", opened: "aberta {t}", no_area: "Outros", n_home: "{n} em casa",
+      nobody_home: "Não está ninguém em casa", secure_house: "Proteger a casa", confirm_tap: "Toque de novo para confirmar", cam_motion: "Movimento",
+      cam_unavailable: "Câmara indisponível", ringing: "Está a tocar!", last_ring: "Último toque {t}", no_rings: "Ainda sem toques",
+      all_healthy: "Todos os dispositivos estão bem", offline: "Offline", n_issues: "{n} problemas", more_n: "+{n} mais",
+      ready_to_leave: "Pronto para sair: tudo desligado e fechado", n_to_check: "{n} por verificar", enter_code: "Introduza o código", arm_home: "Em casa",
+      arm_away: "Ausente", arm_night: "Noite", arm_vacation: "Férias", disarm: "Desarmar",
+      n_alerts_one: "1 alerta", n_issues_one: "1 problema"
     }
   };
 
@@ -401,6 +511,16 @@
     fan: "M12 10.5C12 6 13 3 15.5 3S19 6 12 10.5zM13.5 12c4.5 0 7.5 1 7.5 3.5S18 19 13.5 12zM12 13.5c0 4.5-1 7.5-3.5 7.5S5 18 12 13.5zM10.5 12C6 12 3 11 3 8.5S6 5 10.5 12z",
     floor: "M3 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0",
     security: "M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z",
+    alarm: "M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6zM9.5 12.5h5v3.5h-5zM10.5 12.5V11a1.5 1.5 0 0 1 3 0v1.5",
+    safety: "M12 3.5 21 19.5H3zM12 10v4.2M12 17h.01",
+    openings: "M5 21V4.5A1.5 1.5 0 0 1 6.5 3h11A1.5 1.5 0 0 1 19 4.5V21M3 21h18M14.5 12.5h.01",
+    presence: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20a6.5 6.5 0 0 1 13 0M16.5 4.3a3.5 3.5 0 0 1 0 6.4M18.5 14.2a6.5 6.5 0 0 1 3 5.8",
+    activity: "M3 12h4l3-8 4 16 3-8h4",
+    camera: "M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    doorbell: "M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0",
+    health: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10zM7.5 12H10l1.5-2.5 2 4 1.5-1.5h1.5",
+    leaving: "M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l4-4-4-4M14 12H4",
+    check: "M5 12.5l4.5 4.5L19 7.5",
     weather: "M8 5V3M3.5 7.5 2 6M13.5 6.5 15 5M5 12H3M12.5 10A4.5 4.5 0 0 0 4.6 12.2M17 20H8a4 4 0 1 1 .6-7.95A5 5 0 0 1 18 13a3.5 3.5 0 0 1-1 7z",
     solar: "M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
     grid: "M8 21l4-18 4 18M6 9h12M5 14h14M9.5 14 12 21l2.5-7",
@@ -542,6 +662,14 @@
     .ring .disp{font-size:32px}
     .art{width:56px;height:56px;border-radius:14px}
     .play{width:44px;height:44px}
+    .alrow{gap:12px}
+    .shield{width:64px;height:64px}
+    .shield svg{width:30px;height:30px}
+    .alst .disp{font-size:18px}
+    .almodes{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .people{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
+    .ava{width:44px;height:44px}
+    .sv{max-width:40%}
   }
   .single,.single .wrap{height:100%}.single .grid{grid-template-columns:minmax(0,1fr);height:100%}.single .grid:empty{display:none}.single .w{grid-column:1/-1;box-sizing:border-box;height:100%}
   .wh{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px}
@@ -622,6 +750,65 @@
   .room .rh{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .room .rhum{display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
   .room .bar i{background:var(--cool)}
+  /* security: the alarm shield and its mode buttons, the keypad */
+  .alrow{display:flex;align-items:center;gap:18px}
+  .shield{position:relative;width:88px;height:88px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:0 0 0 6px color-mix(in srgb,var(--c) 7%,transparent);transition:color .4s,background .4s,box-shadow .6s}
+  .shield.armed{box-shadow:0 0 0 6px color-mix(in srgb,var(--c) 12%,transparent),0 0 36px color-mix(in srgb,var(--c) 45%,transparent)}
+  .shield.busy{animation:agHalo 1.4s ease-in-out infinite}
+  .shield.alarm,.sitem.bad .bulb{animation:agAlarm .9s ease-in-out infinite}
+  .alst{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .alst .disp{font-size:22px;line-height:1.15}
+  .almodes{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px}
+  .almodes button,.kp button{min-height:44px;border-radius:14px;font-weight:600;font-size:13px;background:var(--off);border:1px solid var(--faint);color:var(--text)}
+  .almodes button.cur{background:color-mix(in srgb,var(--acc) var(--acc-t),transparent);border-color:color-mix(in srgb,var(--acc) 55%,transparent)}
+  .kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .kp button{font-size:18px;min-height:48px}
+  .kp .kpgo{background:var(--acc);color:#1c140c;border-color:transparent}
+  .kpcode{min-height:28px;text-align:center;font-size:20px;letter-spacing:.35em;color:var(--text)}
+  .kpx{justify-self:center;font-size:13px;color:var(--muted);background:none;border:0;min-height:32px}
+  @keyframes agHalo{50%{box-shadow:0 0 0 14px color-mix(in srgb,var(--c) 4%,transparent)}}
+  @keyframes agAlarm{50%{background:color-mix(in srgb,var(--c) 45%,transparent);box-shadow:0 0 44px color-mix(in srgb,var(--c) 70%,transparent)}}
+  /* security lists: safety, doors and windows, activity, device health, leaving */
+  .slist{display:flex;flex-direction:column;gap:6px}
+  .sitem{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:6px 12px 6px 6px;border-radius:16px;background:var(--off);border:1px solid var(--faint);color:var(--text);text-align:left;transition:background .4s,border-color .4s}
+  .sitem .bulb{width:36px;height:36px;flex:none}
+  .sitem.bad{--c:var(--alert);background:color-mix(in srgb,var(--alert) 14%,transparent);border-color:color-mix(in srgb,var(--alert) 50%,transparent)}
+  .sitem.bad .bulb{background:var(--alert);color:#fff}
+  .sitem.warn{background:color-mix(in srgb,var(--solar) 10%,transparent);border-color:color-mix(in srgb,var(--solar) 40%,transparent)}
+  .sitem.warn .bulb{background:color-mix(in srgb,var(--solar) 22%,transparent);color:var(--solar)}
+  .si{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .si b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .si span,.sv{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sv{flex:none;max-width:45%;font-size:13px;font-variant-numeric:tabular-nums}
+  .sgrp{margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .sgrp:first-child{margin-top:0}
+  .bigok{display:flex;align-items:center;gap:12px;padding:6px 2px;font-size:15px;font-weight:600}
+  .bigok i{width:36px;height:36px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--battery) 18%,transparent);color:var(--battery)}
+  .bigbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;border-radius:16px;border:0;background:var(--acc);color:#1c140c;font-size:14px;font-weight:700;transition:background .3s,color .3s}
+  .bigbtn.sure{background:var(--alert);color:#fff}
+  /* who's home */
+  .people{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px}
+  .pers{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;padding:12px 6px 10px;border-radius:18px;background:var(--off);border:1px solid var(--faint);color:var(--text)}
+  .ava{width:52px;height:52px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--glass2) center/cover no-repeat;font-size:18px;font-weight:700;box-shadow:0 0 0 3px var(--faint);transition:box-shadow .4s,filter .4s,opacity .4s}
+  .pers.home .ava{box-shadow:0 0 0 3px color-mix(in srgb,var(--battery) 75%,transparent)}
+  .pers.away .ava{filter:grayscale(.7);opacity:.7}
+  .pers b{max-width:100%;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pers span{max-width:100%;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* activity timelines */
+  .atl{display:flex;height:8px;margin-top:6px;border-radius:99px;overflow:hidden;background:var(--track)}
+  .atl i{display:block;height:100%}
+  .aitem{flex-direction:column;align-items:stretch;gap:0;padding:10px 12px}
+  .aitem .ah{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .aitem .ah b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* camera and doorbell */
+  .cam{position:relative;display:block;width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;border:1px solid var(--faint);background:var(--off) center/cover no-repeat}
+  .cam .cbadge{position:absolute;top:10px;left:10px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;background:var(--alert);color:#fff;animation:agHalo 1.4s ease-in-out infinite;--c:var(--alert)}
+  .cam .cnone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
+  .dbell{display:flex;align-items:center;gap:14px}
+  .bell{width:56px;height:56px;flex:none;border-radius:18px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc-ink)}
+  .bell.ringing{background:var(--acc);color:#1c140c;box-shadow:0 0 34px color-mix(in srgb,var(--acc) 60%,transparent)}
+  .bell.ringing svg{animation:agBell .5s ease-in-out infinite;transform-origin:50% 15%}
+  @keyframes agBell{25%{transform:rotate(16deg)}75%{transform:rotate(-16deg)}}
   .dim input{flex:1;min-width:0}
   /* climate */
   .clim{display:flex;flex-wrap:wrap;align-items:center;gap:20px}
@@ -716,6 +903,7 @@
   // Before a card has hass (card picker, config errors): the page language, which Home Assistant sets to the profile's
   const pageLang = () => trLang(null, document.documentElement?.lang || navigator.language);
   const tr = (lang, k, vars) => {
+    if (vars?.n === 1 && (I18N[lang]?.[`${k}_one`] ?? I18N.en[`${k}_one`])) k = `${k}_one`;
     let s = I18N[lang]?.[k] ?? I18N.en[k] ?? k;
     if (vars) Object.keys(vars).forEach((v) => { s = s.replace(`{${v}}`, vars[v]); });
     return s;
@@ -1825,6 +2013,7 @@
     /* ----- i18n / format */
     get _lang() { const l = (this._config.language || this._hass?.locale?.language || this._hass?.language || "en").split("-")[0]; return I18N[l] ? l : "en"; }
     _t(k, vars) {
+      if (vars?.n === 1 && (this._config.translations?.[this._lang]?.[`${k}_one`] ?? I18N[this._lang]?.[`${k}_one`])) k = `${k}_one`;
       let s = (this._config.translations?.[this._lang]?.[k]) ?? I18N[this._lang][k] ?? I18N.en[k] ?? k;
       if (vars) Object.keys(vars).forEach((v) => { s = s.replace(`{${v}}`, vars[v]); });
       return s;
@@ -2253,6 +2442,230 @@
       return { body: `<div class="tiles">${tiles}</div>`, meta: avg ? this._t("rooms_avg", { v: avg }) : "" };
     }
 
+    /* ======================================================== security widgets */
+    _unset() { return { body: `<div class="muted" style="font-size:13px">${esc(this._t("not_set_up"))}</div>`, meta: "" }; }
+    // `entities` as given, or every entity of a domain whose device class is in `dcs`
+    _pick(w, domain, dcs, key = "entities") {
+      const given = asList(w[key]).map((x) => entOf(x).entity).filter(Boolean);
+      if (given.length) return given;
+      const st = this._hass?.states || {};
+      return Object.keys(st).filter((id) => id.startsWith(domain + ".") && (!dcs || dcs.includes(st[id].attributes.device_class)) && !this._hass.entities?.[id]?.hidden);
+    }
+    _sitem(id, cls, value, sub) {
+      const s = this._st(id);
+      const name = s?.attributes?.friendly_name || id;
+      return `<button class="sitem ${cls}" data-act="more" data-e="${esc(id)}"><div class="bulb">${s ? animIcon(s, 20, 1.9) : svgIcon(ICON.safety, 20)}</div>
+        <div class="si"><b>${esc(name)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div>${value ? `<span class="sv">${esc(value)}</span>` : ""}</button>`;
+    }
+    _ok(text) { return `<div class="bigok"><i>${svgIcon(ICON.check, 20, 2.2)}</i><span>${esc(text)}</span></div>`; }
+    // A button that needs a second tap within four seconds (runs a script, scene or button)
+    _sureBtn(w, entity, label) {
+      const sure = this._sure?.[w.id] > Date.now();
+      return `<button class="bigbtn ${sure ? "sure" : ""}" data-act="sure" data-w="${esc(w.id)}" data-e="${esc(entity)}">${svgIcon(ICON.security, 18, 2)}<span>${esc(sure ? this._t("confirm_tap") : label)}</span></button>`;
+    }
+
+    _w_alarm(w) {
+      if (!w.entity) return this._unset();
+      const s = this._st(w.entity);
+      if (!s) return this._missing(w.entity);
+      const st = s.state, a = s.attributes;
+      const busy = ["arming", "pending", "disarming"].includes(st), alarm = st === "triggered", armed = st.startsWith("armed_");
+      const c = alarm ? "var(--alert)" : busy ? "var(--solar)" : armed ? "var(--acc)" : "var(--battery)";
+      // supported_features: 1 home, 2 away, 4 night, 32 vacation
+      const F = a.supported_features ?? 39;
+      const avail = [["home", 1], ["away", 2], ["night", 4], ["vacation", 32]].filter(([, b]) => F & b).map(([m]) => m);
+      const modes = (asList(w.modes).length ? asList(w.modes) : avail).filter((m) => ["home", "away", "night", "vacation"].includes(m));
+      const word = (m) => this._loc(m === "disarm" ? "ui.card.alarm_control_panel.disarm" : `ui.card.alarm_control_panel.arm_${m}`, this._t(m === "disarm" ? "disarm" : `arm_${m}`));
+      const kp = this._kp?.[w.id];
+      const act = (m, cls = "") => `<button class="${cls}" data-act="alarm" data-w="${esc(w.id)}" data-e="${esc(w.entity)}" data-m="${m}">${esc(word(m))}</button>`;
+      const key = (v, label, cls = "") => `<button class="${cls}" data-act="kp" data-w="${esc(w.id)}" data-e="${esc(w.entity)}" data-v="${v}" aria-label="${esc(label)}">${label}</button>`;
+      const pad = kp ? `<div class="kpcode">${kp.code ? "•".repeat(kp.code.length) : `<span class="muted" style="font-size:14px;letter-spacing:0">${esc(this._t("enter_code"))}</span>`}</div>
+        <div class="kp">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => key(n, String(n))).join("")}${key("del", "⌫")}${key(0, "0")}${key("ok", "✓", "kpgo")}</div>
+        <button class="kpx" data-act="kp" data-w="${esc(w.id)}" data-e="${esc(w.entity)}" data-v="x">${esc(this._t("close"))}</button>` : "";
+      const btns = st === "disarmed" ? modes.map((m) => act(m)).join("") : act("disarm", "cur");
+      return {
+        body: `<div class="alrow"><button class="shield ${armed ? "armed" : ""} ${busy ? "busy" : ""} ${alarm ? "alarm" : ""}" style="--c:${c}" data-act="more" data-e="${esc(w.entity)}">${svgIcon(armed || alarm ? ICON.alarm : ICON.security, 40, 1.8)}</button>
+          <div class="alst"><span class="disp">${esc(stateText(this._hass, s, this._lang))}</span><span class="muted" style="font-size:13px">${esc(relTime(s.last_changed, this._lang))}</span></div></div>
+          ${kp ? pad : `<div class="almodes">${btns}</div>`}`,
+        meta: w.subtitle || ""
+      };
+    }
+
+    _w_safety(w) {
+      const ids = this._pick(w, "binary_sensor", ["smoke", "gas", "carbon_monoxide", "moisture", "safety", "problem", "heat", "tamper"]);
+      if (!ids.length) return this._unset();
+      const bad = ids.filter((id) => this._st(id)?.state === "on");
+      const rows = [...bad, ...ids.filter((id) => !bad.includes(id))].map((id) => {
+        const s = this._st(id);
+        return s ? this._sitem(id, bad.includes(id) ? "bad" : "", stateText(this._hass, s, this._lang), areaOf(this._hass, id)) : `<div class="err">${esc(this._t("not_found", { e: id }))}</div>`;
+      }).join("");
+      return { body: `${bad.length ? "" : this._ok(this._t("all_safe"))}<div class="slist">${rows}</div>`, meta: bad.length ? this._t("n_alerts", { n: bad.length }) : "" };
+    }
+
+    _w_openings(w) {
+      const ids = this._pick(w, "binary_sensor", ["door", "window", "garage_door", "opening"]);
+      if (!ids.length) return this._unset();
+      const open = ids.filter((id) => this._st(id)?.state === "on");
+      // grouped by area, areas with something open first
+      const groups = {};
+      ids.forEach((id) => { const a = areaOf(this._hass, id) || this._t("no_area"); (groups[a] = groups[a] || []).push(id); });
+      const names = Object.keys(groups).sort((x, y) => groups[y].filter((id) => open.includes(id)).length - groups[x].filter((id) => open.includes(id)).length);
+      const body = names.map((g) => (names.length > 1 ? `<div class="sgrp">${esc(g)}</div>` : "") + groups[g].sort((x, y) => open.includes(y) - open.includes(x)).map((id) => {
+        const s = this._st(id);
+        if (!s) return `<div class="err">${esc(this._t("not_found", { e: id }))}</div>`;
+        const isOpen = open.includes(id);
+        return this._sitem(id, isOpen ? "warn" : "", isOpen ? this._t("opened", { t: relTime(s.last_changed, this._lang) }) : stateText(this._hass, s, this._lang));
+      }).join("")).join("");
+      return { body: `<div class="slist">${body}</div>`, meta: open.length ? this._t("n_open", { n: open.length }) : this._t("all_closed") };
+    }
+
+    _w_presence(w) {
+      const ids = this._pick(w, "person", null, "people");
+      if (!ids.length) return this._unset();
+      let home = 0;
+      const people = ids.map((id) => {
+        const s = this._st(id);
+        if (!s) return "";
+        const isHome = s.state === "home";
+        if (isHome) home++;
+        const name = s.attributes.friendly_name || id;
+        const pic = s.attributes.entity_picture;
+        const initials = name.split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase();
+        return `<button class="pers ${isHome ? "home" : "away"}" data-act="more" data-e="${esc(id)}"><div class="ava" style="${pic ? `background-image:url('${esc(pic)}')` : ""}">${pic ? "" : esc(initials)}</div>
+          <b>${esc(name)}</b><span>${esc(stateText(this._hass, s, this._lang))} · ${esc(relTime(s.last_changed, this._lang))}</span></button>`;
+      }).join("");
+      const out = home === 0;
+      return {
+        body: `${out ? `<div class="bigok"><i style="background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc-ink)">${svgIcon(ICON.leaving, 20, 2)}</i><span>${esc(this._t("nobody_home"))}</span></div>` : ""}<div class="people">${people}</div>
+          ${out && w.script ? this._sureBtn(w, w.script, this._t("secure_house")) : ""}`,
+        meta: out ? "" : this._t("n_home", { n: home })
+      };
+    }
+
+    // The last 24 hours of several entities, loaded once and kept five minutes
+    _history(ids) {
+      const key = ids.join(",");
+      this._ah = this._ah || {};
+      const c = this._ah[key];
+      if (c && (c.loading || Date.now() - c.at < 300000)) return c;
+      if (!this._hass?.callApi) return { data: {} };
+      const end = new Date(), start = new Date(end.getTime() - 24 * 3600e3);
+      this._ah[key] = { at: Date.now(), loading: true, start: start.getTime(), data: c?.data || {} };
+      this._hass.callApi("GET", `history/period/${start.toISOString()}?filter_entity_id=${encodeURIComponent(key)}&end_time=${encodeURIComponent(end.toISOString())}&minimal_response&no_attributes`)
+        .then((r) => {
+          const data = {};
+          (Array.isArray(r) ? r : []).forEach((rows) => {
+            if (!rows?.length) return;
+            data[rows[0].entity_id] = rows.map((x) => ({ t: Date.parse(x.last_changed || x.last_updated) || (x.lu ? x.lu * 1000 : NaN), s: x.state ?? x.s })).filter((x) => isFinite(x.t));
+          });
+          this._ah[key] = { at: Date.now(), start: start.getTime(), data };
+          this._schedule();
+        })
+        .catch(() => { this._ah[key] = { at: Date.now(), start: start.getTime(), data: {} }; this._schedule(); });
+      return this._ah[key];
+    }
+
+    _w_activity(w) {
+      const ids = this._pick(w, "binary_sensor", ["motion", "occupancy", "presence", "door", "window", "garage_door", "opening"]).slice(0, 12);
+      if (!ids.length) return this._unset();
+      const h = this._history(ids);
+      const now = Date.now(), t0 = h.start || now - 24 * 3600e3;
+      const rows = ids.map((id) => this._st(id)).filter(Boolean).sort((a, b) => Date.parse(b.last_changed) - Date.parse(a.last_changed)).map((s) => {
+        const pts = h.data?.[s.entity_id] || [];
+        const segs = pts.map((pt, i) => {
+          const a = Math.max(pt.t, t0), b = i + 1 < pts.length ? pts[i + 1].t : now;
+          return `<i style="width:${(Math.max(0, b - a) / (now - t0) * 100).toFixed(3)}%;background:${pt.s === "on" ? "var(--acc)" : "transparent"}"></i>`;
+        }).join("");
+        const lead = pts.length ? `<i style="width:${(Math.max(0, pts[0].t - t0) / (now - t0) * 100).toFixed(3)}%"></i>` : "";
+        return `<button class="sitem aitem ${s.state === "on" ? "warn" : ""}" data-act="more" data-e="${esc(s.entity_id)}"><div class="ah"><b>${esc(s.attributes.friendly_name || s.entity_id)}</b>
+          <span class="sv">${esc(relTime(s.last_changed, this._lang))}</span></div><div class="atl">${lead}${segs}</div></button>`;
+      }).join("");
+      return { body: `<div class="slist">${rows}</div>`, meta: this._t("last_24h") };
+    }
+
+    _w_camera(w) {
+      if (!w.entity) return this._unset();
+      const s = this._st(w.entity);
+      if (!s) return this._missing(w.entity);
+      const pic = s.state !== "unavailable" ? s.attributes.entity_picture : "";
+      // a fresh snapshot every 30 seconds (the card redraws on its 30-second clock)
+      const src = pic ? `${pic}${pic.includes("?") ? "&" : "?"}t=${Math.floor(Date.now() / 30000)}` : "";
+      const motion = w.motion_sensor && this._st(w.motion_sensor)?.state === "on";
+      return {
+        body: `<button class="cam" data-act="more" data-e="${esc(w.entity)}" style="${src ? `background-image:url('${esc(src)}')` : ""}">${motion ? `<span class="cbadge">${esc(this._t("cam_motion"))}</span>` : ""}${src ? "" : `<span class="cnone">${esc(this._t("cam_unavailable"))}</span>`}</button>`,
+        meta: s.attributes.friendly_name || ""
+      };
+    }
+
+    _w_doorbell(w) {
+      if (!w.entity) return this._unset();
+      const s = this._st(w.entity);
+      if (!s) return this._missing(w.entity);
+      // an event entity's state is the time of its last event; a binary sensor is on while it rings
+      const isEvent = domainOf(w.entity) === "event";
+      const last = isEvent ? Date.parse(s.state) : Date.parse(s.last_changed);
+      const ringing = s.state === "on" || (isEvent && isFinite(last) && Date.now() - last < 30000);
+      const text = ringing ? this._t("ringing") : isFinite(last) && (isEvent || s.state === "off") ? this._t("last_ring", { t: relTime(new Date(last).toISOString(), this._lang) }) : this._t("no_rings");
+      const cam = w.camera && this._st(w.camera);
+      const pic = cam && cam.state !== "unavailable" ? cam.attributes.entity_picture : "";
+      const src = pic ? `${pic}${pic.includes("?") ? "&" : "?"}t=${Math.floor(Date.now() / 30000)}` : "";
+      return {
+        body: `<div class="dbell"><button class="bell ${ringing ? "ringing" : ""}" data-act="more" data-e="${esc(w.entity)}">${svgIcon(ICON.doorbell, 28, 1.9)}</button>
+          <div class="alst"><span class="disp" style="font-size:19px">${esc(text)}</span><span class="muted" style="font-size:13px">${esc(s.attributes.friendly_name || "")}</span></div></div>
+          ${src ? `<button class="cam" data-act="more" data-e="${esc(w.camera)}" style="background-image:url('${esc(src)}')"></button>` : ""}`,
+        meta: ""
+      };
+    }
+
+    _w_health(w) {
+      const below = w.battery_below ?? 25;
+      const st = this._hass?.states || {};
+      const DOMAINS = ["sensor", "binary_sensor", "lock", "camera", "alarm_control_panel", "climate", "light", "switch", "cover", "fan", "media_player", "event"];
+      const given = asList(w.entities).map((x) => entOf(x).entity).filter(Boolean);
+      // without a list: every battery sensor, and every device entity that is offline
+      const ids = given.length ? given : Object.keys(st).filter((id) => DOMAINS.includes(domainOf(id)) && !this._hass.entities?.[id]?.hidden
+        && (st[id].attributes.device_class === "battery" || (st[id].state === "unavailable" && this._hass.entities?.[id]?.device_id)));
+      const issues = [];
+      ids.forEach((id) => {
+        const s = st[id];
+        if (!s) return;
+        if (s.state === "unavailable") issues.push({ id, rank: -1, cls: "bad", v: this._t("offline") });
+        else if (s.attributes.device_class === "battery" && isFinite(parseFloat(s.state)) && parseFloat(s.state) < below) {
+          const n = parseFloat(s.state);
+          issues.push({ id, rank: n, cls: n < 10 ? "bad" : "warn", v: `${Math.round(n)}%` });
+        }
+      });
+      if (!ids.length) return this._unset();
+      issues.sort((a, b) => a.rank - b.rank);
+      const limit = w.limit ?? 8;
+      const rows = issues.slice(0, limit).map((x) => this._sitem(x.id, x.cls, x.v, areaOf(this._hass, x.id))).join("");
+      const more = issues.length > limit ? `<div class="muted" style="font-size:13px;padding:2px 4px">${esc(this._t("more_n", { n: issues.length - limit }))}</div>` : "";
+      return { body: issues.length ? `<div class="slist">${rows}</div>${more}` : this._ok(this._t("all_healthy")), meta: issues.length ? this._t("n_issues", { n: issues.length }) : "" };
+    }
+
+    _w_leaving(w) {
+      const st = this._hass?.states || {};
+      const given = asList(w.checks).map((x) => entOf(x).entity).filter(Boolean);
+      // without a list: lights, doors, windows, garage doors, locks and players
+      const ids = given.length ? given : Object.keys(st).filter((id) => {
+        const d = domainOf(id), dc = st[id].attributes.device_class;
+        if (this._hass.entities?.[id]?.hidden || st[id].attributes.entity_id) return false;
+        return d === "light" || d === "lock" || d === "media_player" || (d === "cover" && ["garage", "door", "gate"].includes(dc))
+          || (d === "binary_sensor" && ["door", "window", "garage_door", "opening"].includes(dc));
+      });
+      const todo = ids.filter((id) => {
+        const s = st[id];
+        if (!s) return false;
+        const d = domainOf(id);
+        return d === "lock" ? s.state === "unlocked" || s.state === "open" : d === "media_player" ? s.state === "playing" : d === "cover" ? s.state !== "closed" : s.state === "on";
+      });
+      const rows = todo.map((id) => this._sitem(id, "warn", stateText(this._hass, st[id], this._lang), areaOf(this._hass, id))).join("");
+      return {
+        body: `${todo.length ? `<div class="slist">${rows}</div>` : this._ok(this._t("ready_to_leave"))}${w.script ? this._sureBtn(w, w.script, this._t("secure_house")) : ""}`,
+        meta: todo.length ? this._t("n_to_check", { n: todo.length }) : ""
+      };
+    }
+
     _w_climate(w) {
       const s = this._st(w.entity);
       if (!s) return this._missing(w.entity);
@@ -2484,6 +2897,37 @@
           setTimeout(() => this.dispatchEvent(ev), 150);
           return;
         }
+        case "alarm": {
+          const s = this._st(ent);
+          if (!s) return;
+          // a code is asked for when the alarm has one (code_arm_required: false skips it for arming)
+          const needs = s.attributes.code_format != null && (m === "disarm" || s.attributes.code_arm_required !== false);
+          if (needs) { this._kp = { ...(this._kp || {}), [wid]: { mode: m, code: "" } }; return this._schedule(); }
+          return this._call("alarm_control_panel", m === "disarm" ? "alarm_disarm" : `alarm_arm_${m}`, { entity_id: ent });
+        }
+        case "kp": {
+          const k = this._kp?.[wid];
+          if (!k) return;
+          if (v === "ok") {
+            this._call("alarm_control_panel", k.mode === "disarm" ? "alarm_disarm" : `alarm_arm_${k.mode}`, { entity_id: ent, code: k.code });
+            delete this._kp[wid];
+          } else if (v === "x") delete this._kp[wid];
+          else if (v === "del") k.code = k.code.slice(0, -1);
+          else if (k.code.length < 12) k.code += v;
+          return this._schedule();
+        }
+        case "sure": {
+          // first tap arms the button for four seconds, the second one runs it
+          this._sure = this._sure || {};
+          if (this._sure[wid] > Date.now()) {
+            delete this._sure[wid];
+            runCall(this._hass, this._st(ent));
+          } else {
+            this._sure[wid] = Date.now() + 4000;
+            setTimeout(() => this._schedule(), 4100);
+          }
+          return this._schedule();
+        }
         case "light": {
           // Tiles can be lights, switches or input_booleans: use each entity's own toggle service.
           this._focus[wid] = ent;
@@ -2537,7 +2981,7 @@
   }
 
   /* ================================================================ visual editor */
-  const WIDGET_TYPES = ["energy", "lights", "climate", "rooms", "scenes", "media", "fan", "floor", "security", "weather"];
+  const WIDGET_TYPES = ["energy", "lights", "climate", "rooms", "scenes", "media", "fan", "floor", "security", "weather", "alarm", "safety", "openings", "presence", "activity", "camera", "doorbell", "health", "leaving"];
   const ED_LABELS = {
     en: {
       appearance: "Appearance", chips: "Header chips", widgets: "Widgets", add_widget: "Add widget", add_chip: "Add chip", add_light: "Add light", add_scene: "Add scene",
@@ -2557,7 +3001,9 @@
       latitude: "Latitude (empty = home)", longitude: "Longitude (empty = home)", location_name: "Place name (optional)",
       header_buttons: "Header buttons", add_button: "Add button", no_buttons: "No buttons yet.", admin_only: "Admins only",
       col_cool: "Cool (blue)", col_heat: "Heat (orange)", col_solar: "Solar (yellow)", col_battery: "Battery (green)",
-      col_grid: "Grid (violet)", col_alert: "Alert (red)"
+      col_grid: "Grid (violet)", col_alert: "Alert (red)",
+      entities: "Entities (empty = automatic)", people: "People (empty = everyone)", script: "Script, scene or button to secure the house", checks: "What to check (empty = lights, doors, windows, locks)",
+      motion_sensor: "Motion sensor (optional)", camera: "Camera (optional)", battery_below: "Low battery below"
     },
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
@@ -2577,7 +3023,9 @@
       latitude: "Latitudine (gol = casa)", longitude: "Longitudine (gol = casa)", location_name: "Numele locului (opțional)",
       header_buttons: "Butoane în antet", add_button: "Adaugă buton", no_buttons: "Niciun buton încă.", admin_only: "Doar administratori",
       col_cool: "Rece (albastru)", col_heat: "Cald (portocaliu)", col_solar: "Solar (galben)", col_battery: "Baterie (verde)",
-      col_grid: "Rețea (violet)", col_alert: "Alertă (roșu)"
+      col_grid: "Rețea (violet)", col_alert: "Alertă (roșu)",
+      entities: "Entități (gol = automat)", people: "Persoane (gol = toată lumea)", script: "Script, scenă sau buton care securizează casa", checks: "Ce se verifică (gol = lumini, uși, ferestre, încuietori)",
+      motion_sensor: "Senzor de mișcare (opțional)", camera: "Cameră video (opțional)", battery_below: "Baterie descărcată sub"
     },
     de: {
       appearance: "Aussehen", chips: "Chips in der Kopfzeile", widgets: "Widgets", add_widget: "Widget hinzufügen",
@@ -2602,7 +3050,9 @@
       latitude: "Breitengrad (leer = Zuhause)", longitude: "Längengrad (leer = Zuhause)", location_name: "Ortsname (optional)", header_buttons: "Buttons in der Kopfzeile",
       add_button: "Button hinzufügen", no_buttons: "Noch keine Buttons.", admin_only: "Nur Admins", col_cool: "Kühl (blau)",
       col_heat: "Wärme (orange)", col_solar: "Solar (gelb)", col_battery: "Batterie (grün)", col_grid: "Netz (violett)",
-      col_alert: "Warnung (rot)"
+      col_alert: "Warnung (rot)",
+      entities: "Entitäten (leer = automatisch)", people: "Personen (leer = alle)", script: "Skript, Szene oder Taste zum Absichern des Hauses", checks: "Was geprüft wird (leer = Licht, Türen, Fenster, Schlösser)",
+      motion_sensor: "Bewegungsmelder (optional)", camera: "Kamera (optional)", battery_below: "Batterie schwach unter"
     },
     fr: {
       appearance: "Apparence", chips: "Pastilles d'en-tête", widgets: "Widgets", add_widget: "Ajouter un widget",
@@ -2627,7 +3077,9 @@
       latitude: "Latitude (vide = maison)", longitude: "Longitude (vide = maison)", location_name: "Nom du lieu (facultatif)", header_buttons: "Boutons d'en-tête",
       add_button: "Ajouter un bouton", no_buttons: "Aucun bouton pour l'instant.", admin_only: "Administrateurs seulement", col_cool: "Froid (bleu)",
       col_heat: "Chaud (orange)", col_solar: "Solaire (jaune)", col_battery: "Batterie (vert)", col_grid: "Réseau (violet)",
-      col_alert: "Alerte (rouge)"
+      col_alert: "Alerte (rouge)",
+      entities: "Entités (vide = automatique)", people: "Personnes (vide = tout le monde)", script: "Script, scène ou bouton pour sécuriser la maison", checks: "À vérifier (vide = lumières, portes, fenêtres, serrures)",
+      motion_sensor: "Détecteur de mouvement (facultatif)", camera: "Caméra (facultatif)", battery_below: "Pile faible sous"
     },
     es: {
       appearance: "Apariencia", chips: "Indicadores del encabezado", widgets: "Widgets", add_widget: "Añadir widget",
@@ -2652,7 +3104,9 @@
       latitude: "Latitud (vacío = casa)", longitude: "Longitud (vacío = casa)", location_name: "Nombre del lugar (opcional)", header_buttons: "Botones del encabezado",
       add_button: "Añadir botón", no_buttons: "Aún no hay botones.", admin_only: "Solo administradores", col_cool: "Frío (azul)",
       col_heat: "Calor (naranja)", col_solar: "Solar (amarillo)", col_battery: "Batería (verde)", col_grid: "Red (violeta)",
-      col_alert: "Alerta (rojo)"
+      col_alert: "Alerta (rojo)",
+      entities: "Entidades (vacío = automático)", people: "Personas (vacío = todos)", script: "Script, escena o botón para asegurar la casa", checks: "Qué revisar (vacío = luces, puertas, ventanas, cerraduras)",
+      motion_sensor: "Sensor de movimiento (opcional)", camera: "Cámara (opcional)", battery_below: "Batería baja por debajo de"
     },
     it: {
       appearance: "Aspetto", chips: "Indicatori dell'intestazione", widgets: "Widget", add_widget: "Aggiungi widget",
@@ -2677,7 +3131,9 @@
       latitude: "Latitudine (vuoto = casa)", longitude: "Longitudine (vuoto = casa)", location_name: "Nome del luogo (facoltativo)", header_buttons: "Pulsanti dell'intestazione",
       add_button: "Aggiungi pulsante", no_buttons: "Ancora nessun pulsante.", admin_only: "Solo amministratori", col_cool: "Freddo (blu)",
       col_heat: "Caldo (arancione)", col_solar: "Solare (giallo)", col_battery: "Batteria (verde)", col_grid: "Rete (viola)",
-      col_alert: "Allerta (rosso)"
+      col_alert: "Allerta (rosso)",
+      entities: "Entità (vuoto = automatico)", people: "Persone (vuoto = tutti)", script: "Script, scena o pulsante per mettere in sicurezza la casa", checks: "Cosa controllare (vuoto = luci, porte, finestre, serrature)",
+      motion_sensor: "Sensore di movimento (facoltativo)", camera: "Telecamera (facoltativa)", battery_below: "Batteria scarica sotto"
     },
     nl: {
       appearance: "Uiterlijk", chips: "Chips in de koptekst", widgets: "Widgets", add_widget: "Widget toevoegen",
@@ -2702,7 +3158,9 @@
       latitude: "Breedtegraad (leeg = thuis)", longitude: "Lengtegraad (leeg = thuis)", location_name: "Plaatsnaam (optioneel)", header_buttons: "Knoppen in de koptekst",
       add_button: "Knop toevoegen", no_buttons: "Nog geen knoppen.", admin_only: "Alleen beheerders", col_cool: "Koel (blauw)",
       col_heat: "Warm (oranje)", col_solar: "Zon (geel)", col_battery: "Accu (groen)", col_grid: "Net (paars)",
-      col_alert: "Waarschuwing (rood)"
+      col_alert: "Waarschuwing (rood)",
+      entities: "Entiteiten (leeg = automatisch)", people: "Personen (leeg = iedereen)", script: "Script, scène of knop om het huis te beveiligen", checks: "Wat te controleren (leeg = lampen, deuren, ramen, sloten)",
+      motion_sensor: "Bewegingssensor (optioneel)", camera: "Camera (optioneel)", battery_below: "Batterij bijna leeg onder"
     },
     pl: {
       appearance: "Wygląd", chips: "Wskaźniki w nagłówku", widgets: "Widżety", add_widget: "Dodaj widżet",
@@ -2727,7 +3185,9 @@
       latitude: "Szerokość geograficzna (puste = dom)", longitude: "Długość geograficzna (puste = dom)", location_name: "Nazwa miejsca (opcjonalnie)", header_buttons: "Przyciski nagłówka",
       add_button: "Dodaj przycisk", no_buttons: "Brak przycisków.", admin_only: "Tylko administratorzy", col_cool: "Chłód (niebieski)",
       col_heat: "Ciepło (pomarańczowy)", col_solar: "Fotowoltaika (żółty)", col_battery: "Bateria (zielony)", col_grid: "Sieć (fioletowy)",
-      col_alert: "Alarm (czerwony)"
+      col_alert: "Alarm (czerwony)",
+      entities: "Encje (puste = automatycznie)", people: "Osoby (puste = wszyscy)", script: "Skrypt, scena lub przycisk zabezpieczający dom", checks: "Co sprawdzać (puste = światła, drzwi, okna, zamki)",
+      motion_sensor: "Czujnik ruchu (opcjonalnie)", camera: "Kamera (opcjonalnie)", battery_below: "Słaba bateria poniżej"
     },
     pt: {
       appearance: "Aspeto", chips: "Indicadores do cabeçalho", widgets: "Widgets", add_widget: "Adicionar widget",
@@ -2752,7 +3212,9 @@
       latitude: "Latitude (vazio = casa)", longitude: "Longitude (vazio = casa)", location_name: "Nome do local (opcional)", header_buttons: "Botões do cabeçalho",
       add_button: "Adicionar botão", no_buttons: "Ainda sem botões.", admin_only: "Só administradores", col_cool: "Frio (azul)",
       col_heat: "Calor (laranja)", col_solar: "Solar (amarelo)", col_battery: "Bateria (verde)", col_grid: "Rede (violeta)",
-      col_alert: "Alerta (vermelho)"
+      col_alert: "Alerta (vermelho)",
+      entities: "Entidades (vazio = automático)", people: "Pessoas (vazio = todos)", script: "Script, cena ou botão para proteger a casa", checks: "O que verificar (vazio = luzes, portas, janelas, fechaduras)",
+      motion_sensor: "Sensor de movimento (opcional)", camera: "Câmara (opcional)", battery_below: "Bateria fraca abaixo de"
     }
   };
   const MDI = {
@@ -2877,6 +3339,17 @@
           { name: "invert_battery", selector: { boolean: {} } }, { name: "invert_grid", selector: { boolean: {} } }];
         case "lights": return [sizes, title];
         case "rooms": return [sizes, title];
+        case "alarm": return [sizes, title, { name: "entity", selector: { entity: { domain: "alarm_control_panel" } } },
+          { name: "modes", selector: { select: { multiple: true, mode: "list", options: ["home", "away", "night", "vacation"].map((m) => ({ value: m, label: this._hass?.localize?.(`ui.card.alarm_control_panel.arm_${m}`) || pretty(m) })) } } }];
+        case "safety": return [sizes, title, { name: "entities", selector: { entity: { multiple: true, filter: { domain: "binary_sensor", device_class: ["smoke", "gas", "carbon_monoxide", "moisture", "safety", "problem", "heat", "tamper"] } } } }];
+        case "openings": return [sizes, title, { name: "entities", selector: { entity: { multiple: true, filter: { domain: "binary_sensor", device_class: ["door", "window", "garage_door", "opening"] } } } }];
+        case "presence": return [sizes, title, { name: "people", selector: { entity: { multiple: true, domain: "person" } } }, { name: "script", selector: { entity: { domain: ["script", "scene", "button"] } } }];
+        case "activity": return [sizes, title, { name: "entities", selector: { entity: { multiple: true, domain: "binary_sensor" } } }];
+        case "camera": return [sizes, title, { name: "entity", selector: { entity: { domain: "camera" } } }, { name: "motion_sensor", selector: { entity: { domain: "binary_sensor" } } }];
+        case "doorbell": return [sizes, title, { name: "entity", selector: { entity: { domain: ["event", "binary_sensor", "sensor"] } } }, { name: "camera", selector: { entity: { domain: "camera" } } }];
+        case "health": return [sizes, title, { name: "battery_below", selector: { number: { min: 5, max: 60, step: 5, mode: "slider", unit_of_measurement: "%" } } },
+          { name: "entities", selector: { entity: { multiple: true } } }];
+        case "leaving": return [sizes, title, { name: "script", selector: { entity: { domain: ["script", "scene", "button"] } } }, { name: "checks", selector: { entity: { multiple: true } } }];
         case "climate": return [sizes, title, { name: "entity", selector: { entity: { domain: "climate" } } },
           { name: "modes", selector: { select: { multiple: true, mode: "list", options: ["cool", "heat", "heat_cool", "auto", "dry", "fan_only", "off"].map((m) => ({ value: m, label: this._hass?.localize?.(`component.climate.entity_component._.state.${m}`) || pretty(m) })) } } },
           subtitle];
@@ -3159,6 +3632,20 @@
       .slice(0, 6).map((id) => ({ name: roomName(st[id], id), temperature: id, humidity: humidityFor(st, id) }));
     if (rooms.length) widgets.push({ type: "rooms", size: "L", rooms });
     widgets.push(wx ? { type: "weather", size: "S", entity: wx } : { type: "weather", size: "S", source: "open_meteo" });
+    // home security, from what this Home Assistant has
+    const alarmP = of("alarm_control_panel")[0];
+    if (alarmP) widgets.push({ type: "alarm", entity: alarmP });
+    if (of("binary_sensor").some((id) => ["smoke", "gas", "carbon_monoxide", "moisture", "safety"].includes(st[id].attributes.device_class))) widgets.push({ type: "safety" });
+    if (opens.length) widgets.push({ type: "openings" });
+    if (of("person").length) widgets.push({ type: "presence" });
+    if (of("binary_sensor").some((id) => ["motion", "occupancy", "presence"].includes(st[id].attributes.device_class))) widgets.push({ type: "activity", size: "L" });
+    const cam = of("camera")[0];
+    if (cam) widgets.push({ type: "camera", entity: cam });
+    const bell = [...of("event"), ...of("binary_sensor")].find((id) => /doorbell|sonerie|ding|klingel|sonnette/.test(nm(id)));
+    if (bell) widgets.push({ type: "doorbell", entity: bell, ...(cam ? { camera: cam } : {}) });
+    widgets.push({ type: "health" });
+    const away = of("script").find((id) => /leav|away|plec|absent|weg/.test(nm(id)));
+    widgets.push({ type: "leaving", ...(away ? { script: away } : {}) });
     return { widgets };
   }
 
@@ -3177,6 +3664,15 @@
     security: { size: "S" },
     weather: { size: "S" },
     rooms: { size: "L" },
+    alarm: { size: "M" },
+    safety: { size: "M" },
+    openings: { size: "M" },
+    presence: { size: "M" },
+    activity: { size: "L" },
+    camera: { size: "M" },
+    doorbell: { size: "M" },
+    health: { size: "M" },
+    leaving: { size: "M" },
     header: { size: "XL" }
   };
   const WIDGET_COLUMNS = { S: 6, M: 12, L: 12, XL: "full" };
