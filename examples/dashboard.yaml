@@ -4,9 +4,10 @@
 # Also included:
 #   • Kiosk mode — guests get a clean, full-screen dashboard without the sidebar and top bar;
 #     admins keep them. Needs kiosk-mode (HACS → Frontend).
-#   • A small power menu next to the Customize button: one round button opens a glass
-#     menu with Restart Home Assistant, Reboot host and Shut down (each asks for confirmation),
-#     next to a logout button. Needs Bubble Card (HACS → Frontend).
+#   • A small power menu next to the Customize button: one round button opens a glass menu
+#     in the middle of the screen with Restart Home Assistant, Reboot host and Shut down
+#     (each asks for confirmation), next to a logout button. Needs Bubble Card (HACS → Frontend).
+#     With the Aurora Glass theme the page behind the menu dims to the theme's own tint.
 #     Replace YOUR_ADMIN_USER_ID with your user id (Settings → People → Users → open the user;
 #     the id is in the address bar). Only the users listed see the power button and the menu.
 #     Restart, reboot and shut down only work for administrator accounts.
@@ -104,7 +105,8 @@ views:
                 size: S
                 source: open_meteo       # built-in, free; or remove this line and set  entity: weather.home
 
-          # The menu (a Bubble Card pop-up opened by the #power link)
+          # The menu (a Bubble Card pop-up opened by the #power link), in the middle of the
+          # screen and styled from the theme, so it follows dark/light mode and every preset.
           - type: custom:bubble-card
             card_type: pop-up
             hash: "#power"
@@ -113,23 +115,61 @@ views:
             visibility:
               - condition: user
                 users: *power_users
-            bg_color: "#080c18"
-            bg_opacity: 70
+            popup_mode: centered
+            width_desktop: 420px
             bg_blur: 24
             shadow_opacity: 0
-            width_desktop: 420px
-            margin_top_desktop: calc(100vh - 360px)
-            margin_top_mobile: calc(100vh - 340px)
-            styles: &menu_text |
-              .bubble-name, .bubble-icon, .bubble-close-button, ha-icon { color: #f2f4fb !important; }
-              .bubble-button-card-container, .bubble-close-button { background: rgba(255,255,255,0.08) !important; }
+            styles: |
+              .bubble-pop-up {
+                --bubble-pop-up-main-background-color: color-mix(in srgb, var(--primary-background-color) 66%, transparent);
+                --bubble-pop-up-border-radius: var(--ha-card-border-radius, 28px);
+                font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+              }
+              .bubble-pop-up-background {
+                border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                box-shadow: var(--ha-card-box-shadow, none);
+              }
+              .bubble-header-container {
+                background: none !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              .bubble-button-card-container {
+                background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                border-radius: 20px !important;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+              }
+              .bubble-name {
+                color: var(--primary-text-color) !important;
+                font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+                font-weight: 600 !important;
+              }
+              .bubble-icon-container { background: color-mix(in srgb, var(--primary-color) 18%, transparent) !important; }
+              .bubble-icon { color: var(--primary-color) !important; }
+              .bubble-close-button {
+                background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+              }
+              .bubble-close-button, .bubble-close-button ha-icon { color: var(--primary-text-color) !important; }
             cards:
               - type: custom:bubble-card
                 card_type: button
                 button_type: name
                 name: Restart Home Assistant
                 icon: mdi:home-assistant
-                styles: *menu_text
+                styles: &menu_button |
+                  .bubble-button-card-container {
+                    --ag: var(--primary-color);
+                    background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                    border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                    border-radius: 20px !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+                    font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+                  }
+                  .bubble-name { color: var(--primary-text-color) !important; font-weight: 600 !important; }
+                  .bubble-icon-container { background: color-mix(in srgb, var(--ag) 18%, transparent) !important; }
+                  .bubble-icon { color: var(--ag) !important; }
                 tap_action:
                   action: perform-action
                   perform_action: homeassistant.restart
@@ -140,7 +180,7 @@ views:
                 button_type: name
                 name: Reboot host
                 icon: mdi:restart
-                styles: *menu_text
+                styles: *menu_button
                 tap_action:
                   action: perform-action
                   perform_action: hassio.host_reboot
@@ -151,7 +191,18 @@ views:
                 button_type: name
                 name: Shut down
                 icon: mdi:power
-                styles: *menu_text
+                styles: |   # like the others, with the theme's alert colour
+                  .bubble-button-card-container {
+                    --ag: var(--error-color);
+                    background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                    border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                    border-radius: 20px !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+                    font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+                  }
+                  .bubble-name { color: var(--primary-text-color) !important; font-weight: 600 !important; }
+                  .bubble-icon-container { background: color-mix(in srgb, var(--ag) 18%, transparent) !important; }
+                  .bubble-icon { color: var(--ag) !important; }
                 tap_action:
                   action: perform-action
                   perform_action: hassio.host_shutdown
