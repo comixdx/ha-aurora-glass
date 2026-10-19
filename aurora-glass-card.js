@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.8.0
+ * Aurora Glass Card for Home Assistant — v0.8.1
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -10,7 +10,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.8.0";
+  const VERSION = "0.8.1";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -2830,6 +2830,18 @@
   .ec.sens .en{flex:1}
   .ev2{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
   .ehum{display:flex;align-items:center;gap:4px;font-size:15px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
+  /* Sensor tiles fit their own width: the area goes first, then everything gets smaller, then the humidity moves under the value */
+  .host{container-type:inline-size}
+  @container (max-width:260px){.ec.sens .en span{display:none}}
+  @container (max-width:200px){
+    .ec.sens{padding:12px;gap:8px}
+    .ec.sens .eh{gap:8px}
+    .ec.sens .eic{width:34px;height:34px;border-radius:12px}
+    .ec.sens .en b{font-size:14px}
+    .ec.sens .ebig{font-size:22px}
+    .ehum{font-size:13px;gap:2px}
+  }
+  @container (max-width:150px){.ev2{flex-direction:column;align-items:flex-start;gap:0}}
   .tg{flex:none;width:50px;height:30px;border-radius:99px;padding:3px;display:flex;justify-content:flex-start;background:var(--track);transition:background .25s;border:0;cursor:pointer}
   .tg.on{justify-content:flex-end;background:var(--ai)}
   .tg i{width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
@@ -3048,6 +3060,7 @@
       const hum = humidityFor(st, id);
       return { name: roomName(st[id], id), temperature: id, ...(hum ? { humidity: hum } : {}) };
     }
+    getGridOptions() { return { columns: 6, rows: 2, min_columns: 3, min_rows: 2 }; }
     setConfig(c) {
       if (!c || !(c.temperature || c.entity)) throw new Error("aurora-glass-room: choose a temperature sensor");
       super.setConfig({ ...c, entity: c.temperature || c.entity });
