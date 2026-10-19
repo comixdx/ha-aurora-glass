@@ -1,14 +1,15 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.5.4
+ * Aurora Glass Card for Home Assistant — v0.6.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
+ * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
  * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
  * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
  * No build step, no dependencies. Add as a dashboard resource (type: JavaScript module).
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.5.4";
+  const VERSION = "0.6.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -216,6 +217,7 @@
   .editing .w{outline-color:color-mix(in srgb,var(--acc) 75%,transparent);animation:agWiggle 2.6s ease-in-out infinite;animation-delay:calc(var(--i) * -0.37s)}
   @container (max-width:1099px){.grid{grid-template-columns:repeat(6,minmax(0,1fr))}.w,.w.S{grid-column:span 3}.w.L,.w.XL{grid-column:span 6}}
   @container (max-width:719px){.grid{grid-template-columns:minmax(0,1fr);gap:14px}.w,.w.S,.w.L,.w.XL{grid-column:auto;padding:16px}.wrap{gap:16px}}
+  .single,.single .wrap{height:100%}.single .grid{grid-template-columns:minmax(0,1fr);height:100%}.single .grid:empty{display:none}.single .w{grid-column:1/-1;box-sizing:border-box;height:100%}
   .wh{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px}
   .wt{display:flex;align-items:center;gap:10px;min-width:0}
   .wt h2{margin:0;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1390,7 +1392,8 @@
     static getConfigElement() { return document.createElement("aurora-glass-card-editor"); }
 
     setConfig(config) {
-      if (!config || !Array.isArray(config.widgets) || !config.widgets.length) throw new Error("aurora-glass-card: add a `widgets:` list");
+      // `single` is set by the one-widget cards below: the header card has no widgets at all.
+      if (!config || !Array.isArray(config.widgets) || (!config.widgets.length && !config.single)) throw new Error("aurora-glass-card: add a `widgets:` list");
       const seen = {};
       this._config = { background: true, ...config };
       this._widgets = config.widgets.map((w, i) => {
@@ -1612,7 +1615,7 @@
       const tpl = document.createElement("template");
       tpl.innerHTML = `<div>${html}</div>`;
       const next = tpl.content.firstElementChild;
-      const cls = ["root", this._config.background ? "bg" : "", this._p.motion ? "" : "still", this._p.editing ? "editing" : "", this._first ? "enter" : ""].filter(Boolean).join(" ");
+      const cls = ["root", this._config.background ? "bg" : "", this._config.single ? "single" : "", this._p.motion ? "" : "still", this._p.editing ? "editing" : "", this._first ? "enter" : ""].filter(Boolean).join(" ");
       next.className = cls;
       next.setAttribute("style", this._vars());
       morph(this._root, next, sr.activeElement);
@@ -2104,7 +2107,8 @@
       layout: "Layout", layout_tile: "Tile", layout_row: "Row", tap_action: "Tap", hold_action: "Hold", act_auto: "Automatic (toggle or run, else pop-up)", act_toggle: "Toggle",
       act_popup: "Aurora Glass pop-up", act_native: "Home Assistant's dialog", act_none: "Nothing", icon: "Icon (optional)", show_state: "Show the state", glass: "Glass background", auto: "Auto",
       source: "Weather service", src_entity: "A Home Assistant weather entity (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (built in, free, no account)",
-      latitude: "Latitude (empty = home)", longitude: "Longitude (empty = home)", location_name: "Place name (optional)"
+      latitude: "Latitude (empty = home)", longitude: "Longitude (empty = home)", location_name: "Place name (optional)",
+      header_buttons: "Header buttons", add_button: "Add button", no_buttons: "No buttons yet.", admin_only: "Admins only"
     },
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
@@ -2121,7 +2125,8 @@
       layout: "Aspect", layout_tile: "Pătrat", layout_row: "Rând", tap_action: "Atingere", hold_action: "Ținere apăsată", act_auto: "Automat (comută sau rulează, altfel fereastră)", act_toggle: "Comută",
       act_popup: "Fereastra Aurora Glass", act_native: "Fereastra Home Assistant", act_none: "Nimic", icon: "Iconiță (opțional)", show_state: "Afișează starea", glass: "Fundal de sticlă", auto: "Auto",
       source: "Serviciu meteo", src_entity: "O entitate meteo din Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (inclus, gratuit, fără cont)",
-      latitude: "Latitudine (gol = casa)", longitude: "Longitudine (gol = casa)", location_name: "Numele locului (opțional)"
+      latitude: "Latitudine (gol = casa)", longitude: "Longitudine (gol = casa)", location_name: "Numele locului (opțional)",
+      header_buttons: "Butoane în antet", add_button: "Adaugă buton", no_buttons: "Niciun buton încă.", admin_only: "Doar administratori"
     }
   };
   const MDI = {
@@ -2267,6 +2272,8 @@
     _rowSchema(kind) {
       if (kind === "lights") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["light", "switch", "input_boolean"] } } }, { name: "name", selector: { text: {} } }, { name: "subtitle", selector: { text: {} } }] }];
       if (kind === "scenes") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["scene", "script", "button", "input_button"] } } }, { name: "name", selector: { text: {} } }] }, { name: "description", selector: { text: {} } }];
+      if (kind === "buttons") return [{ type: "grid", name: "", schema: [{ name: "icon", selector: { icon: {} } }, { name: "name", selector: { text: {} } }, { name: "admin_only", selector: { boolean: {} } }] },
+        { name: "tap_action", selector: { ui_action: {} } }];
       const colors = { "": this._l("accent"), cool: "Cool (blue)", heat: "Heat (orange)", solar: "Solar (yellow)", battery: "Battery (green)", grid: "Grid (violet)", alert: "Alert (red)" };
       return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: "sensor" } } }, { name: "name", selector: { text: {} } },
         { name: "color", selector: { select: { mode: "dropdown", options: opt(["", "cool", "heat", "solar", "battery", "grid", "alert"], colors) } } }] }];
@@ -2510,6 +2517,146 @@
     return { widgets };
   }
 
+  /* ================================================================ widget cards */
+  // Each widget as its own card (custom:aurora-glass-energy, custom:aurora-glass-lights, …) plus the header,
+  // so a dashboard can place and size them one by one. The widget is rendered by an inner aurora-glass-card
+  // with the header and background off, so the look, animations and pop-ups are the same as on the board.
+  const WIDGET_CARDS = {
+    energy: { size: "L", desc: "Solar, battery, grid and home power flow" },
+    lights: { size: "L", desc: "Lights and switches with toggles" },
+    climate: { size: "M", desc: "A thermostat with mode buttons" },
+    scenes: { size: "M", desc: "Scenes and scripts as tap-to-run rows" },
+    media: { size: "M", desc: "A media player with artwork and controls" },
+    fan: { size: "S", desc: "A fan with an animated icon" },
+    floor: { size: "S", desc: "A heated floor with its temperature" },
+    security: { size: "S", desc: "A lock and door and window sensors" },
+    weather: { size: "S", desc: "Current weather and forecast" },
+    header: { size: "XL", desc: "Greeting, date, chips and header buttons" }
+  };
+  const WIDGET_COLUMNS = { S: 6, M: 12, L: 12, XL: "full" };
+  const WIDGET_ROWS = { S: 3, M: 5, L: 6, XL: 2 };
+  // Settings of the whole board that a single widget card also has
+  const WIDGET_APPEARANCE = ["preset", "accent", "blur", "motion", "popup", "dashboard_theme", "language"];
+
+  class AuroraGlassWidgetCard extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.innerHTML = `<style>:host{display:block;height:100%}</style>`;
+      this._card = document.createElement("aurora-glass-card");
+      this.shadowRoot.appendChild(this._card);
+    }
+
+    static getConfigElement() { return document.createElement("aurora-glass-widget-editor"); }
+    static getStubConfig(hass) {
+      if (this.kind === "header") {
+        const st = hass?.states || {};
+        const temp = Object.keys(st).find((id) => id.startsWith("sensor.") && st[id].attributes.device_class === "temperature");
+        return { chips: temp ? [{ entity: temp, color: "cool" }] : [] };
+      }
+      const { type, size, ...w } = stubFromHass(hass).widgets.find((x) => x.type === this.kind) || {};
+      return w;
+    }
+
+    get _size() { return this._config?.size || WIDGET_CARDS[this.constructor.kind].size; }
+
+    setConfig(config) {
+      if (!config) throw new Error("Invalid configuration");
+      const kind = this.constructor.kind;
+      const { type, ...rest } = config;
+      const inner = { single: true, background: false, customize: false, id: `widget-${kind}` };
+      WIDGET_APPEARANCE.forEach((k) => { if (k in rest) inner[k] = rest[k]; });
+      if (kind === "header") {
+        Object.assign(inner, { header: true, title: rest.title, chips: rest.chips, header_buttons: rest.header_buttons, widgets: [] });
+      } else {
+        const w = { type: kind, size: this._size };
+        Object.keys(rest).forEach((k) => { if (!WIDGET_APPEARANCE.includes(k)) w[k] = rest[k]; });
+        Object.assign(inner, { header: false, widgets: [w] });
+      }
+      this._config = config;
+      this._card.setConfig(inner);
+    }
+
+    set hass(h) { this._card.hass = h; }
+    set preview(v) { this._card.preview = v; }
+    set editMode(v) { this._card.editMode = v; }
+    getCardSize() { return WIDGET_ROWS[this._size] || 4; }
+    getGridOptions() { return { columns: WIDGET_COLUMNS[this._size] || 12, min_columns: this._size === "S" ? 3 : 6 }; }
+  }
+
+  // The board editor's forms, for one widget: no widget list and no type switch.
+  class AuroraGlassWidgetEditor extends AuroraGlassCardEditor {
+    constructor() { super(); this._open = new Set(); }
+    get _kind() { return String(this._config?.type || "").replace("custom:aurora-glass-", ""); }
+
+    setConfig(config) {
+      const incoming = JSON.stringify(config || {});
+      if (this._config && incoming === this._lastFired) return;
+      this._config = JSON.parse(incoming);
+      this._render();
+    }
+
+    _render() {
+      if (!this._config || !this.shadowRoot) return;
+      const sr = this.shadowRoot;
+      this._forms = [];
+      sr.innerHTML = `<style>${ED_CSS}</style><div class="ed"></div>`;
+      const root = sr.querySelector(".ed");
+      if (!this._ready || !customElements.get("ha-form") || !this._hass) {
+        root.innerHTML = `<div class="empty">${esc(this._l("loading"))}</div>`;
+        return;
+      }
+      const kind = this._kind;
+      const c = this._config;
+      const defSize = WIDGET_CARDS[kind]?.size || "M";
+
+      if (kind === "header") {
+        root.appendChild(this._form([{ name: "title", selector: { text: {} } }], { title: c.title || "" }, (v) => { c.title = v.title; this._fire(); }, { title: "top_title" }));
+        const ch = this._section("chips", this._l("chips"), String(asList(c.chips).length));
+        this._list(ch.body, c, "chips", "chips", "no_chips", "add_chip");
+        root.appendChild(ch.d);
+        const hb = this._section("buttons", this._l("header_buttons"), String(asList(c.header_buttons).length));
+        this._list(hb.body, c, "header_buttons", "buttons", "no_buttons", "add_button");
+        root.appendChild(hb.d);
+      } else {
+        const [head, ...fields] = this._widgetSchema(kind, c);
+        const schema = [{ ...head, schema: head.schema.filter((s) => s.name !== "type") }, ...fields];
+        const data = { size: defSize, ...c };
+        if (kind === "security") data.sensors = asList(c.sensors).map((x) => entOf(x).entity).filter(Boolean);
+        if (kind === "weather") data.source = c.source || "entity";
+        root.appendChild(this._form(schema, data, (v) => {
+          const sourceChanged = kind === "weather" && (v.source || "entity") !== (c.source || "entity");
+          Object.assign(c, v);
+          if (c.source === "entity") delete c.source;
+          if (c.size === defSize) delete c.size;
+          this._fire();
+          if (sourceChanged) this._render();
+        }));
+        if (kind === "lights" || kind === "scenes") {
+          const box = document.createElement("div");
+          box.className = "sub";
+          this._list(box, c, "entities", kind, `no_${kind}`, kind === "lights" ? "add_light" : "add_scene");
+          root.appendChild(box);
+        }
+      }
+
+      // Appearance: the board's settings that apply to one widget
+      const keep = (items) => items
+        .map((s) => (s.type === "grid" ? { ...s, schema: keep(s.schema) } : s))
+        .filter((s) => (s.type === "grid" ? s.schema.length : WIDGET_APPEARANCE.includes(s.name)));
+      const ap = this._section("appearance", this._l("appearance"));
+      const top = {};
+      WIDGET_APPEARANCE.forEach((k) => { top[k] = c[k] ?? TOP_DEFAULTS[k]; });
+      ap.body.appendChild(this._form(keep(this._topSchema()), top, (v) => {
+        WIDGET_APPEARANCE.forEach((k) => { if (v[k] === TOP_DEFAULTS[k]) delete c[k]; else c[k] = v[k]; });
+        if (c.language === "auto") delete c.language;
+        this._fire();
+      }));
+      root.appendChild(ap.d);
+    }
+  }
+  if (!customElements.get("aurora-glass-widget-editor")) customElements.define("aurora-glass-widget-editor", AuroraGlassWidgetEditor);
+
   /* ================================================================ entity card */
   const ENT_CSS = `
   :host{display:block;height:100%}
@@ -2725,5 +2872,12 @@
   if (!window.customCards.some((c) => c.type === "aurora-glass-entity")) {
     window.customCards.push({ type: "aurora-glass-entity", name: "Aurora Glass Entity", description: "One entity as an animated glass tile, with the Aurora Glass pop-up", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
+  Object.keys(WIDGET_CARDS).forEach((kind) => {
+    const tag = `aurora-glass-${kind}`;
+    if (!customElements.get(tag)) customElements.define(tag, class extends AuroraGlassWidgetCard { static get kind() { return kind; } });
+    if (window.customCards.some((c) => c.type === tag)) return;
+    const name = kind === "header" ? "Header" : I18N.en[kind] || pretty(kind);
+    window.customCards.push({ type: tag, name: `Aurora Glass ${name}`, description: WIDGET_CARDS[kind].desc, preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+  });
   console.info(`%c AURORA-GLASS-CARD %c v${VERSION} `, "background:#ffb27a;color:#1c140c;font-weight:700", "background:#080c18;color:#f2f4fb");
 })();

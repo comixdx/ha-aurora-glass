@@ -32,6 +32,10 @@ That's it. The glass look is applied to the whole dashboard by the card itself, 
   - lights and scenes get their own rows with name, subtitle or description;
   - energy flow shows solar, grid, battery, the inverter in the middle and the load; pick the inverter's power, status (e.g. GoodWe work mode) and temperature sensors to show them on the inverter node, and use the two switches for inverters (such as GoodWe) whose battery sensor is positive when discharging or whose grid sensor is positive when exporting.
 
+## Widgets as separate cards
+
+Every widget is also a card of its own, for a Sections view where Home Assistant places and sizes each card: + Add card → search **Aurora Glass** → **Energy flow**, **Lights**, **Climate**, **Scenes**, **Now playing**, **Fan**, **Floor heating**, **Security**, **Weather** or **Header** (greeting, date, chips and the round header buttons). Each opens filled in with matching entities, and its editor has the same fields as that widget in the big card, plus size and an **Appearance** section (theme preset, accent, blur, animations, pop-up and language). They look and animate exactly like the widgets on the board, pop-ups included; the Customize button belongs to the big card only.
+
 ## Customize mode (on the dashboard)
 
 The **Customize** button on the dashboard changes the layout on that one device: move, resize or park widgets, switch preset and accent, blur and animations. A wall tablet and your phone can look different this way. *Reset layout* returns to the editor's layout, and any setting you later change in the editor replaces the device's choice.
@@ -69,6 +73,21 @@ Home Assistant's own dialogs get the glass look too: automatically on dashboards
 ## Optional: the theme for all of Home Assistant
 
 `themes/aurora_glass.yaml` puts the same look on every dashboard and on the rest of the interface (sidebar, settings, dialogs). This is the only part that needs a file: copy it to `/config/themes/`, make sure `configuration.yaml` has `frontend: themes: !include_dir_merge_named themes`, run `frontend.reload_themes`, then choose **Aurora Glass** in your profile. Not needed for the dashboard itself.
+
+## Optional: the sidebar as a top bar
+
+[`extras/ha-top-sidebar.js`](extras/ha-top-sidebar.js) moves Home Assistant's own sidebar to the top of the screen, as a floating glass bar over the dashboard background: the menu button, your dashboards and panels in a row, and Settings, notifications and your profile at the end. The menu button switches between icons only and icons with labels. It works on phones and in the companion app too. "Hide sidebar" in your profile and Home Assistant's kiosk mode still hide it. It takes its colours from the active theme, so it matches best with the Aurora Glass theme above.
+
+1. Copy the file to `/config/www/ha-top-sidebar.js`.
+2. Add it to `configuration.yaml` and restart Home Assistant:
+   ```yaml
+   frontend:
+     extra_module_url:
+       - /local/ha-top-sidebar.js?v=1
+   ```
+3. Reload the browser (on the phone app: Settings → Companion app → Troubleshooting → Reset frontend cache).
+
+Browsers keep `/local/` files for a month, so after replacing the file raise `?v=` and restart. The file restyles Home Assistant's own interface, so a frontend update can change what it needs; it is made for Home Assistant 2026.10.
 
 ## For YAML users
 
@@ -109,6 +128,17 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | `weather` | `entity` (any weather integration: Met.no, OpenWeatherMap, AccuWeather, …), **or** `source: open_meteo` for the built-in Open-Meteo service (free, no account), with optional `latitude`, `longitude` (default: your home) and `location_name`. |
 
 Hold (or right-click) a tile, or tap a chip, an energy node or a widget icon, to open its pop-up.
+
+**Widget cards**
+
+`custom:aurora-glass-<type>` with the widget's keys from the table above, plus `size` and the card options `preset`, `accent`, `blur`, `motion`, `popup`, `dashboard_theme` and `language`. `custom:aurora-glass-header` takes `title`, `chips` and `header_buttons`.
+
+```yaml
+type: custom:aurora-glass-climate
+entity: climate.living_room_ac
+title: Living room
+modes: [cool, heat, off]
+```
 
 **Aurora Glass Entity card**
 
