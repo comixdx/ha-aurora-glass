@@ -116,7 +116,7 @@ Hold any tile (or right-click it), or tap a header chip, an energy-flow node or 
 
 **+ Add card → Aurora Glass Entity** puts a single entity anywhere as a glass tile (or a row with a switch) whose icon animates with its state: the bulb glows and sends out rays at its brightness, the power ring turns, fan blades spin at their speed, the snowflake turns while cooling and the flame flickers while heating, the speaker bars bounce, the lock shackle jumps, blinds slide, doors swing, motion sends out ripples, the thermometer and battery fill to their level, and power sensors flicker while energy flows. Tap toggles (or runs a scene), hold opens the pop-up; both can be changed in its editor along with layout, icon, theme and accent.
 
-![Aurora Glass Entity cards: a light, a fan, a lock, an AC and a sensor](docs/images/shot-entity-card.svg)
+![Aurora Glass Entity cards: a light, a fan, a lock, an AC and a sensor](docs/images/shot-entity-cards.svg)
 
 ## 8. Widgets as separate cards
 
@@ -402,7 +402,7 @@ show_state: true
 motion: true
 ```
 
-![Entity cards](docs/images/shot-entity-card.svg)
+![Entity cards](docs/images/shot-entity-cards.svg)
 
 `auto` toggles lights, switches, fans and covers, runs scenes, scripts and buttons, and opens the pop-up for everything else. In a Sections view, a tile takes 3 columns × 2 rows and a row takes 6 × 1; drag the corner to resize.
 
