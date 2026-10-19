@@ -130,6 +130,12 @@ navbar-templates:
         .route { flex: none !important; scroll-snap-align: start; }
         .label { display: none !important; }
       }
+
+      /* Phones: every page draws its own navbar; it fades in while it is moved to the open page, so it never flashes at the start */
+      @media (max-width: 600px) {
+        .navbar-card { animation: agNavIn .28s ease-out both; }
+        @keyframes agNavIn { from { opacity: 0; } to { opacity: 1; } }
+      }
   # One round button at the top right, with a menu
   account:
     routes:
