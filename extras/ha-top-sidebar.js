@@ -26,11 +26,11 @@
     }
   `;
 
-  // ha-drawer: the sidebar shell becomes a full-width bar and the page starts below it.
-  // The transform makes the page the containing block for its own fixed toolbars,
-  // so a dashboard header with top:0 sits under the bar instead of behind it.
+  // ha-drawer: the sidebar shell becomes a full-width bar over the top of the page.
+  // Headers, page content and pop-ups (Bubble Card too) all leave room for --safe-area-inset-top,
+  // the space HA keeps free for a phone's notch, so raising it to the bar height moves everything
+  // below the bar while fixed elements stay relative to the screen and stack normally.
   const DRAWER_CSS = `
-    :host(:not([type="modal"])) .layout { position: relative; }
     :host(:not([type="modal"])) .sidebar-shell {
       inset: 0 0 auto 0;
       width: 100% !important;
@@ -42,12 +42,8 @@
       background: var(--lovelace-background, var(--primary-background-color));
     }
     :host(:not([type="modal"])) .app-content {
-      position: absolute;
-      inset: var(--ha-top-sidebar-height) 0 0 0;
-      width: auto;
-      height: auto;
       padding-inline-start: 0 !important;
-      transform: translateZ(0);
+      --safe-area-inset-top: var(--ha-top-sidebar-height);
     }
   `;
 
