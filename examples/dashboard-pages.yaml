@@ -43,29 +43,30 @@ navbar-templates:
               }
               return out;
             };
-            let tries = 0;
-            const go = () => {
-              const bars = find(document)
-                .map((nb) => nb.shadowRoot?.querySelector(".navbar-card"))
-                .filter((bar) => bar && bar.isConnected && bar.getClientRects().length && bar.querySelector(".button.active"));
-              if (!bars.length) { if (++tries < 60) requestAnimationFrame(go); return; }
-              for (const bar of bars) {
-                if (bar.scrollWidth <= bar.clientWidth) continue;
-                // remember where the bar is when it is swiped by hand
-                if (!bar.__agNav) {
-                  bar.__agNav = true;
+            // The new page's navbar can appear a moment after the page changes, so look a few times
+            const pass = () => {
+              if (window.__agNavPath !== path) return;
+              for (const nb of find(document)) {
+                const bar = nb.shadowRoot?.querySelector(".navbar-card");
+                const act = bar?.querySelector(".button.active");
+                if (!bar || !act || !bar.isConnected || !bar.getClientRects().length || bar.scrollWidth <= bar.clientWidth) continue;
+                if (bar.__agNavPath === path) continue;          // this bar is already in place
+                if (!bar.__agNavSeen) {
+                  // a new bar: start where the previous page's bar was, and remember hand swipes
+                  bar.__agNavSeen = true;
+                  bar.scrollTo({ left: window.__agNavLeft || 0, behavior: "instant" });
                   bar.addEventListener("scroll", () => { window.__agNavLeft = bar.scrollLeft; }, { passive: true });
                 }
-                // start where the bar was on the previous page, then glide to the page you opened
-                bar.scrollTo({ left: window.__agNavLeft || 0, behavior: "instant" });
-                const act = bar.querySelector(".button.active").closest(".route") || bar.querySelector(".button.active");
-                const b = bar.getBoundingClientRect(), a = act.getBoundingClientRect();
+                bar.__agNavPath = path;
+                const route = act.closest(".route") || act;
+                const b = bar.getBoundingClientRect(), a = route.getBoundingClientRect();
                 const left = Math.max(0, Math.min(bar.scrollLeft + (a.left + a.width / 2) - (b.left + b.width / 2), bar.scrollWidth - bar.clientWidth));
                 requestAnimationFrame(() => bar.scrollTo({ left, behavior: "smooth" }));
                 window.__agNavLeft = left;
               }
             };
-            requestAnimationFrame(go);
+            requestAnimationFrame(pass);
+            [250, 600, 1200].forEach((ms) => setTimeout(pass, ms));
           }
           return false;
         ]]]
