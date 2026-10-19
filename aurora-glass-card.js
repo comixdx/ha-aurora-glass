@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.6.1
+ * Aurora Glass Card for Home Assistant — v0.6.2
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -9,7 +9,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.6.1";
+  const VERSION = "0.6.2";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -1694,7 +1694,8 @@
         date = now.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" });
         time = now.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
       } catch (e) { date = now.toDateString(); }
-      const title = this._config.title ?? this._t(hr < 12 ? "good_morning" : hr < 18 ? "good_afternoon" : "good_evening");
+      const greeting = this._config.greeting === false ? "" : this._t(hr < 12 ? "good_morning" : hr < 18 ? "good_afternoon" : "good_evening");
+      const title = this._config.title ?? greeting;
       const chips = asList(this._config.chips).map((c) => {
         c = entOf(c);
         const s = this._st(c.entity);
@@ -1712,7 +1713,7 @@
       const hb = asList(this._config.header_buttons).map((b, i) => [b, i])
         .filter(([b]) => b && (!b.admin_only || isAdmin) && (!b.users || asList(b.users).includes(uid)))
         .map(([b, i]) => `<button class="hb glass2" data-act="hb" data-i="${i}" aria-label="${esc(b.name || b.icon || "")}" title="${esc(b.name || "")}"><ha-icon icon="${esc(b.icon || "mdi:gesture-tap")}"></ha-icon></button>`).join("");
-      return `<header><div class="hello"><div class="muted" style="font-size:14px;letter-spacing:.02em">${esc(date)} · ${esc(time)}</div><h1 class="disp">${esc(title)}</h1></div><div class="chips">${chips}${edit || hb ? `<div class="hbs">${edit}${hb}</div>` : ""}</div></header>`;
+      return `<header><div class="hello"><div class="muted" style="font-size:14px;letter-spacing:.02em">${esc(date)} · ${esc(time)}</div>${title ? `<h1 class="disp">${esc(title)}</h1>` : ""}</div><div class="chips">${chips}${edit || hb ? `<div class="hbs">${edit}${hb}</div>` : ""}</div></header>`;
     }
 
     _panel() {
@@ -2186,7 +2187,7 @@
   const ED_LABELS = {
     en: {
       appearance: "Appearance", chips: "Header chips", widgets: "Widgets", add_widget: "Add widget", add_chip: "Add chip", add_light: "Add light", add_scene: "Add scene",
-      preset: "Theme preset", accent: "Accent colour", blur: "Glass blur", motion: "Animations", background: "Draw the glass background", header: "Show header",
+      preset: "Theme preset", accent: "Accent colour", blur: "Glass blur", motion: "Animations", background: "Draw the glass background", header: "Show header", greeting: "Show the greeting",
       customize: "Show the Customize button", dashboard_theme: "Apply the glass theme to the whole dashboard (no theme file needed)", title: "Title", top_title: "Title (empty = greeting)", min_height: "Minimum height (e.g. 100vh for a Panel view)", language: "Language",
       type: "Widget type", size: "Size", entity: "Entity", name: "Name", subtitle: "Subtitle", color: "Dot colour", decimals: "Decimals", description: "Description",
       solar_power: "Solar power", home_power: "Load / house consumption (optional, computed if empty)", inverter_power: "Inverter output power (optional)", inverter_status: "Inverter status (optional, e.g. work mode)", inverter_temperature: "Inverter temperature (optional)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
@@ -2204,7 +2205,7 @@
     },
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
-      preset: "Temă", accent: "Culoare de accent", blur: "Estompare sticlă", motion: "Animații", background: "Fundal de sticlă", header: "Afișează antetul",
+      preset: "Temă", accent: "Culoare de accent", blur: "Estompare sticlă", motion: "Animații", background: "Fundal de sticlă", header: "Afișează antetul", greeting: "Afișează salutul",
       customize: "Afișează butonul Personalizează", dashboard_theme: "Aplică tema de sticlă pe tot tabloul (fără fișier de temă)", title: "Titlu", top_title: "Titlu (gol = salut)", min_height: "Înălțime minimă (ex. 100vh pentru vizualizare Panou)", language: "Limbă",
       type: "Tip widget", size: "Mărime", entity: "Entitate", name: "Nume", subtitle: "Subtitlu", color: "Culoare punct", decimals: "Zecimale", description: "Descriere",
       solar_power: "Putere solară", home_power: "Consum / sarcină (opțional, calculat dacă e gol)", inverter_power: "Putere ieșire invertor (opțional)", inverter_status: "Stare invertor (opțional, ex. mod de lucru)", inverter_temperature: "Temperatură invertor (opțional)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
@@ -2229,7 +2230,7 @@
     chev: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"
   };
   const opt = (values, labels) => values.map((v) => ({ value: v, label: labels ? labels[v] || v : v }));
-  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, customize: true, dashboard_theme: true, language: "auto", popup: "aurora" };
+  const TOP_DEFAULTS = { preset: "auto", accent: "peach", blur: 24, motion: true, background: true, header: true, greeting: true, customize: true, dashboard_theme: true, language: "auto", popup: "aurora" };
 
   function cleanCfg(v) {
     if (Array.isArray(v)) return v.map(cleanCfg).filter((x) => x !== undefined);
@@ -2315,6 +2316,7 @@
           { name: "motion", selector: { boolean: {} } },
           { name: "background", selector: { boolean: {} } },
           { name: "header", selector: { boolean: {} } },
+          { name: "greeting", selector: { boolean: {} } },
           { name: "customize", selector: { boolean: {} } }
         ] },
         { name: "dashboard_theme", selector: { boolean: {} } },
@@ -2659,7 +2661,7 @@
       const inner = { single: true, background: false, customize: false, id: `widget-${kind}` };
       WIDGET_APPEARANCE.forEach((k) => { if (k in rest) inner[k] = rest[k]; });
       if (kind === "header") {
-        Object.assign(inner, { header: true, title: rest.title, chips: rest.chips, header_buttons: rest.header_buttons, widgets: [] });
+        Object.assign(inner, { header: true, title: rest.title, greeting: rest.greeting, chips: rest.chips, header_buttons: rest.header_buttons, widgets: [] });
       } else {
         const w = { type: kind, size: this._size };
         Object.keys(rest).forEach((k) => { if (!WIDGET_APPEARANCE.includes(k)) w[k] = rest[k]; });
@@ -2703,7 +2705,11 @@
       const defSize = WIDGET_CARDS[kind]?.size || "M";
 
       if (kind === "header") {
-        root.appendChild(this._form([{ name: "title", selector: { text: {} } }], { title: c.title || "" }, (v) => { c.title = v.title; this._fire(); }, { title: "top_title" }));
+        root.appendChild(this._form([{ name: "title", selector: { text: {} } }, { name: "greeting", selector: { boolean: {} } }], { title: c.title || "", greeting: c.greeting ?? true }, (v) => {
+          c.title = v.title;
+          if (v.greeting) delete c.greeting; else c.greeting = false;
+          this._fire();
+        }, { title: "top_title" }));
         const ch = this._section("chips", this._l("chips"), String(asList(c.chips).length));
         this._list(ch.body, c, "chips", "chips", "no_chips", "add_chip");
         root.appendChild(ch.d);

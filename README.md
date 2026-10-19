@@ -123,7 +123,7 @@ Hold any tile (or right-click it), or tap a header chip, an energy-flow node or 
 Every widget is also a card of its own, for a **Sections** view where Home Assistant places and sizes each card.
 
 1. In a Sections view: **+ Add card** → search **Aurora Glass** → pick **Energy flow**, **Lights**, **Climate**, **Scenes**, **Now playing**, **Fan**, **Floor heating**, **Security**, **Weather** or **Header** (greeting, date, chips and the round header buttons).
-2. It opens filled in with matching entities. The editor has the same fields as that widget in the big card, plus **Size** and an **Appearance** section (theme preset, accent, blur, animations, pop-up and language). The Header card also edits the chips and the header buttons (icon, name, admins only, tap action).
+2. It opens filled in with matching entities. The editor has the same fields as that widget in the big card, plus **Size** and an **Appearance** section (theme preset, accent, blur, animations, pop-up and language). The Header card also edits the chips and the header buttons (icon, name, admins only, tap action), and **Show the greeting** turns the "Good evening" line off.
 3. **Save**, then drag the cards where you want them and resize them by their corner.
 
 Each one is a card of its own:
@@ -223,7 +223,7 @@ Two rules matter more than anything else:
 
 | # | What | YAML |
 |---|---|---|
-| 1 | Greeting and date | `title: Acasă` replaces the greeting; `header: false` hides the whole header |
+| 1 | Greeting and date | `title: Acasă` replaces the greeting, `greeting: false` leaves only the date; `header: false` hides the whole header |
 | 2 | Header chips | `chips:` — a list of sensors |
 | 3 | Customize button | `customize: false` hides it |
 | 4 | A widget | one item under `widgets:` |
@@ -406,7 +406,7 @@ motion: true
 
 ## Widget cards in YAML
 
-`custom:aurora-glass-<type>` takes the widget's keys from the sections above, plus `size` and the card options `preset`, `accent`, `blur`, `motion`, `popup`, `dashboard_theme` and `language`. `custom:aurora-glass-header` takes `title`, `chips` and `header_buttons`.
+`custom:aurora-glass-<type>` takes the widget's keys from the sections above, plus `size` and the card options `preset`, `accent`, `blur`, `motion`, `popup`, `dashboard_theme` and `language`. `custom:aurora-glass-header` takes `title`, `greeting`, `chips` and `header_buttons`.
 
 ```yaml
 type: custom:aurora-glass-climate
@@ -446,6 +446,7 @@ header_buttons:
 | `min_height` | — | e.g. `100vh` in a Panel view. |
 | `chips` | — | `{entity, name, color, decimals}`; `color` is a hex or `cool`/`heat`/`solar`/`battery`/`grid`/`alert`. |
 | `title` | greeting | Header title. `header: false` hides the header. |
+| `greeting` | `true` | `false` drops the "Good morning / afternoon / evening" line when no `title` is set; the date, chips and buttons stay. |
 | `customize` | `true` | `false` hides the Customize button. |
 | `header_buttons` | — | Small round buttons next to the Customize button: `{icon, name, tap_action}` (any Home Assistant action: navigate, perform-action with confirmation, …), shown to everyone or only to `admin_only: true` / `users: [user ids]`. |
 | `popup` | `aurora` | What holding a tile opens: `aurora` (glass pop-up), `native` (Home Assistant's dialog) or `none`. |
