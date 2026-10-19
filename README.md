@@ -2,7 +2,7 @@
 
 A frosted-glass dashboard card whose animations follow real entity states: dots flow along the energy lines at a speed set by the kW, the fan spins at its set speed, air streaks while the AC cools, the floor shimmers while it heats, the music bars move while a speaker plays. Hold any tile for a glass pop-up with its controls, place each widget as its own card, and give the whole of Home Assistant the same look, down to a glass top bar in place of the sidebar. Everything is set up with clicks — YAML is optional.
 
-![The finished Aurora Glass dashboard: header with chips, energy flow, lights, climate and more](docs/images/shot-dashboard-result.svg)
+![The finished Aurora Glass dashboard: header with chips, energy flow, lights, climate and more](docs/images/shot-dashboard-result-v2.svg)
 
 **Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. The theme](#9-the-theme-for-all-of-home-assistant) · [10. The sidebar as a top bar](#10-the-sidebar-as-a-top-bar) · [11. The complete example](#11-the-complete-example)
 
@@ -130,7 +130,7 @@ Each one is a card of its own:
 
 | | |
 |---|---|
-| ![Header card](docs/images/shot-widget-header.svg) | ![Energy flow card](docs/images/shot-widget-energy.svg) |
+| ![Header card](docs/images/shot-widget-header.svg) | ![Energy flow card](docs/images/shot-widget-energy-v2.svg) |
 | ![Lights card](docs/images/shot-widget-lights.svg) | ![Climate card](docs/images/shot-widget-climate.svg) |
 | ![Scenes card](docs/images/shot-widget-scenes.svg) | ![Now playing card](docs/images/shot-widget-media.svg) |
 | ![Fan card](docs/images/shot-widget-fan.svg) | ![Floor heating card](docs/images/shot-widget-floor.svg) |
@@ -183,7 +183,7 @@ Browsers keep `/local/` files for a month, so after replacing the file raise `?v
 2. ✏️ → ⋮ → **Raw configuration editor** → paste the file → **Save**.
 3. Replace the entity ids with yours and `YOUR_ADMIN_USER_ID` with your user id (Settings → People → Users → open the user; the id is in the address bar).
 
-![The example dashboard](docs/images/shot-dashboard-result.svg)
+![The example dashboard](docs/images/shot-dashboard-result-v2.svg)
 
 ---
 
@@ -269,7 +269,7 @@ On a wide screen the card has 12 columns: `S` takes 3, `M` 4 (the default), `L` 
 
 ## Energy flow
 
-![Each node of the energy flow and the YAML key that feeds it](docs/images/energy-keys.svg)
+![Each node of the energy flow and the YAML key that feeds it](docs/images/energy-keys-v2.svg)
 
 ```yaml
   - type: energy
@@ -286,7 +286,7 @@ On a wide screen the card has 12 columns: `S` takes 3, `M` 4 (the default), `L` 
     invert_grid: true       # GoodWe: active_power is + when exporting
 ```
 
-![The energy flow widget: solar, grid and battery into the inverter, the inverter into the house](docs/images/shot-widget-energy.svg)
+![The energy flow widget: solar, grid and battery into the inverter, the inverter into the house](docs/images/shot-widget-energy-v2.svg)
 
 The entity ids above are examples. Use the ones from **Settings → Devices & services → your inverter**, or start typing in the visual editor's entity picker.
 
