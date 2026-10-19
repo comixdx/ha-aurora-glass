@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.7.1
+ * Aurora Glass Card for Home Assistant — v0.7.2
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -9,7 +9,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.7.1";
+  const VERSION = "0.7.2";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -2819,6 +2819,9 @@
   .bar i{display:block;height:100%;border-radius:99px;background:var(--ai);transition:width .5s}
   .ec.row{flex-direction:row;align-items:center;min-height:var(--minh,64px);padding:10px 12px 10px 10px;gap:12px}
   .ec.row .en{flex:1}
+  .ec.sens .eh{justify-content:flex-start;align-items:center;gap:12px}
+  .ec.sens .eic{width:40px;height:40px;border-radius:14px}
+  .ec.sens .en{flex:1}
   .tg{flex:none;width:50px;height:30px;border-radius:99px;padding:3px;display:flex;justify-content:flex-start;background:var(--track);transition:background .25s;border:0;cursor:pointer}
   .tg.on{justify-content:flex-end;background:var(--ai)}
   .tg i{width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
@@ -2884,14 +2887,13 @@
         const area = c.subtitle ?? areaOf(this._hass, id);
         const numeric = d === "sensor" && isFinite(parseFloat(st.state));
         // Sensors read like the widgets: one decimal (none for %), "°" for temperatures, and the tile stays neutral glass.
-        let valTxt = stTxt, level = null;
+        let valTxt = stTxt;
         if (numeric) {
           const n = parseFloat(st.state), u = a.unit_of_measurement || "";
           const dec = c.decimals ?? (u === "%" ? 0 : Math.abs(n) < 100 ? 1 : 0);
           let num;
           try { num = n.toLocaleString(this._hass?.locale?.language || "en", { minimumFractionDigits: dec, maximumFractionDigits: dec }); } catch (e) { num = n.toFixed(dec); }
           valTxt = u === "°C" || u === "°F" ? `${num}°` : u === "%" ? `${num}%` : u ? `${num} ${u}` : num;
-          if (u === "%") level = clamp(n, 0, 100);
         }
         const bri = d === "light" && on && a.brightness != null ? Math.round(a.brightness / 2.55) : null;
         const pct = bri ?? (d === "fan" && on && a.percentage != null ? a.percentage : d === "cover" && a.current_position != null ? a.current_position : null);
@@ -2902,11 +2904,15 @@
           html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">${icon}
             <div class="en"><b>${esc(name)}</b>${c.show_state !== false ? `<span>${esc([stTxt, area].filter(Boolean).join(" · "))}</span>` : ""}</div>
             ${canToggle ? `<button class="tg ${st.state === "on" ? "on" : ""}" data-act="toggle" role="switch" aria-checked="${st.state === "on"}" aria-label="${esc(name)}"><i></i></button>` : numeric ? `<span class="ebig" style="font-size:20px">${esc(valTxt)}</span>` : ""}</div>`;
+        } else if (numeric) {
+          html = `<div class="${cls} sens" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
+            <div class="eh">${icon}<div class="en"><b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div></div>
+            ${c.show_state !== false ? `<span class="ebig">${esc(valTxt)}</span>` : ""}</div>`;
         } else {
           html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
             <div class="eh">${icon}${c.show_state !== false && !numeric ? `<span class="eval">${esc(pct != null ? pct + "%" : stTxt)}</span>` : ""}</div>
-            <div class="en">${numeric && c.show_state !== false ? `<span class="ebig">${esc(valTxt)}</span>` : ""}<b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div>
-            ${pct != null || level != null ? `<div class="bar"><i style="width:${pct ?? level}%"></i></div>` : ""}</div>`;
+            <div class="en"><b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div>
+            ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}</div>`;
         }
       }
       const tpl = document.createElement("template");
