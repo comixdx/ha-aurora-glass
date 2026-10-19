@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.6.0
+ * Aurora Glass Card for Home Assistant — v0.6.1
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -9,7 +9,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.6.0";
+  const VERSION = "0.6.1";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -35,6 +35,9 @@
   };
   const SEM_DARK = { cool: "#6cb6ff", heat: "#ff8a66", solar: "#f6c84a", battery: "#5fdca6", grid: "#b3a4ff", home: "#f2f4fb", alert: "#ff6b7f" };
   const SEM_LIGHT = { cool: "#2b74cc", heat: "#d4552e", solar: "#b4840a", battery: "#178a5c", grid: "#6450cf", home: "#151827", alert: "#cf3049" };
+  // Energy flow nodes: solar DC, grid AC, inverter, house, battery
+  const EF_DARK = { pv: "#ef9f27", grid: "#378add", inv: "#1d9e75", house: "#639922", batt: "#d4537e" };
+  const EF_LIGHT = { pv: "#c27a0e", grid: "#2a6fc0", inv: "#138a66", house: "#4f8a1a", batt: "#c23d6a" };
 
   /* ------------------------------------------------------------------ i18n */
   const I18N = {
@@ -47,6 +50,11 @@
       floor: "Floor heating", security: "Security", weather: "Weather",
       live: "Live", n_of_m_on: "{n} of {m} on", solar: "Solar", home: "Home", inverter: "Inverter", load: "Load", exporting: "Exporting to grid", importing: "From grid",
       grid_idle: "Grid idle", charging: "Charging {v}", discharging: "Discharging {v}", battery_idle: "Battery idle",
+      grid: "Grid", battery: "Battery", throughput: "throughput", of_supply: "{p} of supply", no_production: "no production", self_now: "Self-sufficiency now",
+      ef_export: "Solar covers the house — the surplus goes back to the grid.", ef_export_charge: "Solar covers the house and charges the battery — the surplus goes back to the grid.",
+      ef_solar: "Solar is covering the house.", ef_solar_charge: "Solar covers the house and charges the battery.", ef_solar_grid: "Solar covers part of the house; the grid tops up the rest.",
+      ef_batt_grid: "The battery is carrying most of the load; the grid tops up the rest.", ef_grid_batt: "The grid is carrying most of the load; the battery helps.",
+      ef_batt: "The battery is powering the house.", ef_grid: "Drawing from the grid.", ef_quiet: "No power is flowing right now.",
       target: "target", cooling: "Cooling", heating: "Heating", idle: "Idle", tap_to_run: "Tap to run", active: "Active: {n}",
       nothing_playing: "Nothing playing", play: "Play", pause: "Pause", speed: "Speed {n}", tap_speed: "Tap to change speed",
       running: "Running", heating_to: "heating to {t}", locked: "Locked · tap to unlock", unlocked: "Unlocked · tap to lock",
@@ -69,6 +77,11 @@
       floor: "Încălzire în pardoseală", security: "Securitate", weather: "Vremea",
       live: "Live", n_of_m_on: "{n} din {m} aprinse", solar: "Solar", home: "Casă", inverter: "Invertor", load: "Consum", exporting: "Injectare în rețea", importing: "Din rețea",
       grid_idle: "Rețea inactivă", charging: "Se încarcă {v}", discharging: "Se descarcă {v}", battery_idle: "Baterie inactivă",
+      grid: "Rețea", battery: "Baterie", throughput: "tranzit", of_supply: "{p} din alimentare", no_production: "fără producție", self_now: "Autonomie acum",
+      ef_export: "Soarele acoperă casa — surplusul merge în rețea.", ef_export_charge: "Soarele acoperă casa și încarcă bateria — surplusul merge în rețea.",
+      ef_solar: "Soarele acoperă consumul casei.", ef_solar_charge: "Soarele acoperă casa și încarcă bateria.", ef_solar_grid: "Soarele acoperă o parte din consum; rețeaua completează restul.",
+      ef_batt_grid: "Bateria duce cea mai mare parte a consumului; rețeaua completează restul.", ef_grid_batt: "Rețeaua duce cea mai mare parte a consumului; bateria ajută.",
+      ef_batt: "Bateria alimentează casa.", ef_grid: "Se consumă din rețea.", ef_quiet: "Nu circulă energie acum.",
       target: "țintă", cooling: "Răcire", heating: "Încălzire", idle: "Inactiv", tap_to_run: "Atinge pentru a rula", active: "Activă: {n}",
       nothing_playing: "Nu se redă nimic", play: "Redă", pause: "Pauză", speed: "Viteza {n}", tap_speed: "Atinge pentru a schimba viteza",
       running: "Pornit", heating_to: "încălzește la {t}", locked: "Încuiat · atinge pentru a descuia", unlocked: "Descuiat · atinge pentru a încuia",
@@ -228,16 +241,53 @@
   .ctl button{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
   .err{font-size:13px;color:var(--alert)}
   /* energy */
-  .flowbox{position:relative;height:380px}
-  .flowbox svg.lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-  .trk{fill:none;stroke:var(--track);stroke-width:2}
-  .flow{fill:none;stroke-width:6;stroke-linecap:round;stroke-dasharray:.1 14;transition:opacity .5s;animation:agDash var(--d,1.2s) linear infinite}
-  .node{position:absolute;transform:translate(-50%,-36px);display:flex;flex-direction:column;align-items:center;gap:10px;z-index:1}
-  .bub{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--c);background:var(--fill,linear-gradient(var(--glass2),var(--glass2))),var(--ground);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 7%,transparent);transition:box-shadow .6s}
-  .bub.big{width:84px;height:84px}
-  .bub.act{box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 7%,transparent),0 0 34px color-mix(in srgb,var(--c) 40%,transparent)}
-  .nv{display:flex;flex-direction:column;align-items:center;gap:1px;white-space:nowrap}
-  .nv .disp{font-size:20px}.nv .muted{font-size:12px}
+  /* A cross: solar on top, grid left, inverter in the middle, house right, battery below.
+     Sizes follow the widget's own width, so the same layout fits a phone. */
+  .ef{container-type:inline-size;display:flex;flex-direction:column;gap:14px;--sz:clamp(58px,15cqw,96px);--szb:calc(var(--sz) * 1.125);--leg:clamp(28px,11cqw,84px)}
+  .efsum{font-size:13px;line-height:1.4;color:var(--muted)}
+  .efg{display:grid;grid-template-columns:minmax(0,1fr) var(--leg) minmax(0,1fr) var(--leg) minmax(0,1fr);grid-template-rows:auto var(--leg) auto var(--leg) auto;justify-items:center}
+  .en{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;max-width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
+  .en.up{flex-direction:column-reverse}
+  .en svg{width:var(--sz);height:var(--sz);flex:none;overflow:visible;transition:filter .6s}
+  .en.big svg{width:var(--szb);height:var(--szb)}
+  .en.side svg{margin-top:calc((var(--szb) - var(--sz)) / 2)}
+  .en.act svg{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 45%,transparent))}
+  .en .ring{fill:color-mix(in srgb,var(--c) 22%,var(--ground));stroke:var(--c);stroke-width:3}
+  .en .ln{fill:none;stroke:var(--ci);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .en .thin{stroke-width:1.2;opacity:.7}
+  .en .fl{fill:var(--ci)}
+  .en .bdg{fill:var(--c)}
+  .en .bdt{fill:#fff;font:700 9px 'Figtree',system-ui,sans-serif;text-anchor:middle}
+  .en .bdt.sm{font-size:8px}
+  .en{--ci:color-mix(in srgb,var(--c) 62%,var(--text))}
+  .el{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:600;color:var(--ci)}
+  .el small{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
+  .ev{display:flex;align-items:baseline;gap:6px;font-size:clamp(15px,4.4cqw,20px);line-height:1.1;white-space:nowrap}
+  .es{max-width:100%;overflow:hidden;font-size:11px;color:var(--muted);white-space:nowrap;text-overflow:ellipsis}
+  .ev .es{font-family:'Figtree',var(--ha-font-family-body,system-ui),sans-serif;font-weight:400}
+  .esoc{width:min(108px,90%);height:4px;margin:2px 0;border-radius:2px;overflow:hidden;background:var(--track)}
+  .esoc i{display:block;height:100%;border-radius:2px;background:var(--c);transition:width .6s}
+  .eleg{position:relative;width:100%;height:100%;--lc:var(--c)}
+  .eleg.h{height:var(--szb)}
+  .eleg::before{content:"";position:absolute;background:linear-gradient(var(--ld,180deg),transparent,var(--lc) 22%,var(--lc) 78%,transparent);transition:background .5s}
+  .eleg.v::before{top:0;bottom:0;left:calc(50% - 1px);width:2px}
+  .eleg.h::before{top:calc(50% - 1px);left:0;right:0;height:2px;--ld:90deg}
+  .eleg.idle{--lc:var(--track)}
+  .edot{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--lc);box-shadow:0 0 8px var(--lc);animation:var(--an) var(--d,1.6s) linear infinite var(--dr,normal)}
+  .edot:nth-of-type(2){animation-delay:calc(var(--d,1.6s) * -.333)}
+  .edot:nth-of-type(3){animation-delay:calc(var(--d,1.6s) * -.667)}
+  .eleg.v .edot{left:calc(50% - 3.5px);--an:agFv}
+  .eleg.h .edot{top:calc(50% - 3.5px);--an:agFh}
+  .eleg.idle .edot,.still .edot{display:none}
+  .etag{position:absolute;font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .eleg.v .etag{top:50%;left:calc(50% + 12px);transform:translateY(-50%)}
+  .eleg.h .etag{top:calc(50% + 10px);left:50%;transform:translateX(-50%)}
+  @container (max-width:520px){.etag .pc{display:none}}
+  .efoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding-top:12px;border-top:1px solid var(--faint);font-size:12px;color:var(--muted)}
+  .elg{display:flex;flex-wrap:wrap;gap:6px 14px}
+  .elg span{display:flex;align-items:center;gap:6px}
+  .elg i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+  .efoot b{font-weight:600;color:var(--text)}
   /* lights */
   .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .w.L .tiles,.w.XL .tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -330,7 +380,8 @@
   @keyframes agDrop{0%{opacity:0;transform:translateY(-10px)}100%{opacity:1;transform:none}}
   @keyframes agWiggle{0%,100%{transform:rotate(-.35deg)}50%{transform:rotate(.35deg)}}
   @keyframes agSpin{to{transform:rotate(360deg)}}
-  @keyframes agDash{to{stroke-dashoffset:-14.1}}
+  @keyframes agFv{0%{top:-4px;opacity:0}18%,82%{opacity:1}100%{top:calc(100% - 3px);opacity:0}}
+  @keyframes agFh{0%{left:-4px;opacity:0}18%,82%{opacity:1}100%{left:calc(100% - 3px);opacity:0}}
   @keyframes agAir{0%{transform:translateX(-40%);opacity:0}25%{opacity:.95}100%{transform:translateX(260%);opacity:0}}
   @keyframes agRise{0%{transform:translateY(12px) scale(.6);opacity:0}35%{opacity:.85}100%{transform:translateY(-34px) scale(1.25);opacity:0}}
   @keyframes agEq{0%,100%{transform:scaleY(.22)}50%{transform:scaleY(1)}}
@@ -1510,6 +1561,8 @@
         "--acc": A.c, "--acc-ink": T.dark ? A.c : A.deep, "--acc-a": T.dark ? "14%" : "28%", "--acc-t": T.dark ? "16%" : "32%",
         "--blur": `${this._p.blur}px`, "--cool": S.cool, "--heat": S.heat, "--solar": S.solar, "--battery": S.battery, "--grid": S.grid, "--alert": S.alert
       };
+      const EF = T.dark ? EF_DARK : EF_LIGHT;
+      Object.keys(EF).forEach((k) => { v[`--ef-${k}`] = EF[k]; });
       if (this._config.min_height && !this.preview && !this.editMode) v["--min-h"] = this._config.min_height;
       if (this._config.radius) v["--root-radius"] = this._config.radius;
       return Object.keys(v).map((k) => `${k}:${v[k]}`).join(";");
@@ -1726,7 +1779,7 @@
 
     /* ======================================================== widgets */
     _w_energy(w) {
-      // Five nodes, inverter in the middle: solar, grid and battery connect to it; it feeds the load.
+      // A cross with the inverter in the middle: solar above, grid to the left, battery below, the house to the right.
       const solar = Math.max(0, this._kw(w.solar_power) ?? 0);
       let batt = this._kw(w.battery_power);            // + = charging (flip with invert_battery)
       if (batt != null && w.invert_battery) batt = -batt;
@@ -1737,45 +1790,84 @@
       let inv = this._kw(w.inverter_power);            // AC side of the inverter
       if (inv == null) inv = Math.max(0, solar - (batt ?? 0));
       const socS = this._st(w.battery_soc);
-      const soc = socS && isFinite(parseFloat(socS.state)) ? Math.round(parseFloat(socS.state)) : null;
+      const soc = socS && isFinite(parseFloat(socS.state)) ? clamp(Math.round(parseFloat(socS.state)), 0, 100) : null;
       const stS = this._st(w.inverter_status);
       const tS = this._st(w.inverter_temperature);
       const invTemp = tS && isFinite(parseFloat(tS.state)) ? `${this._num(parseFloat(tS.state), 0)}°` : "";
-      const invLabel = [stS && !["unknown", "unavailable"].includes(stS.state) ? stS.state : "", invTemp].filter(Boolean).join(" · ") || (w.inverter_name || this._t("inverter"));
-      const live = (kw) => kw != null && Math.abs(kw) > 0.03;
-      const dur = (kw) => (Math.round(clamp(2.4 - Math.abs(kw) * 0.45, 0.45, 2.4) * 4) / 4).toFixed(2) + "s";
-      const flow = (c, kw, reverse) => `stroke:var(--${c});opacity:${live(kw) ? 1 : 0};--d:${dur(kw || 0)};animation-direction:${reverse ? "reverse" : "normal"}`;
-      const kwTxt = (v) => `${this._num(Math.abs(v), Math.abs(v) < 10 ? 1 : 0)} kW`;
-      const node = (x, y, c, icon, value, label, act, extra = "", big = false, e = "") =>
-        `<button class="node" style="left:${x}%;top:${y}%" data-act="more" data-e="${esc(e)}"><div class="bub ${big ? "big" : ""} ${act ? "act" : ""}" style="--c:var(--${c});${extra}">${svgIcon(ICON[icon], big ? 30 : 26)}</div><div class="nv"><span class="disp">${esc(value)}</span><span class="muted">${esc(label)}</span></div></button>`;
+      const invSub = [stS && !["unknown", "unavailable"].includes(stS.state) ? stS.state : "", invTemp].filter(Boolean).join(" · ") || this._t("throughput");
       const hasGrid = grid != null, hasBatt = batt != null || soc != null;
-      // viewBox 600 × 380. Inverter at (300,170); corners: solar, grid on top, battery, load at the bottom.
-      const P = {
-        solar: "M110 60 C 200 60, 230 170, 300 170",
-        grid: "M490 60 C 400 60, 370 170, 300 170",
-        battery: "M110 280 C 200 280, 230 170, 300 170",
-        load: "M300 170 C 370 170, 400 280, 490 280"
+
+      const on = (kw) => kw != null && Math.abs(kw) > 0.02;
+      const imp = Math.max(0, grid ?? 0), exp = Math.max(0, -(grid ?? 0));
+      const charge = Math.max(0, batt ?? 0), discharge = Math.max(0, -(batt ?? 0));
+      const supply = solar + discharge + imp;
+      const kw = (v) => `${this._num(Math.abs(v), Math.abs(v) < 10 ? 2 : 1)} kW`;
+      const pct = (v) => `${supply > 0 ? Math.round(v / supply * 100) : 0}%`;
+      const summary = on(exp) ? this._t(on(charge) ? "ef_export_charge" : "ef_export")
+        : on(solar) && !on(imp) && !on(discharge) ? this._t(on(charge) ? "ef_solar_charge" : "ef_solar")
+        : on(discharge) && on(imp) ? this._t(discharge >= imp ? "ef_batt_grid" : "ef_grid_batt")
+        : on(discharge) ? this._t("ef_batt")
+        : on(solar) && on(imp) ? this._t("ef_solar_grid")
+        : on(imp) ? this._t("ef_grid") : this._t("ef_quiet");
+
+      // A line between two nodes with three dots running along it; `back` runs them the other way.
+      const leg = (axis, col, row, c, v, back) => {
+        const live = on(v);
+        const d = clamp(2.6 - Math.abs(v) * 0.4, 0.8, 2.6).toFixed(2);
+        const tag = live ? `${kw(v)}<span class="pc"> · ${pct(Math.abs(v))}</span>` : esc(this._t("idle").toLowerCase());
+        return `<div class="eleg ${axis} ${live ? "" : "idle"}" style="grid-column:${col};grid-row:${row};--c:var(--ef-${c});--d:${d}s;--dr:${back ? "reverse" : "normal"}" aria-hidden="true">
+          <i class="edot"></i><i class="edot"></i><i class="edot"></i><span class="etag">${tag}</span></div>`;
       };
-      const path = (cls, d, style) => `<path class="${cls}" d="${d}" vector-effect="non-scaling-stroke"${style ? ` style="${style}"` : ""}></path>`;
-      const lines = `<svg class="lines" viewBox="0 0 600 380" preserveAspectRatio="none" aria-hidden="true">
-        ${path("trk", P.solar)}${hasGrid ? path("trk", P.grid) : ""}${hasBatt ? path("trk", P.battery) : ""}${path("trk", P.load)}
-        ${path("flow", P.solar, flow("solar", solar, false))}
-        ${hasGrid ? path("flow", P.grid, flow("grid", grid, grid < 0)) : ""}
-        ${hasBatt ? path("flow", P.battery, flow("battery", batt, (batt || 0) > 0)) : ""}
-        ${path("flow", P.load, flow("acc", home, false))}
-      </svg>`;
-      const fill = soc != null ? `--fill:linear-gradient(to top, color-mix(in srgb, var(--battery) 30%, transparent) ${soc}%, var(--glass2) ${soc}%)` : "";
-      const T = 15.79, M = 44.74, B = 73.68;   // 60, 170, 280 of 380
-      const nodes = [
-        node(18.33, T, "solar", "solar", kwTxt(solar), w.solar_name || this._t("solar"), solar > 0.03, "", false, w.solar_power),
-        hasGrid ? node(81.67, T, "grid", "grid", kwTxt(grid), grid < -0.03 ? this._t("exporting") : grid > 0.03 ? this._t("importing") : this._t("grid_idle"), live(grid), "", false, w.grid_power) : "",
-        node(50, M, "text", "inverter", kwTxt(inv), invLabel, live(inv), "", true, w.inverter_power || w.inverter_status || ""),
-        hasBatt ? node(18.33, B, "battery", "battery", soc != null ? `${soc}%` : kwTxt(batt || 0),
-          (batt || 0) > 0.03 ? this._t("charging", { v: kwTxt(batt) }) : (batt || 0) < -0.03 ? this._t("discharging", { v: kwTxt(batt) }) : this._t("battery_idle"),
-          live(batt), fill, false, w.battery_soc || w.battery_power) : "",
-        node(81.67, B, "acc", "home", kwTxt(home), w.load_name || this._t("load"), live(home), "", false, w.home_power || "")
+      // Node icons from the design: a ring, line art in a lighter tint and a small badge.
+      const badge = (x, y, r, t, sm) => `<circle class="bdg" cx="${x}" cy="${y}" r="${r}"></circle><text class="bdt${sm ? " sm" : ""}" x="${x}" y="${y + 4}">${t}</text>`;
+      const cells = soc == null ? [1, 0.55, 0.22] : [0, 1, 2].map((i) => (soc > i * 33 + 5 ? 1 : 0.2));
+      const ART = {
+        pv: `<svg viewBox="12 14 116 116" aria-hidden="true"><circle class="ring" cx="68" cy="70" r="52"></circle><circle class="ln" cx="68" cy="48" r="8"></circle>
+          <path class="ln" d="M68 35V31M79 39l3-3M83 53h4M57 39l-3-3M53 53h-4"></path><rect class="ln" x="46" y="62" width="44" height="20" rx="3"></rect>
+          <path class="ln thin" d="M61 62V82M75 62V82M46 72H90"></path>${badge(112, 102, 11, "PV")}</svg>`,
+        grid: `<svg viewBox="148 14 116 116" aria-hidden="true"><circle class="ring" cx="204" cy="70" r="52"></circle>
+          <path class="ln" d="M192 94V60M184 70h16M185 78h14M184 70l8-10M200 70l-8-10M216 94V60M208 70h16M209 78h14M208 70l8-10M224 70l-8-10"></path>
+          <path class="ln thin" d="M184 70Q204 80 224 70M185 78Q204 87 223 78"></path>${badge(248, 102, 11, "AC")}</svg>`,
+        inv: `<svg viewBox="278 8 132 132" aria-hidden="true"><circle class="ring" cx="340" cy="70" r="58"></circle><rect class="ln" x="308" y="54" width="64" height="34" rx="6"></rect>
+          <polyline class="ln" points="315,80 315,64 323,64 323,80 329,80"></polyline><path class="ln thin" d="M340 57V85" stroke-dasharray="2.5 2"></path>
+          <path class="ln" d="M348 71Q353 60 358 71Q363 82 368 71"></path>${badge(392, 106, 12, "INV", true)}</svg>`,
+        house: `<svg viewBox="420 14 116 116" aria-hidden="true"><circle class="ring" cx="476" cy="70" r="52"></circle><polygon class="ln" points="476,46 500,60 500,90 452,90 452,60"></polygon>
+          <rect class="ln" x="468" y="72" width="16" height="18" rx="2"></rect><rect class="ln" x="457" y="66" width="10" height="9" rx="1.5"></rect>
+          <path class="ln thin" d="M462 66v9M457 70.5h10"></path><circle class="ln" cx="490" cy="66" r="6"></circle><path class="ln" d="M487 71.5h6M487.5 75h5"></path>${badge(520, 102, 11, "~W", true)}</svg>`,
+        batt: `<svg viewBox="556 14 116 116" aria-hidden="true"><circle class="ring" cx="612" cy="70" r="52"></circle><rect class="ln" x="588" y="60" width="38" height="22" rx="4"></rect>
+          <rect class="ln" x="626" y="66" width="6" height="10" rx="2.5"></rect>
+          ${[592, 602, 612].map((x, i) => `<rect class="fl" x="${x}" y="64" width="${i < 2 ? 8 : 6}" height="14" rx="1.8" opacity="${cells[i]}"></rect>`).join("")}
+          ${on(charge) ? `<polygon class="fl" points="608,42 602,53 607,53 604,66 615,51 609,51 613,42" opacity=".85"></polygon>` : ""}${badge(656, 102, 11, "DC")}</svg>`
+      };
+      const node = (col, row, c, e, act, inner, cls = "") =>
+        `<button class="en ${cls} ${act ? "act" : ""}" style="grid-column:${col};grid-row:${row};--c:var(--ef-${c})" data-act="more" data-e="${esc(e || "")}">${ART[c]}${inner}</button>`;
+      const lbl = (t, extra = "") => `<div class="el">${esc(t)}${extra}</div>`;
+      const val = (t, sub = "") => `<div class="ev disp">${esc(t)}${sub}</div>`;
+      const sub = (t) => (t ? `<div class="es">${esc(t)}</div>` : "");
+
+      const battVal = batt == null ? `${soc}%` : `${on(charge) ? "+" : on(discharge) ? "−" : ""}${kw(charge || discharge)}`;
+      const battSub = batt == null ? "" : on(charge) ? this._t("charging", { v: "" }).trim() : on(discharge) ? this._t("discharging", { v: "" }).trim() : this._t("idle");
+      const grid3 = [
+        // Solar sits above its line with the icon at the bottom, next to the line.
+        node(3, 1, "pv", w.solar_power, on(solar), `${sub(on(solar) ? this._t("of_supply", { p: pct(solar) }) : this._t("no_production"))}${val(kw(solar))}${lbl(w.solar_name || this._t("solar"))}`, "up"),
+        leg("v", 3, 2, "pv", solar, false),
+        hasGrid ? node(1, 3, "grid", w.grid_power, on(grid), `${lbl(this._t("grid"))}${val(kw(grid))}${sub(on(exp) ? this._t("exporting") : on(imp) ? this._t("importing") : this._t("grid_idle"))}`, "side") : "",
+        hasGrid ? leg("h", 2, 3, "grid", grid, on(exp)) : "",
+        node(3, 3, "inv", w.inverter_power || w.inverter_status, on(inv), `${lbl(w.inverter_name || this._t("inverter"))}${val(kw(inv))}${sub(invSub)}`, "big"),
+        leg("h", 4, 3, "house", home, false),
+        node(5, 3, "house", w.home_power, on(home), `${lbl(w.load_name || this._t("load"))}${val(kw(home))}`, "side"),
+        hasBatt ? leg("v", 3, 4, "batt", batt ?? 0, on(discharge)) : "",
+        hasBatt ? node(3, 5, "batt", w.battery_soc || w.battery_power, on(batt),
+          `${lbl(this._t("battery"), soc != null && batt != null ? `<small>${soc}%</small>` : "")}${soc != null ? `<div class="esoc"><i style="width:${soc}%"></i></div>` : ""}${val(battVal, battSub ? `<span class="es">${esc(battSub)}</span>` : "")}`) : ""
       ].join("");
-      return { body: `<div class="flowbox">${lines}${nodes}</div>`, meta: this._t("live") };
+      const legend = [["pv", this._t("solar")], hasGrid ? ["grid", this._t("grid")] : null, hasBatt ? ["batt", this._t("battery")] : null, ["house", this._t("load")]]
+        .filter(Boolean).map(([c, t]) => `<span><i style="--c:var(--ef-${c})"></i>${esc(t)}</span>`).join("");
+      const self = supply > 0 ? `${Math.round((supply - imp) / supply * 100)}%` : "—";
+      return {
+        body: `<div class="ef"><div class="efsum">${esc(summary)}</div><div class="efg">${grid3}</div>
+          <div class="efoot"><div class="elg">${legend}</div><div>${esc(this._t("self_now"))} <b>${self}</b></div></div></div>`,
+        meta: this._t("live")
+      };
     }
 
     _w_lights(w) {
