@@ -24,6 +24,8 @@ A frosted-glass dashboard card whose animations follow real entity states: dots 
 
 3. Reload the browser (on the phone app: Settings → Companion app → Troubleshooting → **Reset frontend cache**, or restart the app).
 
+Everything (cards, pop-ups, the editor and the card picker) follows the language of your Home Assistant profile: English, Română, Deutsch, Français, Español, Italiano, Nederlands, Polski or Português. Entity states and weather conditions always use Home Assistant's own translations.
+
 Updates show up in HACS the same way; after updating, reload the browser once more.
 
 ## 2. Create a dashboard
@@ -57,7 +59,7 @@ That's it — the dashboard looks like the picture at the top of this page. The 
 
 ![The visual editor next to the live preview: Appearance (1), Header chips (2), Widgets (3) and Save (4)](docs/images/shot-card-editor.svg)
 
-- **Appearance** — theme preset (Auto follows HA's light/dark, or Midnight, Dawn, Lagoon, Ember), accent colour, glass blur, switches for animations, the drifting background, the header, the Customize button and *Apply the glass theme to the whole dashboard*; title, language (Auto / English / Română) and minimum height (`100vh` fills the screen in a Panel view).
+- **Appearance** — theme preset (Auto follows HA's light/dark, or Midnight, Dawn, Lagoon, Ember), accent colour, glass blur, switches for animations, the drifting background, the header, the Customize button and *Apply the glass theme to the whole dashboard*; title, language (Auto follows your Home Assistant profile; or English, Română, Deutsch, Français, Español, Italiano, Nederlands, Polski, Português) and minimum height (`100vh` fills the screen in a Panel view).
 
   ![The Appearance section](docs/images/shot-editor-appearance.svg)
 
@@ -451,7 +453,7 @@ header_buttons:
 | `customize` | `true` | `false` hides the Customize button. |
 | `header_buttons` | — | Small round buttons next to the Customize button: `{icon, name, tap_action}` (any Home Assistant action: navigate, perform-action with confirmation, …), shown to everyone or only to `admin_only: true` / `users: [user ids]`. |
 | `popup` | `aurora` | What holding a tile opens: `aurora` (glass pop-up), `native` (Home Assistant's dialog) or `none`. |
-| `language` | profile | `en`, `ro`. Add others with `translations: { de: { lights: "Licht" } }`. |
+| `language` | profile | `en`, `ro`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `pt`. Other languages use English, with Home Assistant's own words for states and weather. Override any text with `translations: { de: { lights: "Lampen" } }`. |
 | `id` | page path | Key for the saved device layout, if the card is on several dashboards. |
 
 Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:

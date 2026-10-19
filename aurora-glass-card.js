@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.8.2
+ * Aurora Glass Card for Home Assistant — v0.9.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -10,7 +10,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.8.2";
+  const VERSION = "0.9.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -67,7 +67,13 @@
       run: "Run", ran: "Done", last_24h: "Last 24 hours", min: "Min", avg: "Average", max: "Max", forecast: "Forecast", volume: "Volume", mute: "Mute",
       source: "Source", no_history: "No history yet", wind: "Wind", pressure: "Pressure", previous: "Previous", next: "Next", hold_hint: "Hold any tile for details",
       opening: "Opening", closing: "Closing", open: "Open", closed: "Closed", detected: "Detected", clear: "Clear", home_state: "Home", away: "Away", mode: "Mode",
-      updated: "Updated {t}", no_location: "Set your home location in Settings → System → General, or enter latitude and longitude in the widget"
+      updated: "Updated {t}", no_location: "Set your home location in Settings → System → General, or enter latitude and longitude in the widget",
+      header_card: "Header", entity_card: "Entity", room_card: "Room", desc_board: "Frosted-glass, customizable dashboard with state animations",
+      desc_entity: "One entity as an animated glass tile, with the Aurora Glass pop-up", desc_room: "A room's temperature and humidity in one glass tile", desc_energy: "Solar, battery, grid and home power flow", desc_lights: "Lights and switches with toggles",
+      desc_climate: "A thermostat with mode buttons", desc_rooms: "Temperature and humidity of each room", desc_scenes: "Scenes and scripts as tap-to-run rows", desc_media: "A media player with artwork and controls",
+      desc_fan: "A fan with an animated icon", desc_floor: "A heated floor with its temperature", desc_security: "A lock and door and window sensors", desc_weather: "Current weather and forecast",
+      desc_header: "Greeting, date, chips and header buttons", err_widgets: "add a `widgets:` list", err_widget_type: "widget {n} needs a type", err_entity: "choose an entity",
+      err_room: "choose a temperature sensor", err_config: "Invalid configuration"
     },
     ro: {
       good_morning: "Bună dimineața", good_afternoon: "Bună ziua", good_evening: "Bună seara",
@@ -94,7 +100,293 @@
       run: "Rulează", ran: "Gata", last_24h: "Ultimele 24 de ore", min: "Min", avg: "Medie", max: "Max", forecast: "Prognoză", volume: "Volum", mute: "Fără sunet",
       source: "Sursă", no_history: "Încă nu există istoric", wind: "Vânt", pressure: "Presiune", previous: "Anterior", next: "Următor", hold_hint: "Ține apăsat pe orice element pentru detalii",
       opening: "Se deschide", closing: "Se închide", open: "Deschis", closed: "Închis", detected: "Detectat", clear: "Liber", home_state: "Acasă", away: "Plecat", mode: "Mod",
-      updated: "Actualizat {t}", no_location: "Setează locația casei în Setări → Sistem → General sau introdu latitudinea și longitudinea în widget"
+      updated: "Actualizat {t}", no_location: "Setează locația casei în Setări → Sistem → General sau introdu latitudinea și longitudinea în widget",
+      header_card: "Antet", entity_card: "Entitate", room_card: "Cameră", desc_board: "Tablou de sticlă mată, personalizabil, cu animații după stare",
+      desc_entity: "O entitate ca dală de sticlă animată, cu fereastra Aurora Glass", desc_room: "Temperatura și umiditatea unei camere într-o singură dală de sticlă", desc_energy: "Fluxul de energie: solar, baterie, rețea și casă", desc_lights: "Lumini și întrerupătoare cu comutatoare",
+      desc_climate: "Un termostat cu butoane de mod", desc_rooms: "Temperatura și umiditatea fiecărei camere", desc_scenes: "Scene și scripturi pornite cu o atingere", desc_media: "Un player media cu copertă și comenzi",
+      desc_fan: "Un ventilator cu iconiță animată", desc_floor: "Încălzirea în pardoseală cu temperatura ei", desc_security: "O încuietoare și senzori de uși și ferestre", desc_weather: "Vremea acum și prognoza",
+      desc_header: "Salut, dată, indicatori și butoane în antet", err_widgets: "adaugă o listă `widgets:`", err_widget_type: "widgetul {n} are nevoie de un tip", err_entity: "alege o entitate",
+      err_room: "alege un senzor de temperatură", err_config: "Configurație invalidă"
+    },
+    de: {
+      good_morning: "Guten Morgen", good_afternoon: "Guten Tag", good_evening: "Guten Abend", customize: "Anpassen",
+      done: "Fertig", theme: "Design", accent: "Akzent", blur: "Glasunschärfe",
+      motion: "Bewegung", on: "An", off: "Aus", auto: "Auto",
+      add_widgets: "Widgets hinzufügen", all_on_board: "Alle Widgets sind auf dem Board. Entferne eines mit −, um es hier zu parken.", reset: "Layout zurücksetzen", move_earlier: "Nach vorne",
+      move_later: "Nach hinten", change_size: "Größe ändern", remove: "Vom Board entfernen", energy: "Energiefluss",
+      lights: "Licht", climate: "Klima", scenes: "Szenen", media: "Läuft gerade",
+      fan: "Ventilator", floor: "Fußbodenheizung", security: "Sicherheit", weather: "Wetter",
+      rooms: "Räume", rooms_avg: "Ø {v}", live: "Live", n_of_m_on: "{n} von {m} an",
+      solar: "Solar", home: "Haus", inverter: "Wechselrichter", load: "Verbrauch",
+      exporting: "Einspeisung ins Netz", importing: "Aus dem Netz", grid_idle: "Netz ruhig", charging: "Lädt {v}",
+      discharging: "Entlädt {v}", battery_idle: "Batterie ruhig", grid: "Netz", battery: "Batterie",
+      throughput: "Durchsatz", of_supply: "{p} der Versorgung", no_production: "keine Erzeugung", self_now: "Autarkie jetzt",
+      ef_export: "Die Sonne deckt das Haus – der Überschuss geht ins Netz.", ef_export_charge: "Die Sonne deckt das Haus und lädt die Batterie – der Überschuss geht ins Netz.", ef_solar: "Die Sonne deckt das Haus.", ef_solar_charge: "Die Sonne deckt das Haus und lädt die Batterie.",
+      ef_solar_grid: "Die Sonne deckt einen Teil des Hauses, das Netz den Rest.", ef_batt_grid: "Die Batterie trägt den Großteil, das Netz den Rest.", ef_grid_batt: "Das Netz trägt den Großteil, die Batterie hilft.", ef_batt: "Die Batterie versorgt das Haus.",
+      ef_grid: "Strom kommt aus dem Netz.", ef_quiet: "Gerade fließt kein Strom.", target: "Ziel", cooling: "Kühlt",
+      heating: "Heizt", idle: "Ruhig", tap_to_run: "Zum Starten tippen", active: "Aktiv: {n}",
+      nothing_playing: "Nichts läuft", play: "Abspielen", pause: "Pause", speed: "Stufe {n}",
+      tap_speed: "Tippen ändert die Stufe", running: "Läuft", heating_to: "heizt auf {t}", locked: "Verriegelt · zum Entriegeln tippen",
+      unlocked: "Entriegelt · zum Verriegeln tippen", all_closed: "Alles geschlossen", n_open: "{n} offen", door_unlocked: "Tür entriegelt",
+      secure: "Alles sicher", not_found: "Entität nicht gefunden: {e}", humidity: "Feuchte {h}%", brightness: "Helligkeit",
+      close: "Schließen", more_details: "Weitere Details", turn_on: "Einschalten", turn_off: "Ausschalten",
+      color_temp: "Farbtemperatur", color: "Farbe", effect: "Effekt", changed: "Geändert {t}",
+      just_now: "gerade eben", oscillate: "Schwenken", direction: "Richtung", forward: "Vorwärts",
+      reverse: "Rückwärts", preset: "Voreinstellung", fan_mode: "Lüfter", cover_open: "Öffnen",
+      cover_close: "Schließen", stop: "Stopp", position: "Position", lock_act: "Verriegeln",
+      unlock_act: "Entriegeln", open_act: "Öffnen", run: "Ausführen", ran: "Erledigt",
+      last_24h: "Letzte 24 Stunden", min: "Min", avg: "Durchschnitt", max: "Max",
+      forecast: "Vorhersage", volume: "Lautstärke", mute: "Stumm", source: "Quelle",
+      no_history: "Noch kein Verlauf", wind: "Wind", pressure: "Luftdruck", previous: "Zurück",
+      next: "Weiter", hold_hint: "Eine Kachel gedrückt halten für Details", opening: "Öffnet", closing: "Schließt",
+      open: "Offen", closed: "Geschlossen", detected: "Erkannt", clear: "Frei",
+      home_state: "Zuhause", away: "Abwesend", mode: "Modus", updated: "Aktualisiert {t}",
+      no_location: "Lege deinen Standort unter Einstellungen → System → Allgemein fest oder gib Breiten- und Längengrad im Widget ein", header_card: "Kopfzeile", entity_card: "Entität", room_card: "Raum",
+      desc_board: "Anpassbares Dashboard aus Milchglas mit Animationen nach Zustand", desc_entity: "Eine Entität als animierte Glaskachel, mit dem Aurora-Glass-Pop-up", desc_room: "Temperatur und Luftfeuchte eines Raums in einer Glaskachel", desc_energy: "Energiefluss von Solar, Batterie, Netz und Haus",
+      desc_lights: "Lichter und Schalter zum Umschalten", desc_climate: "Ein Thermostat mit Modustasten", desc_rooms: "Temperatur und Luftfeuchte jedes Raums", desc_scenes: "Szenen und Skripte zum Antippen",
+      desc_media: "Ein Mediaplayer mit Cover und Steuerung", desc_fan: "Ein Ventilator mit animiertem Symbol", desc_floor: "Eine Fußbodenheizung mit ihrer Temperatur", desc_security: "Ein Schloss sowie Tür- und Fenstersensoren",
+      desc_weather: "Aktuelles Wetter und Vorhersage", desc_header: "Begrüßung, Datum, Chips und Kopfzeilen-Buttons", err_widgets: "füge eine `widgets:`-Liste hinzu", err_widget_type: "Widget {n} braucht einen Typ",
+      err_entity: "wähle eine Entität", err_room: "wähle einen Temperatursensor", err_config: "Ungültige Konfiguration"
+    },
+    fr: {
+      good_morning: "Bonjour", good_afternoon: "Bon après-midi", good_evening: "Bonsoir", customize: "Personnaliser",
+      done: "Terminé", theme: "Thème", accent: "Accent", blur: "Flou du verre",
+      motion: "Animation", on: "Allumé", off: "Éteint", auto: "Auto",
+      add_widgets: "Ajouter des widgets", all_on_board: "Tous les widgets sont sur le tableau. Retirez-en un avec − pour le ranger ici.", reset: "Réinitialiser la disposition", move_earlier: "Avancer",
+      move_later: "Reculer", change_size: "Changer la taille", remove: "Retirer du tableau", energy: "Flux d'énergie",
+      lights: "Lumières", climate: "Climat", scenes: "Scènes", media: "En cours de lecture",
+      fan: "Ventilateur", floor: "Plancher chauffant", security: "Sécurité", weather: "Météo",
+      rooms: "Pièces", rooms_avg: "Moy. {v}", live: "En direct", n_of_m_on: "{n} sur {m} allumées",
+      solar: "Solaire", home: "Maison", inverter: "Onduleur", load: "Consommation",
+      exporting: "Injection dans le réseau", importing: "Depuis le réseau", grid_idle: "Réseau inactif", charging: "En charge {v}",
+      discharging: "En décharge {v}", battery_idle: "Batterie inactive", grid: "Réseau", battery: "Batterie",
+      throughput: "transit", of_supply: "{p} de l'apport", no_production: "aucune production", self_now: "Autonomie actuelle",
+      ef_export: "Le soleil alimente la maison — le surplus part dans le réseau.", ef_export_charge: "Le soleil alimente la maison et charge la batterie — le surplus part dans le réseau.", ef_solar: "Le soleil alimente la maison.", ef_solar_charge: "Le soleil alimente la maison et charge la batterie.",
+      ef_solar_grid: "Le soleil couvre une partie de la maison ; le réseau complète.", ef_batt_grid: "La batterie assure l'essentiel ; le réseau complète.", ef_grid_batt: "Le réseau assure l'essentiel ; la batterie aide.", ef_batt: "La batterie alimente la maison.",
+      ef_grid: "Consommation depuis le réseau.", ef_quiet: "Aucun flux d'énergie pour le moment.", target: "consigne", cooling: "Refroidit",
+      heating: "Chauffe", idle: "Inactif", tap_to_run: "Touchez pour lancer", active: "Active : {n}",
+      nothing_playing: "Aucune lecture", play: "Lecture", pause: "Pause", speed: "Vitesse {n}",
+      tap_speed: "Touchez pour changer la vitesse", running: "En marche", heating_to: "chauffe à {t}", locked: "Verrouillée · touchez pour déverrouiller",
+      unlocked: "Déverrouillée · touchez pour verrouiller", all_closed: "Tout est fermé", n_open: "{n} ouvert(s)", door_unlocked: "Porte déverrouillée",
+      secure: "Tout est sécurisé", not_found: "Entité introuvable : {e}", humidity: "Humidité {h} %", brightness: "Luminosité",
+      close: "Fermer", more_details: "Plus de détails", turn_on: "Allumer", turn_off: "Éteindre",
+      color_temp: "Température de couleur", color: "Couleur", effect: "Effet", changed: "Modifié {t}",
+      just_now: "à l'instant", oscillate: "Oscillation", direction: "Sens", forward: "Avant",
+      reverse: "Arrière", preset: "Préréglage", fan_mode: "Ventilation", cover_open: "Ouvrir",
+      cover_close: "Fermer", stop: "Stop", position: "Position", lock_act: "Verrouiller",
+      unlock_act: "Déverrouiller", open_act: "Ouvrir", run: "Lancer", ran: "Fait",
+      last_24h: "Dernières 24 heures", min: "Min", avg: "Moyenne", max: "Max",
+      forecast: "Prévisions", volume: "Volume", mute: "Muet", source: "Source",
+      no_history: "Pas encore d'historique", wind: "Vent", pressure: "Pression", previous: "Précédent",
+      next: "Suivant", hold_hint: "Maintenez une tuile pour les détails", opening: "Ouverture", closing: "Fermeture",
+      open: "Ouvert", closed: "Fermé", detected: "Détecté", clear: "Rien",
+      home_state: "À la maison", away: "Absent", mode: "Mode", updated: "Mis à jour {t}",
+      no_location: "Définissez l'emplacement de la maison dans Paramètres → Système → Général, ou saisissez latitude et longitude dans le widget", header_card: "En-tête", entity_card: "Entité", room_card: "Pièce",
+      desc_board: "Tableau de bord en verre dépoli, personnalisable, animé selon les états", desc_entity: "Une entité en tuile de verre animée, avec la fenêtre Aurora Glass", desc_room: "La température et l'humidité d'une pièce dans une seule tuile", desc_energy: "Flux d'énergie du solaire, de la batterie, du réseau et de la maison",
+      desc_lights: "Lumières et interrupteurs à basculer", desc_climate: "Un thermostat avec boutons de mode", desc_rooms: "Température et humidité de chaque pièce", desc_scenes: "Scènes et scripts à lancer d'une touche",
+      desc_media: "Un lecteur multimédia avec pochette et commandes", desc_fan: "Un ventilateur à l'icône animée", desc_floor: "Un plancher chauffant avec sa température", desc_security: "Une serrure et des capteurs de portes et fenêtres",
+      desc_weather: "Météo actuelle et prévisions", desc_header: "Salutation, date, pastilles et boutons d'en-tête", err_widgets: "ajoutez une liste `widgets:`", err_widget_type: "le widget {n} a besoin d'un type",
+      err_entity: "choisissez une entité", err_room: "choisissez un capteur de température", err_config: "Configuration invalide"
+    },
+    es: {
+      good_morning: "Buenos días", good_afternoon: "Buenas tardes", good_evening: "Buenas noches", customize: "Personalizar",
+      done: "Listo", theme: "Tema", accent: "Acento", blur: "Desenfoque del cristal",
+      motion: "Movimiento", on: "Encendido", off: "Apagado", auto: "Auto",
+      add_widgets: "Añadir widgets", all_on_board: "Todos los widgets están en el panel. Quita uno con − para guardarlo aquí.", reset: "Restablecer diseño", move_earlier: "Mover antes",
+      move_later: "Mover después", change_size: "Cambiar tamaño", remove: "Quitar del panel", energy: "Flujo de energía",
+      lights: "Luces", climate: "Clima", scenes: "Escenas", media: "Reproduciendo",
+      fan: "Ventilador", floor: "Suelo radiante", security: "Seguridad", weather: "Tiempo",
+      rooms: "Habitaciones", rooms_avg: "Media {v}", live: "En vivo", n_of_m_on: "{n} de {m} encendidas",
+      solar: "Solar", home: "Casa", inverter: "Inversor", load: "Consumo",
+      exporting: "Vertiendo a la red", importing: "Desde la red", grid_idle: "Red inactiva", charging: "Cargando {v}",
+      discharging: "Descargando {v}", battery_idle: "Batería inactiva", grid: "Red", battery: "Batería",
+      throughput: "tránsito", of_supply: "{p} del suministro", no_production: "sin producción", self_now: "Autosuficiencia ahora",
+      ef_export: "El sol cubre la casa — el excedente va a la red.", ef_export_charge: "El sol cubre la casa y carga la batería — el excedente va a la red.", ef_solar: "El sol está cubriendo la casa.", ef_solar_charge: "El sol cubre la casa y carga la batería.",
+      ef_solar_grid: "El sol cubre parte de la casa; la red completa el resto.", ef_batt_grid: "La batería lleva la mayor parte; la red completa el resto.", ef_grid_batt: "La red lleva la mayor parte; la batería ayuda.", ef_batt: "La batería alimenta la casa.",
+      ef_grid: "Consumiendo de la red.", ef_quiet: "Ahora no fluye energía.", target: "objetivo", cooling: "Enfriando",
+      heating: "Calentando", idle: "Inactivo", tap_to_run: "Toca para ejecutar", active: "Activa: {n}",
+      nothing_playing: "No se reproduce nada", play: "Reproducir", pause: "Pausa", speed: "Velocidad {n}",
+      tap_speed: "Toca para cambiar la velocidad", running: "En marcha", heating_to: "calentando a {t}", locked: "Cerrada · toca para abrir",
+      unlocked: "Abierta · toca para cerrar", all_closed: "Todo cerrado", n_open: "{n} abiertas", door_unlocked: "Puerta sin cerrojo",
+      secure: "Todo seguro", not_found: "Entidad no encontrada: {e}", humidity: "Humedad {h} %", brightness: "Brillo",
+      close: "Cerrar", more_details: "Más detalles", turn_on: "Encender", turn_off: "Apagar",
+      color_temp: "Temperatura de color", color: "Color", effect: "Efecto", changed: "Cambiado {t}",
+      just_now: "ahora mismo", oscillate: "Oscilación", direction: "Dirección", forward: "Adelante",
+      reverse: "Atrás", preset: "Preajuste", fan_mode: "Ventilación", cover_open: "Abrir",
+      cover_close: "Cerrar", stop: "Parar", position: "Posición", lock_act: "Cerrar",
+      unlock_act: "Abrir", open_act: "Abrir", run: "Ejecutar", ran: "Hecho",
+      last_24h: "Últimas 24 horas", min: "Mín", avg: "Media", max: "Máx",
+      forecast: "Previsión", volume: "Volumen", mute: "Silenciar", source: "Fuente",
+      no_history: "Aún no hay historial", wind: "Viento", pressure: "Presión", previous: "Anterior",
+      next: "Siguiente", hold_hint: "Mantén pulsada una tarjeta para ver detalles", opening: "Abriendo", closing: "Cerrando",
+      open: "Abierto", closed: "Cerrado", detected: "Detectado", clear: "Despejado",
+      home_state: "En casa", away: "Fuera", mode: "Modo", updated: "Actualizado {t}",
+      no_location: "Configura la ubicación de casa en Ajustes → Sistema → General, o introduce latitud y longitud en el widget", header_card: "Encabezado", entity_card: "Entidad", room_card: "Habitación",
+      desc_board: "Panel de cristal esmerilado, personalizable, con animaciones según el estado", desc_entity: "Una entidad como tarjeta de cristal animada, con la ventana de Aurora Glass", desc_room: "Temperatura y humedad de una habitación en una sola tarjeta", desc_energy: "Flujo de energía solar, batería, red y casa",
+      desc_lights: "Luces e interruptores para encender y apagar", desc_climate: "Un termostato con botones de modo", desc_rooms: "Temperatura y humedad de cada habitación", desc_scenes: "Escenas y scripts que se ejecutan con un toque",
+      desc_media: "Un reproductor con carátula y controles", desc_fan: "Un ventilador con icono animado", desc_floor: "Un suelo radiante con su temperatura", desc_security: "Una cerradura y sensores de puertas y ventanas",
+      desc_weather: "Tiempo actual y previsión", desc_header: "Saludo, fecha, indicadores y botones del encabezado", err_widgets: "añade una lista `widgets:`", err_widget_type: "el widget {n} necesita un tipo",
+      err_entity: "elige una entidad", err_room: "elige un sensor de temperatura", err_config: "Configuración no válida"
+    },
+    it: {
+      good_morning: "Buongiorno", good_afternoon: "Buon pomeriggio", good_evening: "Buonasera", customize: "Personalizza",
+      done: "Fatto", theme: "Tema", accent: "Accento", blur: "Sfocatura del vetro",
+      motion: "Movimento", on: "Acceso", off: "Spento", auto: "Auto",
+      add_widgets: "Aggiungi widget", all_on_board: "Tutti i widget sono sulla plancia. Togline uno con − per parcheggiarlo qui.", reset: "Ripristina disposizione", move_earlier: "Sposta prima",
+      move_later: "Sposta dopo", change_size: "Cambia dimensione", remove: "Togli dalla plancia", energy: "Flusso di energia",
+      lights: "Luci", climate: "Clima", scenes: "Scene", media: "In riproduzione",
+      fan: "Ventilatore", floor: "Riscaldamento a pavimento", security: "Sicurezza", weather: "Meteo",
+      rooms: "Stanze", rooms_avg: "Media {v}", live: "Live", n_of_m_on: "{n} di {m} accese",
+      solar: "Solare", home: "Casa", inverter: "Inverter", load: "Consumo",
+      exporting: "Immissione in rete", importing: "Dalla rete", grid_idle: "Rete inattiva", charging: "In carica {v}",
+      discharging: "In scarica {v}", battery_idle: "Batteria inattiva", grid: "Rete", battery: "Batteria",
+      throughput: "transito", of_supply: "{p} della fornitura", no_production: "nessuna produzione", self_now: "Autosufficienza ora",
+      ef_export: "Il sole copre la casa — il surplus va in rete.", ef_export_charge: "Il sole copre la casa e carica la batteria — il surplus va in rete.", ef_solar: "Il sole sta coprendo la casa.", ef_solar_charge: "Il sole copre la casa e carica la batteria.",
+      ef_solar_grid: "Il sole copre parte della casa; la rete completa il resto.", ef_batt_grid: "La batteria regge quasi tutto il consumo; la rete completa il resto.", ef_grid_batt: "La rete regge quasi tutto il consumo; la batteria aiuta.", ef_batt: "La batteria alimenta la casa.",
+      ef_grid: "Prelievo dalla rete.", ef_quiet: "Ora non scorre energia.", target: "obiettivo", cooling: "Raffredda",
+      heating: "Riscalda", idle: "Inattivo", tap_to_run: "Tocca per avviare", active: "Attiva: {n}",
+      nothing_playing: "Niente in riproduzione", play: "Riproduci", pause: "Pausa", speed: "Velocità {n}",
+      tap_speed: "Tocca per cambiare velocità", running: "In funzione", heating_to: "riscalda a {t}", locked: "Chiusa · tocca per aprire",
+      unlocked: "Aperta · tocca per chiudere", all_closed: "Tutto chiuso", n_open: "{n} aperti", door_unlocked: "Porta non chiusa a chiave",
+      secure: "Tutto al sicuro", not_found: "Entità non trovata: {e}", humidity: "Umidità {h}%", brightness: "Luminosità",
+      close: "Chiudi", more_details: "Altri dettagli", turn_on: "Accendi", turn_off: "Spegni",
+      color_temp: "Temperatura colore", color: "Colore", effect: "Effetto", changed: "Modificato {t}",
+      just_now: "proprio ora", oscillate: "Oscillazione", direction: "Direzione", forward: "Avanti",
+      reverse: "Indietro", preset: "Preimpostazione", fan_mode: "Ventola", cover_open: "Apri",
+      cover_close: "Chiudi", stop: "Stop", position: "Posizione", lock_act: "Chiudi a chiave",
+      unlock_act: "Sblocca", open_act: "Apri", run: "Avvia", ran: "Fatto",
+      last_24h: "Ultime 24 ore", min: "Min", avg: "Media", max: "Max",
+      forecast: "Previsioni", volume: "Volume", mute: "Muto", source: "Sorgente",
+      no_history: "Ancora nessuno storico", wind: "Vento", pressure: "Pressione", previous: "Precedente",
+      next: "Successivo", hold_hint: "Tieni premuta una tessera per i dettagli", opening: "In apertura", closing: "In chiusura",
+      open: "Aperto", closed: "Chiuso", detected: "Rilevato", clear: "Libero",
+      home_state: "A casa", away: "Fuori", mode: "Modalità", updated: "Aggiornato {t}",
+      no_location: "Imposta la posizione di casa in Impostazioni → Sistema → Generale, o inserisci latitudine e longitudine nel widget", header_card: "Intestazione", entity_card: "Entità", room_card: "Stanza",
+      desc_board: "Plancia in vetro satinato, personalizzabile, con animazioni in base allo stato", desc_entity: "Un'entità come tessera di vetro animata, con il pop-up di Aurora Glass", desc_room: "Temperatura e umidità di una stanza in un'unica tessera", desc_energy: "Flusso di energia di solare, batteria, rete e casa",
+      desc_lights: "Luci e interruttori da accendere e spegnere", desc_climate: "Un termostato con pulsanti di modalità", desc_rooms: "Temperatura e umidità di ogni stanza", desc_scenes: "Scene e script da avviare con un tocco",
+      desc_media: "Un lettore multimediale con copertina e comandi", desc_fan: "Un ventilatore con icona animata", desc_floor: "Un riscaldamento a pavimento con la sua temperatura", desc_security: "Una serratura e sensori di porte e finestre",
+      desc_weather: "Meteo attuale e previsioni", desc_header: "Saluto, data, indicatori e pulsanti dell'intestazione", err_widgets: "aggiungi un elenco `widgets:`", err_widget_type: "il widget {n} ha bisogno di un tipo",
+      err_entity: "scegli un'entità", err_room: "scegli un sensore di temperatura", err_config: "Configurazione non valida"
+    },
+    nl: {
+      good_morning: "Goedemorgen", good_afternoon: "Goedemiddag", good_evening: "Goedenavond", customize: "Aanpassen",
+      done: "Klaar", theme: "Thema", accent: "Accent", blur: "Glasvervaging",
+      motion: "Beweging", on: "Aan", off: "Uit", auto: "Auto",
+      add_widgets: "Widgets toevoegen", all_on_board: "Alle widgets staan op het bord. Haal er een weg met − om hem hier te parkeren.", reset: "Indeling herstellen", move_earlier: "Naar voren",
+      move_later: "Naar achteren", change_size: "Grootte wijzigen", remove: "Van het bord halen", energy: "Energiestroom",
+      lights: "Lampen", climate: "Klimaat", scenes: "Scènes", media: "Speelt nu",
+      fan: "Ventilator", floor: "Vloerverwarming", security: "Beveiliging", weather: "Weer",
+      rooms: "Kamers", rooms_avg: "Gem. {v}", live: "Live", n_of_m_on: "{n} van {m} aan",
+      solar: "Zon", home: "Huis", inverter: "Omvormer", load: "Verbruik",
+      exporting: "Teruglevering aan het net", importing: "Van het net", grid_idle: "Net in rust", charging: "Laadt {v}",
+      discharging: "Ontlaadt {v}", battery_idle: "Accu in rust", grid: "Net", battery: "Accu",
+      throughput: "doorvoer", of_supply: "{p} van de levering", no_production: "geen opwek", self_now: "Zelfvoorziening nu",
+      ef_export: "De zon dekt het huis — het overschot gaat naar het net.", ef_export_charge: "De zon dekt het huis en laadt de accu — het overschot gaat naar het net.", ef_solar: "De zon dekt het huis.", ef_solar_charge: "De zon dekt het huis en laadt de accu.",
+      ef_solar_grid: "De zon dekt een deel van het huis; het net vult aan.", ef_batt_grid: "De accu draagt het meeste verbruik; het net vult aan.", ef_grid_batt: "Het net draagt het meeste verbruik; de accu helpt.", ef_batt: "De accu voedt het huis.",
+      ef_grid: "Stroom komt van het net.", ef_quiet: "Er stroomt nu geen energie.", target: "doel", cooling: "Koelt",
+      heating: "Verwarmt", idle: "In rust", tap_to_run: "Tik om te starten", active: "Actief: {n}",
+      nothing_playing: "Er speelt niets", play: "Afspelen", pause: "Pauze", speed: "Stand {n}",
+      tap_speed: "Tik om de stand te wijzigen", running: "Draait", heating_to: "verwarmt tot {t}", locked: "Op slot · tik om te openen",
+      unlocked: "Open · tik om op slot te doen", all_closed: "Alles dicht", n_open: "{n} open", door_unlocked: "Deur niet op slot",
+      secure: "Alles veilig", not_found: "Entiteit niet gevonden: {e}", humidity: "Vochtigheid {h}%", brightness: "Helderheid",
+      close: "Sluiten", more_details: "Meer details", turn_on: "Aanzetten", turn_off: "Uitzetten",
+      color_temp: "Kleurtemperatuur", color: "Kleur", effect: "Effect", changed: "Gewijzigd {t}",
+      just_now: "zojuist", oscillate: "Zwenken", direction: "Richting", forward: "Vooruit",
+      reverse: "Achteruit", preset: "Voorinstelling", fan_mode: "Ventilatie", cover_open: "Openen",
+      cover_close: "Sluiten", stop: "Stop", position: "Positie", lock_act: "Op slot",
+      unlock_act: "Openen", open_act: "Openen", run: "Uitvoeren", ran: "Klaar",
+      last_24h: "Laatste 24 uur", min: "Min", avg: "Gemiddeld", max: "Max",
+      forecast: "Verwachting", volume: "Volume", mute: "Dempen", source: "Bron",
+      no_history: "Nog geen geschiedenis", wind: "Wind", pressure: "Luchtdruk", previous: "Vorige",
+      next: "Volgende", hold_hint: "Houd een tegel ingedrukt voor details", opening: "Gaat open", closing: "Gaat dicht",
+      open: "Open", closed: "Dicht", detected: "Gedetecteerd", clear: "Vrij",
+      home_state: "Thuis", away: "Afwezig", mode: "Modus", updated: "Bijgewerkt {t}",
+      no_location: "Stel je thuislocatie in via Instellingen → Systeem → Algemeen, of vul breedte- en lengtegraad in het widget in", header_card: "Koptekst", entity_card: "Entiteit", room_card: "Kamer",
+      desc_board: "Aanpasbaar dashboard van matglas met animaties per status", desc_entity: "Eén entiteit als geanimeerde glastegel, met de Aurora Glass-pop-up", desc_room: "Temperatuur en vochtigheid van een kamer in één tegel", desc_energy: "Energiestroom van zon, accu, net en huis",
+      desc_lights: "Lampen en schakelaars om te schakelen", desc_climate: "Een thermostaat met modusknoppen", desc_rooms: "Temperatuur en vochtigheid van elke kamer", desc_scenes: "Scènes en scripts om met één tik te starten",
+      desc_media: "Een mediaspeler met hoes en bediening", desc_fan: "Een ventilator met geanimeerd pictogram", desc_floor: "Vloerverwarming met haar temperatuur", desc_security: "Een slot en sensoren voor deuren en ramen",
+      desc_weather: "Het weer nu en de verwachting", desc_header: "Begroeting, datum, chips en knoppen in de koptekst", err_widgets: "voeg een `widgets:`-lijst toe", err_widget_type: "widget {n} heeft een type nodig",
+      err_entity: "kies een entiteit", err_room: "kies een temperatuursensor", err_config: "Ongeldige configuratie"
+    },
+    pl: {
+      good_morning: "Dzień dobry", good_afternoon: "Dzień dobry", good_evening: "Dobry wieczór", customize: "Dostosuj",
+      done: "Gotowe", theme: "Motyw", accent: "Akcent", blur: "Rozmycie szkła",
+      motion: "Ruch", on: "Wł.", off: "Wył.", auto: "Auto",
+      add_widgets: "Dodaj widżety", all_on_board: "Wszystkie widżety są na tablicy. Usuń jeden przyciskiem −, aby go tu odłożyć.", reset: "Przywróć układ", move_earlier: "Przesuń wcześniej",
+      move_later: "Przesuń później", change_size: "Zmień rozmiar", remove: "Usuń z tablicy", energy: "Przepływ energii",
+      lights: "Światła", climate: "Klimat", scenes: "Sceny", media: "Teraz odtwarzane",
+      fan: "Wentylator", floor: "Ogrzewanie podłogowe", security: "Bezpieczeństwo", weather: "Pogoda",
+      rooms: "Pokoje", rooms_avg: "Śr. {v}", live: "Na żywo", n_of_m_on: "{n} z {m} wł.",
+      solar: "Fotowoltaika", home: "Dom", inverter: "Falownik", load: "Zużycie",
+      exporting: "Oddawanie do sieci", importing: "Z sieci", grid_idle: "Sieć bezczynna", charging: "Ładowanie {v}",
+      discharging: "Rozładowanie {v}", battery_idle: "Bateria bezczynna", grid: "Sieć", battery: "Bateria",
+      throughput: "przepływ", of_supply: "{p} zasilania", no_production: "brak produkcji", self_now: "Samowystarczalność teraz",
+      ef_export: "Słońce zasila dom — nadwyżka trafia do sieci.", ef_export_charge: "Słońce zasila dom i ładuje baterię — nadwyżka trafia do sieci.", ef_solar: "Słońce zasila dom.", ef_solar_charge: "Słońce zasila dom i ładuje baterię.",
+      ef_solar_grid: "Słońce pokrywa część zużycia; resztę uzupełnia sieć.", ef_batt_grid: "Bateria pokrywa większość zużycia; resztę uzupełnia sieć.", ef_grid_batt: "Sieć pokrywa większość zużycia; bateria pomaga.", ef_batt: "Bateria zasila dom.",
+      ef_grid: "Pobór z sieci.", ef_quiet: "Teraz nie płynie żadna energia.", target: "cel", cooling: "Chłodzi",
+      heating: "Grzeje", idle: "Bezczynny", tap_to_run: "Dotknij, aby uruchomić", active: "Aktywna: {n}",
+      nothing_playing: "Nic nie gra", play: "Odtwórz", pause: "Pauza", speed: "Bieg {n}",
+      tap_speed: "Dotknij, aby zmienić bieg", running: "Działa", heating_to: "grzeje do {t}", locked: "Zamknięty · dotknij, aby otworzyć",
+      unlocked: "Otwarty · dotknij, aby zamknąć", all_closed: "Wszystko zamknięte", n_open: "Otwarte: {n}", door_unlocked: "Drzwi niezamknięte",
+      secure: "Wszystko bezpieczne", not_found: "Nie znaleziono encji: {e}", humidity: "Wilgotność {h}%", brightness: "Jasność",
+      close: "Zamknij", more_details: "Więcej szczegółów", turn_on: "Włącz", turn_off: "Wyłącz",
+      color_temp: "Temperatura barwowa", color: "Kolor", effect: "Efekt", changed: "Zmieniono {t}",
+      just_now: "przed chwilą", oscillate: "Oscylacja", direction: "Kierunek", forward: "Do przodu",
+      reverse: "Do tyłu", preset: "Ustawienie", fan_mode: "Nawiew", cover_open: "Otwórz",
+      cover_close: "Zamknij", stop: "Stop", position: "Pozycja", lock_act: "Zamknij",
+      unlock_act: "Otwórz", open_act: "Otwórz", run: "Uruchom", ran: "Gotowe",
+      last_24h: "Ostatnie 24 godziny", min: "Min", avg: "Średnia", max: "Maks",
+      forecast: "Prognoza", volume: "Głośność", mute: "Wycisz", source: "Źródło",
+      no_history: "Brak historii", wind: "Wiatr", pressure: "Ciśnienie", previous: "Poprzedni",
+      next: "Następny", hold_hint: "Przytrzymaj kafelek, aby zobaczyć szczegóły", opening: "Otwieranie", closing: "Zamykanie",
+      open: "Otwarte", closed: "Zamknięte", detected: "Wykryto", clear: "Brak",
+      home_state: "W domu", away: "Poza domem", mode: "Tryb", updated: "Zaktualizowano {t}",
+      no_location: "Ustaw lokalizację domu w Ustawienia → System → Ogólne lub wpisz szerokość i długość geograficzną w widżecie", header_card: "Nagłówek", entity_card: "Encja", room_card: "Pokój",
+      desc_board: "Konfigurowalny pulpit z matowego szkła z animacjami zależnymi od stanu", desc_entity: "Jedna encja jako animowany kafelek ze szkła, z oknem Aurora Glass", desc_room: "Temperatura i wilgotność pokoju w jednym kafelku", desc_energy: "Przepływ energii: fotowoltaika, bateria, sieć i dom",
+      desc_lights: "Światła i przełączniki do włączania", desc_climate: "Termostat z przyciskami trybów", desc_rooms: "Temperatura i wilgotność każdego pokoju", desc_scenes: "Sceny i skrypty uruchamiane jednym dotknięciem",
+      desc_media: "Odtwarzacz z okładką i sterowaniem", desc_fan: "Wentylator z animowaną ikoną", desc_floor: "Ogrzewanie podłogowe z jego temperaturą", desc_security: "Zamek oraz czujniki drzwi i okien",
+      desc_weather: "Bieżąca pogoda i prognoza", desc_header: "Powitanie, data, wskaźniki i przyciski nagłówka", err_widgets: "dodaj listę `widgets:`", err_widget_type: "widżet {n} potrzebuje typu",
+      err_entity: "wybierz encję", err_room: "wybierz czujnik temperatury", err_config: "Nieprawidłowa konfiguracja"
+    },
+    pt: {
+      good_morning: "Bom dia", good_afternoon: "Boa tarde", good_evening: "Boa noite", customize: "Personalizar",
+      done: "Concluído", theme: "Tema", accent: "Destaque", blur: "Desfoque do vidro",
+      motion: "Movimento", on: "Ligado", off: "Desligado", auto: "Auto",
+      add_widgets: "Adicionar widgets", all_on_board: "Todos os widgets estão no painel. Remova um com − para o guardar aqui.", reset: "Repor disposição", move_earlier: "Mover para antes",
+      move_later: "Mover para depois", change_size: "Mudar tamanho", remove: "Remover do painel", energy: "Fluxo de energia",
+      lights: "Luzes", climate: "Clima", scenes: "Cenas", media: "A reproduzir",
+      fan: "Ventoinha", floor: "Piso radiante", security: "Segurança", weather: "Tempo",
+      rooms: "Divisões", rooms_avg: "Média {v}", live: "Ao vivo", n_of_m_on: "{n} de {m} ligadas",
+      solar: "Solar", home: "Casa", inverter: "Inversor", load: "Consumo",
+      exporting: "A injetar na rede", importing: "Da rede", grid_idle: "Rede inativa", charging: "A carregar {v}",
+      discharging: "A descarregar {v}", battery_idle: "Bateria inativa", grid: "Rede", battery: "Bateria",
+      throughput: "trânsito", of_supply: "{p} do fornecimento", no_production: "sem produção", self_now: "Autossuficiência agora",
+      ef_export: "O sol cobre a casa — o excedente vai para a rede.", ef_export_charge: "O sol cobre a casa e carrega a bateria — o excedente vai para a rede.", ef_solar: "O sol está a cobrir a casa.", ef_solar_charge: "O sol cobre a casa e carrega a bateria.",
+      ef_solar_grid: "O sol cobre parte da casa; a rede completa o resto.", ef_batt_grid: "A bateria assegura a maior parte do consumo; a rede completa o resto.", ef_grid_batt: "A rede assegura a maior parte do consumo; a bateria ajuda.", ef_batt: "A bateria alimenta a casa.",
+      ef_grid: "A consumir da rede.", ef_quiet: "Neste momento não flui energia.", target: "alvo", cooling: "A arrefecer",
+      heating: "A aquecer", idle: "Inativo", tap_to_run: "Toque para executar", active: "Ativa: {n}",
+      nothing_playing: "Nada a reproduzir", play: "Reproduzir", pause: "Pausa", speed: "Velocidade {n}",
+      tap_speed: "Toque para mudar a velocidade", running: "A funcionar", heating_to: "a aquecer até {t}", locked: "Trancada · toque para destrancar",
+      unlocked: "Destrancada · toque para trancar", all_closed: "Tudo fechado", n_open: "{n} abertas", door_unlocked: "Porta destrancada",
+      secure: "Tudo seguro", not_found: "Entidade não encontrada: {e}", humidity: "Humidade {h}%", brightness: "Brilho",
+      close: "Fechar", more_details: "Mais detalhes", turn_on: "Ligar", turn_off: "Desligar",
+      color_temp: "Temperatura de cor", color: "Cor", effect: "Efeito", changed: "Alterado {t}",
+      just_now: "agora mesmo", oscillate: "Oscilação", direction: "Direção", forward: "Para a frente",
+      reverse: "Para trás", preset: "Predefinição", fan_mode: "Ventilação", cover_open: "Abrir",
+      cover_close: "Fechar", stop: "Parar", position: "Posição", lock_act: "Trancar",
+      unlock_act: "Destrancar", open_act: "Abrir", run: "Executar", ran: "Feito",
+      last_24h: "Últimas 24 horas", min: "Mín", avg: "Média", max: "Máx",
+      forecast: "Previsão", volume: "Volume", mute: "Silenciar", source: "Fonte",
+      no_history: "Ainda sem histórico", wind: "Vento", pressure: "Pressão", previous: "Anterior",
+      next: "Seguinte", hold_hint: "Mantenha um mosaico premido para ver detalhes", opening: "A abrir", closing: "A fechar",
+      open: "Aberto", closed: "Fechado", detected: "Detetado", clear: "Livre",
+      home_state: "Em casa", away: "Fora", mode: "Modo", updated: "Atualizado {t}",
+      no_location: "Defina a localização de casa em Definições → Sistema → Geral, ou introduza latitude e longitude no widget", header_card: "Cabeçalho", entity_card: "Entidade", room_card: "Divisão",
+      desc_board: "Painel de vidro fosco, personalizável, com animações conforme o estado", desc_entity: "Uma entidade como mosaico de vidro animado, com a janela do Aurora Glass", desc_room: "Temperatura e humidade de uma divisão num só mosaico", desc_energy: "Fluxo de energia solar, bateria, rede e casa",
+      desc_lights: "Luzes e interruptores para ligar e desligar", desc_climate: "Um termóstato com botões de modo", desc_rooms: "Temperatura e humidade de cada divisão", desc_scenes: "Cenas e scripts executados com um toque",
+      desc_media: "Um leitor multimédia com capa e controlos", desc_fan: "Uma ventoinha com ícone animado", desc_floor: "Um piso radiante com a sua temperatura", desc_security: "Uma fechadura e sensores de portas e janelas",
+      desc_weather: "Tempo atual e previsão", desc_header: "Saudação, data, indicadores e botões do cabeçalho", err_widgets: "adicione uma lista `widgets:`", err_widget_type: "o widget {n} precisa de um tipo",
+      err_entity: "escolha uma entidade", err_room: "escolha um sensor de temperatura", err_config: "Configuração inválida"
     }
   };
 
@@ -419,7 +711,10 @@
   `;
 
   /* ------------------------------------------------- shared theme + i18n helpers */
+  const LANG_NAMES = { en: "English", ro: "Română", de: "Deutsch", fr: "Français", es: "Español", it: "Italiano", nl: "Nederlands", pl: "Polski", pt: "Português" };
   const trLang = (hass, forced) => { const l = (forced || hass?.locale?.language || hass?.language || "en").split("-")[0]; return I18N[l] ? l : "en"; };
+  // Before a card has hass (card picker, config errors): the page language, which Home Assistant sets to the profile's
+  const pageLang = () => trLang(null, document.documentElement?.lang || navigator.language);
   const tr = (lang, k, vars) => {
     let s = I18N[lang]?.[k] ?? I18N.en[k] ?? k;
     if (vars) Object.keys(vars).forEach((v) => { s = s.replace(`{${v}}`, vars[v]); });
@@ -1471,11 +1766,11 @@
 
     setConfig(config) {
       // `single` is set by the one-widget cards below: the header card has no widgets at all.
-      if (!config || !Array.isArray(config.widgets) || (!config.widgets.length && !config.single)) throw new Error("aurora-glass-card: add a `widgets:` list");
+      if (!config || !Array.isArray(config.widgets) || (!config.widgets.length && !config.single)) throw new Error(`aurora-glass-card: ${tr(pageLang(), "err_widgets")}`);
       const seen = {};
       this._config = { background: true, ...config };
       this._widgets = config.widgets.map((w, i) => {
-        if (!w || !w.type) throw new Error(`aurora-glass-card: widget ${i + 1} needs a type`);
+        if (!w || !w.type) throw new Error(`aurora-glass-card: ${tr(pageLang(), "err_widget_type", { n: i + 1 })}`);
         let id = w.id || w.type;
         if (seen[id]) id = `${id}-${i}`;
         seen[id] = 1;
@@ -2250,7 +2545,9 @@
       act_popup: "Aurora Glass pop-up", act_native: "Home Assistant's dialog", act_none: "Nothing", icon: "Icon (optional)", show_state: "Show the state", glass: "Glass background", auto: "Auto",
       source: "Weather service", src_entity: "A Home Assistant weather entity (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (built in, free, no account)",
       latitude: "Latitude (empty = home)", longitude: "Longitude (empty = home)", location_name: "Place name (optional)",
-      header_buttons: "Header buttons", add_button: "Add button", no_buttons: "No buttons yet.", admin_only: "Admins only"
+      header_buttons: "Header buttons", add_button: "Add button", no_buttons: "No buttons yet.", admin_only: "Admins only",
+      col_cool: "Cool (blue)", col_heat: "Heat (orange)", col_solar: "Solar (yellow)", col_battery: "Battery (green)",
+      col_grid: "Grid (violet)", col_alert: "Alert (red)"
     },
     ro: {
       appearance: "Aspect", chips: "Indicatori în antet", widgets: "Widgeturi", add_widget: "Adaugă widget", add_chip: "Adaugă indicator", add_light: "Adaugă lumină", add_scene: "Adaugă scenă",
@@ -2268,7 +2565,184 @@
       act_popup: "Fereastra Aurora Glass", act_native: "Fereastra Home Assistant", act_none: "Nimic", icon: "Iconiță (opțional)", show_state: "Afișează starea", glass: "Fundal de sticlă", auto: "Auto",
       source: "Serviciu meteo", src_entity: "O entitate meteo din Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (inclus, gratuit, fără cont)",
       latitude: "Latitudine (gol = casa)", longitude: "Longitudine (gol = casa)", location_name: "Numele locului (opțional)",
-      header_buttons: "Butoane în antet", add_button: "Adaugă buton", no_buttons: "Niciun buton încă.", admin_only: "Doar administratori"
+      header_buttons: "Butoane în antet", add_button: "Adaugă buton", no_buttons: "Niciun buton încă.", admin_only: "Doar administratori",
+      col_cool: "Rece (albastru)", col_heat: "Cald (portocaliu)", col_solar: "Solar (galben)", col_battery: "Baterie (verde)",
+      col_grid: "Rețea (violet)", col_alert: "Alertă (roșu)"
+    },
+    de: {
+      appearance: "Aussehen", chips: "Chips in der Kopfzeile", widgets: "Widgets", add_widget: "Widget hinzufügen",
+      add_chip: "Chip hinzufügen", add_light: "Licht hinzufügen", add_scene: "Szene hinzufügen", preset: "Design-Vorlage",
+      accent: "Akzentfarbe", blur: "Glasunschärfe", motion: "Animationen", background: "Glashintergrund zeichnen",
+      header: "Kopfzeile anzeigen", greeting: "Begrüßung anzeigen", customize: "Anpassen-Button anzeigen", dashboard_theme: "Glas-Design auf das ganze Dashboard anwenden (keine Theme-Datei nötig)",
+      title: "Titel", top_title: "Titel (leer = Begrüßung)", min_height: "Mindesthöhe (z. B. 100vh für eine Panel-Ansicht)", language: "Sprache",
+      type: "Widget-Typ", size: "Größe", entity: "Entität", name: "Name",
+      subtitle: "Untertitel", color: "Punktfarbe", decimals: "Dezimalstellen", description: "Beschreibung",
+      solar_power: "Solarleistung", home_power: "Hausverbrauch (optional, sonst berechnet)", inverter_power: "Ausgangsleistung Wechselrichter (optional)", inverter_status: "Status Wechselrichter (optional, z. B. Betriebsmodus)",
+      inverter_temperature: "Temperatur Wechselrichter (optional)", battery_power: "Batterieleistung", battery_soc: "Batterieladung (%)", grid_power: "Netzleistung",
+      invert_battery: "Batteriesensor ist beim Entladen positiv (GoodWe)", invert_grid: "Netzsensor ist bei Einspeisung positiv (GoodWe)", modes: "Modustasten (leer = automatisch)", active_hours: "Szene als aktiv markieren für (Stunden)",
+      temperature: "Temperatursensor", lock: "Schloss", lock_name: "Name des Schlosses", sensors: "Tür- und Fenstersensoren",
+      move_up: "Nach oben", move_down: "Nach unten", delete: "Löschen", loading: "Home-Assistant-Editor wird geladen…",
+      no_lights: "Noch keine Lichter.", no_scenes: "Noch keine Szenen.", no_rooms: "Noch keine Räume.", add_room: "Raum hinzufügen",
+      humidity: "Feuchtesensor", no_chips: "Noch keine Chips.", device_note: "Tipp: Der Anpassen-Button auf dem Dashboard ändert das Layout nur auf diesem Gerät. Die Einstellungen hier gelten überall.", popup: "Kachel gedrückt halten (oder Chip, Energieknoten bzw. Widget-Symbol antippen) öffnet",
+      popup_aurora: "Aurora-Glass-Pop-up", popup_native: "Dialog von Home Assistant", popup_none: "Nichts", layout: "Layout",
+      layout_tile: "Kachel", layout_row: "Zeile", tap_action: "Tippen", hold_action: "Gedrückt halten",
+      act_auto: "Automatisch (umschalten oder ausführen, sonst Pop-up)", act_toggle: "Umschalten", act_popup: "Aurora-Glass-Pop-up", act_native: "Dialog von Home Assistant",
+      act_none: "Nichts", icon: "Symbol (optional)", show_state: "Zustand anzeigen", glass: "Glashintergrund",
+      auto: "Auto", source: "Wetterdienst", src_entity: "Eine Wetter-Entität aus Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (eingebaut, kostenlos, ohne Konto)",
+      latitude: "Breitengrad (leer = Zuhause)", longitude: "Längengrad (leer = Zuhause)", location_name: "Ortsname (optional)", header_buttons: "Buttons in der Kopfzeile",
+      add_button: "Button hinzufügen", no_buttons: "Noch keine Buttons.", admin_only: "Nur Admins", col_cool: "Kühl (blau)",
+      col_heat: "Wärme (orange)", col_solar: "Solar (gelb)", col_battery: "Batterie (grün)", col_grid: "Netz (violett)",
+      col_alert: "Warnung (rot)"
+    },
+    fr: {
+      appearance: "Apparence", chips: "Pastilles d'en-tête", widgets: "Widgets", add_widget: "Ajouter un widget",
+      add_chip: "Ajouter une pastille", add_light: "Ajouter une lumière", add_scene: "Ajouter une scène", preset: "Thème",
+      accent: "Couleur d'accent", blur: "Flou du verre", motion: "Animations", background: "Dessiner le fond de verre",
+      header: "Afficher l'en-tête", greeting: "Afficher la salutation", customize: "Afficher le bouton Personnaliser", dashboard_theme: "Appliquer le thème verre à tout le tableau de bord (sans fichier de thème)",
+      title: "Titre", top_title: "Titre (vide = salutation)", min_height: "Hauteur minimale (ex. 100vh pour une vue Panneau)", language: "Langue",
+      type: "Type de widget", size: "Taille", entity: "Entité", name: "Nom",
+      subtitle: "Sous-titre", color: "Couleur du point", decimals: "Décimales", description: "Description",
+      solar_power: "Puissance solaire", home_power: "Consommation de la maison (facultatif, calculée si vide)", inverter_power: "Puissance de sortie de l'onduleur (facultatif)", inverter_status: "État de l'onduleur (facultatif, ex. mode de fonctionnement)",
+      inverter_temperature: "Température de l'onduleur (facultatif)", battery_power: "Puissance de la batterie", battery_soc: "Charge de la batterie (%)", grid_power: "Puissance du réseau",
+      invert_battery: "Le capteur de batterie est positif en décharge (GoodWe)", invert_grid: "Le capteur réseau est positif en injection (GoodWe)", modes: "Boutons de mode (vide = automatique)", active_hours: "Garder une scène active pendant (heures)",
+      temperature: "Capteur de température", lock: "Serrure", lock_name: "Nom de la serrure", sensors: "Capteurs de portes et fenêtres",
+      move_up: "Monter", move_down: "Descendre", delete: "Supprimer", loading: "Chargement de l'éditeur Home Assistant…",
+      no_lights: "Aucune lumière pour l'instant.", no_scenes: "Aucune scène pour l'instant.", no_rooms: "Aucune pièce pour l'instant.", add_room: "Ajouter une pièce",
+      humidity: "Capteur d'humidité", no_chips: "Aucune pastille pour l'instant.", device_note: "Astuce : le bouton Personnaliser du tableau de bord ne change la disposition que sur cet appareil. Les réglages ici s'appliquent partout.", popup: "Maintenir une tuile (ou toucher une pastille, un nœud d'énergie ou l'icône d'un widget) ouvre",
+      popup_aurora: "La fenêtre Aurora Glass", popup_native: "La boîte de dialogue de Home Assistant", popup_none: "Rien", layout: "Disposition",
+      layout_tile: "Tuile", layout_row: "Ligne", tap_action: "Toucher", hold_action: "Maintenir",
+      act_auto: "Automatique (basculer ou lancer, sinon fenêtre)", act_toggle: "Basculer", act_popup: "La fenêtre Aurora Glass", act_native: "La boîte de dialogue de Home Assistant",
+      act_none: "Rien", icon: "Icône (facultatif)", show_state: "Afficher l'état", glass: "Fond de verre",
+      auto: "Auto", source: "Service météo", src_entity: "Une entité météo de Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (intégré, gratuit, sans compte)",
+      latitude: "Latitude (vide = maison)", longitude: "Longitude (vide = maison)", location_name: "Nom du lieu (facultatif)", header_buttons: "Boutons d'en-tête",
+      add_button: "Ajouter un bouton", no_buttons: "Aucun bouton pour l'instant.", admin_only: "Administrateurs seulement", col_cool: "Froid (bleu)",
+      col_heat: "Chaud (orange)", col_solar: "Solaire (jaune)", col_battery: "Batterie (vert)", col_grid: "Réseau (violet)",
+      col_alert: "Alerte (rouge)"
+    },
+    es: {
+      appearance: "Apariencia", chips: "Indicadores del encabezado", widgets: "Widgets", add_widget: "Añadir widget",
+      add_chip: "Añadir indicador", add_light: "Añadir luz", add_scene: "Añadir escena", preset: "Tema",
+      accent: "Color de acento", blur: "Desenfoque del cristal", motion: "Animaciones", background: "Dibujar el fondo de cristal",
+      header: "Mostrar encabezado", greeting: "Mostrar el saludo", customize: "Mostrar el botón Personalizar", dashboard_theme: "Aplicar el tema de cristal a todo el panel (sin archivo de tema)",
+      title: "Título", top_title: "Título (vacío = saludo)", min_height: "Altura mínima (p. ej. 100vh para una vista Panel)", language: "Idioma",
+      type: "Tipo de widget", size: "Tamaño", entity: "Entidad", name: "Nombre",
+      subtitle: "Subtítulo", color: "Color del punto", decimals: "Decimales", description: "Descripción",
+      solar_power: "Potencia solar", home_power: "Consumo de la casa (opcional, se calcula si está vacío)", inverter_power: "Potencia de salida del inversor (opcional)", inverter_status: "Estado del inversor (opcional, p. ej. modo de trabajo)",
+      inverter_temperature: "Temperatura del inversor (opcional)", battery_power: "Potencia de la batería", battery_soc: "Carga de la batería (%)", grid_power: "Potencia de red",
+      invert_battery: "El sensor de batería es positivo al descargar (GoodWe)", invert_grid: "El sensor de red es positivo al verter (GoodWe)", modes: "Botones de modo (vacío = automático)", active_hours: "Mantener una escena activa durante (horas)",
+      temperature: "Sensor de temperatura", lock: "Cerradura", lock_name: "Nombre de la cerradura", sensors: "Sensores de puertas y ventanas",
+      move_up: "Subir", move_down: "Bajar", delete: "Eliminar", loading: "Cargando el editor de Home Assistant…",
+      no_lights: "Aún no hay luces.", no_scenes: "Aún no hay escenas.", no_rooms: "Aún no hay habitaciones.", add_room: "Añadir habitación",
+      humidity: "Sensor de humedad", no_chips: "Aún no hay indicadores.", device_note: "Consejo: el botón Personalizar del panel cambia el diseño solo en ese dispositivo. Los ajustes de aquí se aplican en todas partes.", popup: "Mantener pulsada una tarjeta (o tocar un indicador, un nodo de energía o el icono de un widget) abre",
+      popup_aurora: "La ventana de Aurora Glass", popup_native: "El diálogo de Home Assistant", popup_none: "Nada", layout: "Diseño",
+      layout_tile: "Tarjeta", layout_row: "Fila", tap_action: "Tocar", hold_action: "Mantener pulsado",
+      act_auto: "Automático (alternar o ejecutar, si no ventana)", act_toggle: "Alternar", act_popup: "La ventana de Aurora Glass", act_native: "El diálogo de Home Assistant",
+      act_none: "Nada", icon: "Icono (opcional)", show_state: "Mostrar el estado", glass: "Fondo de cristal",
+      auto: "Auto", source: "Servicio meteorológico", src_entity: "Una entidad meteorológica de Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (integrado, gratis, sin cuenta)",
+      latitude: "Latitud (vacío = casa)", longitude: "Longitud (vacío = casa)", location_name: "Nombre del lugar (opcional)", header_buttons: "Botones del encabezado",
+      add_button: "Añadir botón", no_buttons: "Aún no hay botones.", admin_only: "Solo administradores", col_cool: "Frío (azul)",
+      col_heat: "Calor (naranja)", col_solar: "Solar (amarillo)", col_battery: "Batería (verde)", col_grid: "Red (violeta)",
+      col_alert: "Alerta (rojo)"
+    },
+    it: {
+      appearance: "Aspetto", chips: "Indicatori dell'intestazione", widgets: "Widget", add_widget: "Aggiungi widget",
+      add_chip: "Aggiungi indicatore", add_light: "Aggiungi luce", add_scene: "Aggiungi scena", preset: "Tema",
+      accent: "Colore d'accento", blur: "Sfocatura del vetro", motion: "Animazioni", background: "Disegna lo sfondo di vetro",
+      header: "Mostra intestazione", greeting: "Mostra il saluto", customize: "Mostra il pulsante Personalizza", dashboard_theme: "Applica il tema vetro a tutta la plancia (senza file di tema)",
+      title: "Titolo", top_title: "Titolo (vuoto = saluto)", min_height: "Altezza minima (es. 100vh per una vista Pannello)", language: "Lingua",
+      type: "Tipo di widget", size: "Dimensione", entity: "Entità", name: "Nome",
+      subtitle: "Sottotitolo", color: "Colore del punto", decimals: "Decimali", description: "Descrizione",
+      solar_power: "Potenza solare", home_power: "Consumo della casa (facoltativo, calcolato se vuoto)", inverter_power: "Potenza in uscita dell'inverter (facoltativo)", inverter_status: "Stato dell'inverter (facoltativo, es. modalità di lavoro)",
+      inverter_temperature: "Temperatura dell'inverter (facoltativo)", battery_power: "Potenza della batteria", battery_soc: "Carica della batteria (%)", grid_power: "Potenza di rete",
+      invert_battery: "Il sensore batteria è positivo in scarica (GoodWe)", invert_grid: "Il sensore di rete è positivo in immissione (GoodWe)", modes: "Pulsanti di modalità (vuoto = automatico)", active_hours: "Tieni una scena attiva per (ore)",
+      temperature: "Sensore di temperatura", lock: "Serratura", lock_name: "Nome della serratura", sensors: "Sensori di porte e finestre",
+      move_up: "Sposta su", move_down: "Sposta giù", delete: "Elimina", loading: "Caricamento dell'editor di Home Assistant…",
+      no_lights: "Ancora nessuna luce.", no_scenes: "Ancora nessuna scena.", no_rooms: "Ancora nessuna stanza.", add_room: "Aggiungi stanza",
+      humidity: "Sensore di umidità", no_chips: "Ancora nessun indicatore.", device_note: "Suggerimento: il pulsante Personalizza della plancia cambia la disposizione solo su quel dispositivo. Le impostazioni qui valgono ovunque.", popup: "Tenere premuta una tessera (o toccare un indicatore, un nodo di energia o l'icona di un widget) apre",
+      popup_aurora: "Il pop-up di Aurora Glass", popup_native: "La finestra di Home Assistant", popup_none: "Niente", layout: "Disposizione",
+      layout_tile: "Tessera", layout_row: "Riga", tap_action: "Tocco", hold_action: "Pressione prolungata",
+      act_auto: "Automatico (commuta o avvia, altrimenti pop-up)", act_toggle: "Commuta", act_popup: "Il pop-up di Aurora Glass", act_native: "La finestra di Home Assistant",
+      act_none: "Niente", icon: "Icona (facoltativa)", show_state: "Mostra lo stato", glass: "Sfondo di vetro",
+      auto: "Auto", source: "Servizio meteo", src_entity: "Un'entità meteo di Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (integrato, gratuito, senza account)",
+      latitude: "Latitudine (vuoto = casa)", longitude: "Longitudine (vuoto = casa)", location_name: "Nome del luogo (facoltativo)", header_buttons: "Pulsanti dell'intestazione",
+      add_button: "Aggiungi pulsante", no_buttons: "Ancora nessun pulsante.", admin_only: "Solo amministratori", col_cool: "Freddo (blu)",
+      col_heat: "Caldo (arancione)", col_solar: "Solare (giallo)", col_battery: "Batteria (verde)", col_grid: "Rete (viola)",
+      col_alert: "Allerta (rosso)"
+    },
+    nl: {
+      appearance: "Uiterlijk", chips: "Chips in de koptekst", widgets: "Widgets", add_widget: "Widget toevoegen",
+      add_chip: "Chip toevoegen", add_light: "Lamp toevoegen", add_scene: "Scène toevoegen", preset: "Thema",
+      accent: "Accentkleur", blur: "Glasvervaging", motion: "Animaties", background: "Glazen achtergrond tekenen",
+      header: "Koptekst tonen", greeting: "Begroeting tonen", customize: "Knop Aanpassen tonen", dashboard_theme: "Glasthema op het hele dashboard toepassen (geen themabestand nodig)",
+      title: "Titel", top_title: "Titel (leeg = begroeting)", min_height: "Minimale hoogte (bijv. 100vh voor een paneelweergave)", language: "Taal",
+      type: "Type widget", size: "Grootte", entity: "Entiteit", name: "Naam",
+      subtitle: "Ondertitel", color: "Kleur van de stip", decimals: "Decimalen", description: "Beschrijving",
+      solar_power: "Zonnevermogen", home_power: "Verbruik van het huis (optioneel, anders berekend)", inverter_power: "Uitgangsvermogen omvormer (optioneel)", inverter_status: "Status omvormer (optioneel, bijv. werkmodus)",
+      inverter_temperature: "Temperatuur omvormer (optioneel)", battery_power: "Accuvermogen", battery_soc: "Accuniveau (%)", grid_power: "Netvermogen",
+      invert_battery: "Accusensor is positief bij ontladen (GoodWe)", invert_grid: "Netsensor is positief bij teruglevering (GoodWe)", modes: "Modusknoppen (leeg = automatisch)", active_hours: "Scène actief houden gedurende (uren)",
+      temperature: "Temperatuursensor", lock: "Slot", lock_name: "Naam van het slot", sensors: "Sensoren voor deuren en ramen",
+      move_up: "Omhoog", move_down: "Omlaag", delete: "Verwijderen", loading: "Home Assistant-editor laden…",
+      no_lights: "Nog geen lampen.", no_scenes: "Nog geen scènes.", no_rooms: "Nog geen kamers.", add_room: "Kamer toevoegen",
+      humidity: "Vochtigheidssensor", no_chips: "Nog geen chips.", device_note: "Tip: de knop Aanpassen op het dashboard wijzigt de indeling alleen op dat apparaat. De instellingen hier gelden overal.", popup: "Een tegel ingedrukt houden (of op een chip, energieknooppunt of widgetpictogram tikken) opent",
+      popup_aurora: "De Aurora Glass-pop-up", popup_native: "Het dialoogvenster van Home Assistant", popup_none: "Niets", layout: "Indeling",
+      layout_tile: "Tegel", layout_row: "Rij", tap_action: "Tikken", hold_action: "Ingedrukt houden",
+      act_auto: "Automatisch (schakelen of starten, anders pop-up)", act_toggle: "Schakelen", act_popup: "De Aurora Glass-pop-up", act_native: "Het dialoogvenster van Home Assistant",
+      act_none: "Niets", icon: "Pictogram (optioneel)", show_state: "Status tonen", glass: "Glazen achtergrond",
+      auto: "Auto", source: "Weerdienst", src_entity: "Een weerentiteit uit Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (ingebouwd, gratis, zonder account)",
+      latitude: "Breedtegraad (leeg = thuis)", longitude: "Lengtegraad (leeg = thuis)", location_name: "Plaatsnaam (optioneel)", header_buttons: "Knoppen in de koptekst",
+      add_button: "Knop toevoegen", no_buttons: "Nog geen knoppen.", admin_only: "Alleen beheerders", col_cool: "Koel (blauw)",
+      col_heat: "Warm (oranje)", col_solar: "Zon (geel)", col_battery: "Accu (groen)", col_grid: "Net (paars)",
+      col_alert: "Waarschuwing (rood)"
+    },
+    pl: {
+      appearance: "Wygląd", chips: "Wskaźniki w nagłówku", widgets: "Widżety", add_widget: "Dodaj widżet",
+      add_chip: "Dodaj wskaźnik", add_light: "Dodaj światło", add_scene: "Dodaj scenę", preset: "Motyw",
+      accent: "Kolor akcentu", blur: "Rozmycie szkła", motion: "Animacje", background: "Rysuj szklane tło",
+      header: "Pokaż nagłówek", greeting: "Pokaż powitanie", customize: "Pokaż przycisk Dostosuj", dashboard_theme: "Zastosuj szklany motyw do całego pulpitu (bez pliku motywu)",
+      title: "Tytuł", top_title: "Tytuł (pusty = powitanie)", min_height: "Minimalna wysokość (np. 100vh dla widoku Panel)", language: "Język",
+      type: "Typ widżetu", size: "Rozmiar", entity: "Encja", name: "Nazwa",
+      subtitle: "Podtytuł", color: "Kolor kropki", decimals: "Miejsca po przecinku", description: "Opis",
+      solar_power: "Moc fotowoltaiki", home_power: "Zużycie domu (opcjonalnie, obliczane, gdy puste)", inverter_power: "Moc wyjściowa falownika (opcjonalnie)", inverter_status: "Stan falownika (opcjonalnie, np. tryb pracy)",
+      inverter_temperature: "Temperatura falownika (opcjonalnie)", battery_power: "Moc baterii", battery_soc: "Naładowanie baterii (%)", grid_power: "Moc sieci",
+      invert_battery: "Czujnik baterii jest dodatni przy rozładowaniu (GoodWe)", invert_grid: "Czujnik sieci jest dodatni przy oddawaniu (GoodWe)", modes: "Przyciski trybów (puste = automatycznie)", active_hours: "Oznaczaj scenę jako aktywną przez (godziny)",
+      temperature: "Czujnik temperatury", lock: "Zamek", lock_name: "Nazwa zamka", sensors: "Czujniki drzwi i okien",
+      move_up: "W górę", move_down: "W dół", delete: "Usuń", loading: "Ładowanie edytora Home Assistant…",
+      no_lights: "Brak świateł.", no_scenes: "Brak scen.", no_rooms: "Brak pokoi.", add_room: "Dodaj pokój",
+      humidity: "Czujnik wilgotności", no_chips: "Brak wskaźników.", device_note: "Wskazówka: przycisk Dostosuj na pulpicie zmienia układ tylko na tym urządzeniu. Ustawienia tutaj obowiązują wszędzie.", popup: "Przytrzymanie kafelka (lub dotknięcie wskaźnika, węzła energii albo ikony widżetu) otwiera",
+      popup_aurora: "Okno Aurora Glass", popup_native: "Okno Home Assistant", popup_none: "Nic", layout: "Układ",
+      layout_tile: "Kafelek", layout_row: "Wiersz", tap_action: "Dotknięcie", hold_action: "Przytrzymanie",
+      act_auto: "Automatycznie (przełącz lub uruchom, w innym razie okno)", act_toggle: "Przełącz", act_popup: "Okno Aurora Glass", act_native: "Okno Home Assistant",
+      act_none: "Nic", icon: "Ikona (opcjonalnie)", show_state: "Pokaż stan", glass: "Szklane tło",
+      auto: "Auto", source: "Serwis pogodowy", src_entity: "Encja pogody z Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (wbudowany, darmowy, bez konta)",
+      latitude: "Szerokość geograficzna (puste = dom)", longitude: "Długość geograficzna (puste = dom)", location_name: "Nazwa miejsca (opcjonalnie)", header_buttons: "Przyciski nagłówka",
+      add_button: "Dodaj przycisk", no_buttons: "Brak przycisków.", admin_only: "Tylko administratorzy", col_cool: "Chłód (niebieski)",
+      col_heat: "Ciepło (pomarańczowy)", col_solar: "Fotowoltaika (żółty)", col_battery: "Bateria (zielony)", col_grid: "Sieć (fioletowy)",
+      col_alert: "Alarm (czerwony)"
+    },
+    pt: {
+      appearance: "Aspeto", chips: "Indicadores do cabeçalho", widgets: "Widgets", add_widget: "Adicionar widget",
+      add_chip: "Adicionar indicador", add_light: "Adicionar luz", add_scene: "Adicionar cena", preset: "Tema",
+      accent: "Cor de destaque", blur: "Desfoque do vidro", motion: "Animações", background: "Desenhar o fundo de vidro",
+      header: "Mostrar cabeçalho", greeting: "Mostrar a saudação", customize: "Mostrar o botão Personalizar", dashboard_theme: "Aplicar o tema de vidro a todo o painel (sem ficheiro de tema)",
+      title: "Título", top_title: "Título (vazio = saudação)", min_height: "Altura mínima (ex. 100vh para uma vista Painel)", language: "Idioma",
+      type: "Tipo de widget", size: "Tamanho", entity: "Entidade", name: "Nome",
+      subtitle: "Subtítulo", color: "Cor do ponto", decimals: "Casas decimais", description: "Descrição",
+      solar_power: "Potência solar", home_power: "Consumo da casa (opcional, calculado se vazio)", inverter_power: "Potência de saída do inversor (opcional)", inverter_status: "Estado do inversor (opcional, ex. modo de trabalho)",
+      inverter_temperature: "Temperatura do inversor (opcional)", battery_power: "Potência da bateria", battery_soc: "Carga da bateria (%)", grid_power: "Potência da rede",
+      invert_battery: "O sensor da bateria é positivo ao descarregar (GoodWe)", invert_grid: "O sensor da rede é positivo ao injetar (GoodWe)", modes: "Botões de modo (vazio = automático)", active_hours: "Manter uma cena ativa durante (horas)",
+      temperature: "Sensor de temperatura", lock: "Fechadura", lock_name: "Nome da fechadura", sensors: "Sensores de portas e janelas",
+      move_up: "Mover para cima", move_down: "Mover para baixo", delete: "Eliminar", loading: "A carregar o editor do Home Assistant…",
+      no_lights: "Ainda sem luzes.", no_scenes: "Ainda sem cenas.", no_rooms: "Ainda sem divisões.", add_room: "Adicionar divisão",
+      humidity: "Sensor de humidade", no_chips: "Ainda sem indicadores.", device_note: "Dica: o botão Personalizar do painel muda a disposição só nesse dispositivo. As definições aqui aplicam-se em todo o lado.", popup: "Manter um mosaico premido (ou tocar num indicador, num nó de energia ou no ícone de um widget) abre",
+      popup_aurora: "A janela do Aurora Glass", popup_native: "A caixa de diálogo do Home Assistant", popup_none: "Nada", layout: "Disposição",
+      layout_tile: "Mosaico", layout_row: "Linha", tap_action: "Toque", hold_action: "Manter premido",
+      act_auto: "Automático (alternar ou executar, senão janela)", act_toggle: "Alternar", act_popup: "A janela do Aurora Glass", act_native: "A caixa de diálogo do Home Assistant",
+      act_none: "Nada", icon: "Ícone (opcional)", show_state: "Mostrar o estado", glass: "Fundo de vidro",
+      auto: "Auto", source: "Serviço meteorológico", src_entity: "Uma entidade meteorológica do Home Assistant (Met.no, OpenWeatherMap, AccuWeather, …)", src_om: "Open-Meteo (integrado, gratuito, sem conta)",
+      latitude: "Latitude (vazio = casa)", longitude: "Longitude (vazio = casa)", location_name: "Nome do local (opcional)", header_buttons: "Botões do cabeçalho",
+      add_button: "Adicionar botão", no_buttons: "Ainda sem botões.", admin_only: "Só administradores", col_cool: "Frio (azul)",
+      col_heat: "Calor (laranja)", col_solar: "Solar (amarelo)", col_battery: "Bateria (verde)", col_grid: "Rede (violeta)",
+      col_alert: "Alerta (vermelho)"
     }
   };
   const MDI = {
@@ -2372,7 +2846,7 @@
         { name: "popup", selector: { select: { mode: "dropdown", options: opt(["aurora", "native", "none"], { aurora: this._l("popup_aurora"), native: this._l("popup_native"), none: this._l("popup_none") }) } } },
         { type: "grid", name: "", schema: [
           { name: "title", selector: { text: {} } },
-          { name: "language", selector: { select: { mode: "dropdown", options: opt(["auto", "en", "ro"], { auto: this._l("auto"), en: "English", ro: "Română" }) } } }
+          { name: "language", selector: { select: { mode: "dropdown", options: opt(["auto", ...Object.keys(I18N)], { auto: this._l("auto"), ...LANG_NAMES }) } } }
         ] },
         { name: "min_height", selector: { text: {} } }
       ];
@@ -2420,7 +2894,7 @@
       if (kind === "scenes") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["scene", "script", "button", "input_button"] } } }, { name: "name", selector: { text: {} } }] }, { name: "description", selector: { text: {} } }];
       if (kind === "buttons") return [{ type: "grid", name: "", schema: [{ name: "icon", selector: { icon: {} } }, { name: "name", selector: { text: {} } }, { name: "admin_only", selector: { boolean: {} } }] },
         { name: "tap_action", selector: { ui_action: {} } }];
-      const colors = { "": this._l("accent"), cool: "Cool (blue)", heat: "Heat (orange)", solar: "Solar (yellow)", battery: "Battery (green)", grid: "Grid (violet)", alert: "Alert (red)" };
+      const colors = { "": this._l("accent"), ...Object.fromEntries(["cool", "heat", "solar", "battery", "grid", "alert"].map((c) => [c, this._l(`col_${c}`)])) };
       return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: "sensor" } } }, { name: "name", selector: { text: {} } },
         { name: "color", selector: { select: { mode: "dropdown", options: opt(["", "cool", "heat", "solar", "battery", "grid", "alert"], colors) } } }] }];
     }
@@ -2678,17 +3152,17 @@
   // so a dashboard can place and size them one by one. The widget is rendered by an inner aurora-glass-card
   // with the header and background off, so the look, animations and pop-ups are the same as on the board.
   const WIDGET_CARDS = {
-    energy: { size: "L", desc: "Solar, battery, grid and home power flow" },
-    lights: { size: "L", desc: "Lights and switches with toggles" },
-    climate: { size: "M", desc: "A thermostat with mode buttons" },
-    scenes: { size: "M", desc: "Scenes and scripts as tap-to-run rows" },
-    media: { size: "M", desc: "A media player with artwork and controls" },
-    fan: { size: "S", desc: "A fan with an animated icon" },
-    floor: { size: "S", desc: "A heated floor with its temperature" },
-    security: { size: "S", desc: "A lock and door and window sensors" },
-    weather: { size: "S", desc: "Current weather and forecast" },
-    rooms: { size: "L", desc: "Temperature and humidity of each room" },
-    header: { size: "XL", desc: "Greeting, date, chips and header buttons" }
+    energy: { size: "L" },
+    lights: { size: "L" },
+    climate: { size: "M" },
+    scenes: { size: "M" },
+    media: { size: "M" },
+    fan: { size: "S" },
+    floor: { size: "S" },
+    security: { size: "S" },
+    weather: { size: "S" },
+    rooms: { size: "L" },
+    header: { size: "XL" }
   };
   const WIDGET_COLUMNS = { S: 6, M: 12, L: 12, XL: "full" };
   const WIDGET_ROWS = { S: 3, M: 5, L: 6, XL: 2 };
@@ -2718,7 +3192,7 @@
     get _size() { return this._config?.size || WIDGET_CARDS[this.constructor.kind].size; }
 
     setConfig(config) {
-      if (!config) throw new Error("Invalid configuration");
+      if (!config) throw new Error(tr(pageLang(), "err_config"));
       const kind = this.constructor.kind;
       const { type, ...rest } = config;
       const inner = { single: true, background: false, customize: false, id: `widget-${kind}` };
@@ -2881,7 +3355,7 @@
       return { entity: ids[0] || "sun.sun" };
     }
     setConfig(c) {
-      if (!c || !c.entity) throw new Error("aurora-glass-entity: choose an entity");
+      if (!c || !c.entity) throw new Error(`aurora-glass-entity: ${tr(pageLang(), "err_entity")}`);
       this._config = { layout: "tile", tap_action: "auto", hold_action: "popup", glass: true, show_state: true, ...c };
       this._schedule();
     }
@@ -3081,7 +3555,7 @@
     }
     getGridOptions() { return { columns: 6, rows: 2, min_columns: 3, min_rows: 2 }; }
     setConfig(c) {
-      if (!c || !(c.temperature || c.entity)) throw new Error("aurora-glass-room: choose a temperature sensor");
+      if (!c || !(c.temperature || c.entity)) throw new Error(`aurora-glass-room: ${tr(pageLang(), "err_room")}`);
       super.setConfig({ ...c, entity: c.temperature || c.entity });
     }
   }
@@ -3104,21 +3578,22 @@
 
   if (!customElements.get("aurora-glass-card")) customElements.define("aurora-glass-card", AuroraGlassCard);
   window.customCards = window.customCards || [];
+  const L = pageLang();
   if (!window.customCards.some((c) => c.type === "aurora-glass-card")) {
-    window.customCards.push({ type: "aurora-glass-card", name: "Aurora Glass", description: "Frosted-glass, customizable dashboard with state animations", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+    window.customCards.push({ type: "aurora-glass-card", name: "Aurora Glass", description: tr(L, "desc_board"), preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
   if (!window.customCards.some((c) => c.type === "aurora-glass-entity")) {
-    window.customCards.push({ type: "aurora-glass-entity", name: "Aurora Glass Entity", description: "One entity as an animated glass tile, with the Aurora Glass pop-up", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+    window.customCards.push({ type: "aurora-glass-entity", name: `Aurora Glass ${tr(L, "entity_card")}`, description: tr(L, "desc_entity"), preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
   if (!window.customCards.some((c) => c.type === "aurora-glass-room")) {
-    window.customCards.push({ type: "aurora-glass-room", name: "Aurora Glass Room", description: "A room's temperature and humidity in one glass tile", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+    window.customCards.push({ type: "aurora-glass-room", name: `Aurora Glass ${tr(L, "room_card")}`, description: tr(L, "desc_room"), preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
   Object.keys(WIDGET_CARDS).forEach((kind) => {
     const tag = `aurora-glass-${kind}`;
     if (!customElements.get(tag)) customElements.define(tag, class extends AuroraGlassWidgetCard { static get kind() { return kind; } });
     if (window.customCards.some((c) => c.type === tag)) return;
-    const name = kind === "header" ? "Header" : I18N.en[kind] || pretty(kind);
-    window.customCards.push({ type: tag, name: `Aurora Glass ${name}`, description: WIDGET_CARDS[kind].desc, preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+    const name = tr(L, kind === "header" ? "header_card" : kind);
+    window.customCards.push({ type: tag, name: `Aurora Glass ${name}`, description: tr(L, `desc_${kind}`), preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   });
   console.info(`%c AURORA-GLASS-CARD %c v${VERSION} `, "background:#ffb27a;color:#1c140c;font-weight:700", "background:#080c18;color:#f2f4fb");
 })();
