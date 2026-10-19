@@ -212,7 +212,7 @@ Not needed for the Aurora Glass dashboard itself.
 
 ![The pages navbar and the account menu, on a computer and on a phone](docs/images/shot-navbar-pages.svg)
 
-- **The navbar** sits at the top of every page, as frosted glass like the cards, and marks the page you are on. On a computer it is centred with labels; on a phone it shows icons only, leaves room for the account button and scrolls sideways when the pages don't fit.
+- **The navbar** sits at the top of every page, as frosted glass like the cards, and marks the page you are on. On a computer it is centred with labels; on a phone it shows icons only, leaves room for the account button and scrolls sideways when the pages don't fit, keeping the page you are on in view.
 - **The account button** (top right) opens a small menu: **Log out** (your profile, where the log-out button is) and **Power**.
 - **Power** opens a glass menu in the middle of the screen with Restart Home Assistant, Reboot host and Shut down; each asks first, and only administrators can run them.
 - The look of both bars is in `navbar-templates` at the top of the file, shared by every page. The pages other than Home have no view tab (`visible: false`); the navbar is the way in.

@@ -26,6 +26,35 @@ navbar-templates:
       mode: floating
       min_width: 0
       show_labels: true
+    # On a phone the bar scrolls sideways; this keeps the page you are on in view after opening it.
+    # navbar-card runs the "show" template whenever it draws the bar; the placeholder player is never shown.
+    media_player:
+      players:
+        - entity: media_player.none
+      show: |
+        [[[
+          const path = location.pathname;
+          if (window.__agNavPath !== path) {
+            window.__agNavPath = path;
+            const find = (root, out = []) => {
+              for (const el of root.querySelectorAll("*")) {
+                if (el.tagName === "NAVBAR-CARD") out.push(el);
+                if (el.shadowRoot) find(el.shadowRoot, out);
+              }
+              return out;
+            };
+            [150, 600].forEach((ms) => setTimeout(() => {
+              for (const nb of find(document)) {
+                const bar = nb.shadowRoot?.querySelector(".navbar-card");
+                const act = bar?.querySelector(".button.active")?.closest(".route");
+                if (!bar || !act || bar.scrollWidth <= bar.clientWidth) continue;
+                const b = bar.getBoundingClientRect(), a = act.getBoundingClientRect();
+                bar.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2);
+              }
+            }, ms));
+          }
+          return false;
+        ]]]
     layout: &navbar_layout       # both bars share one padding style, so they need the same settings
       auto_padding:
         enabled: true
