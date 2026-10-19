@@ -67,7 +67,7 @@ That's it — the dashboard looks like the picture at the top of this page. The 
 
 - **Widgets** — one row per widget, opened with a click:
   - ↑ ↓ to reorder and 🗑 to delete (1–3), **Add widget** at the bottom (4);
-  - type (energy flow, lights, climate, scenes, now playing, fan, floor heating, security, weather) and size S / M / L / XL;
+  - type (energy flow, lights, climate, rooms, scenes, now playing, fan, floor heating, security, weather) and size S / M / L / XL;
   - Home Assistant's own entity pickers for every sensor and device;
   - lights and scenes get their own rows with name, subtitle or description;
   - energy flow shows solar, grid, battery, the inverter in the middle and the load; pick the inverter's power, status (e.g. GoodWe work mode) and temperature sensors to show them on the inverter node, and use the two switches for inverters (such as GoodWe) whose battery sensor is positive when discharging or whose grid sensor is positive when exporting.
@@ -122,7 +122,7 @@ Hold any tile (or right-click it), or tap a header chip, an energy-flow node or 
 
 Every widget is also a card of its own, for a **Sections** view where Home Assistant places and sizes each card.
 
-1. In a Sections view: **+ Add card** → search **Aurora Glass** → pick **Energy flow**, **Lights**, **Climate**, **Scenes**, **Now playing**, **Fan**, **Floor heating**, **Security**, **Weather** or **Header** (greeting, date, chips and the round header buttons).
+1. In a Sections view: **+ Add card** → search **Aurora Glass** → pick **Energy flow**, **Lights**, **Climate**, **Rooms**, **Scenes**, **Now playing**, **Fan**, **Floor heating**, **Security**, **Weather** or **Header** (greeting, date, chips and the round header buttons).
 2. It opens filled in with matching entities. The editor has the same fields as that widget in the big card, plus **Size** and an **Appearance** section (theme preset, accent, blur, animations, pop-up and language). The Header card also edits the chips and the header buttons (icon, name, admins only, tap action), and **Show the greeting** turns the "Good evening" line off.
 3. **Save**, then drag the cards where you want them and resize them by their corner.
 
@@ -309,6 +309,16 @@ Tap a tile to toggle it. The slider under the light tiles dims the last light yo
     title: Living room
     modes: [cool, heat, dry, off]    # optional, up to 4 buttons
 
+  - type: rooms                      # temperature and humidity per room
+    size: L
+    rooms:
+      - name: Living room
+        temperature: sensor.living_room_temperature
+        humidity: sensor.living_room_humidity      # optional
+      - name: Bedroom
+        temperature: sensor.bedroom_temperature
+        humidity: sensor.bedroom_humidity
+
   - type: media
     entity: media_player.living_room
     subtitle: Living room
@@ -440,6 +450,7 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | `energy` | Five nodes with the inverter in the middle: solar, grid and battery connect to the inverter, the inverter feeds the load. `solar_power`, `grid_power`, `battery_power`, `battery_soc`, `home_power` (load, optional), `inverter_power`, `inverter_status`, `inverter_temperature` (all three optional), `invert_battery`, `invert_grid`. W or kW. Battery + = charging, grid + = import, unless inverted. |
 | `lights` | `entities`: lights, switches or input_booleans, as an entity id or `{entity, name, subtitle}`. Tap toggles; the slider dims the last tapped light. |
 | `climate` | `entity`, `modes` (up to 4, e.g. `[cool, heat, dry, off]`). +/− taps are bundled into one command. |
+| `rooms` | `rooms`: a list of `{name, temperature, humidity}` (sensor ids; `humidity` optional). Each room is a tile with the temperature, a thermometer that fills to it and is tinted blue below `cool_below` (default 19°), orange above `warm_above` (default 25°) and in the accent colour in between, and the humidity with a bar. The header shows the average temperature. |
 | `scenes` | `entities`: `scene.*`, `script.*`, `button.*` or `{entity, name, description}`. The most recently run scene is marked active (`active_hours`, default 12). |
 | `media` | `entity`, `subtitle`. |
 | `fan` | `entity`. Tap cycles 33 / 66 / 100 % / off. |

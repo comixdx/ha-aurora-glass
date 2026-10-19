@@ -1,7 +1,7 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.6.2
+ * Aurora Glass Card for Home Assistant — v0.7.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
- * Widgets: energy flow, lights, climate, scenes, media, fan, floor heating, security, weather.
+ * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
  * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
  * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
@@ -9,7 +9,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.6.2";
+  const VERSION = "0.7.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -47,7 +47,7 @@
       on: "On", off: "Off", auto: "Auto", add_widgets: "Add widgets", all_on_board: "Every widget is on the board. Remove one with − to park it here.",
       reset: "Reset layout", move_earlier: "Move earlier", move_later: "Move later", change_size: "Change size", remove: "Remove from board",
       energy: "Energy flow", lights: "Lights", climate: "Climate", scenes: "Scenes", media: "Now playing", fan: "Fan",
-      floor: "Floor heating", security: "Security", weather: "Weather",
+      floor: "Floor heating", security: "Security", weather: "Weather", rooms: "Rooms", rooms_avg: "Avg {v}",
       live: "Live", n_of_m_on: "{n} of {m} on", solar: "Solar", home: "Home", inverter: "Inverter", load: "Load", exporting: "Exporting to grid", importing: "From grid",
       grid_idle: "Grid idle", charging: "Charging {v}", discharging: "Discharging {v}", battery_idle: "Battery idle",
       grid: "Grid", battery: "Battery", throughput: "throughput", of_supply: "{p} of supply", no_production: "no production", self_now: "Self-sufficiency now",
@@ -74,7 +74,7 @@
       on: "Pornit", off: "Oprit", auto: "Auto", add_widgets: "Adaugă widgeturi", all_on_board: "Toate widgeturile sunt pe ecran. Scoate unul cu − ca să-l parchezi aici.",
       reset: "Resetează aranjarea", move_earlier: "Mută înainte", move_later: "Mută după", change_size: "Schimbă mărimea", remove: "Scoate de pe ecran",
       energy: "Flux energie", lights: "Lumini", climate: "Climatizare", scenes: "Scene", media: "Se redă", fan: "Ventilator",
-      floor: "Încălzire în pardoseală", security: "Securitate", weather: "Vremea",
+      floor: "Încălzire în pardoseală", security: "Securitate", weather: "Vremea", rooms: "Camere", rooms_avg: "Medie {v}",
       live: "Live", n_of_m_on: "{n} din {m} aprinse", solar: "Solar", home: "Casă", inverter: "Invertor", load: "Consum", exporting: "Injectare în rețea", importing: "Din rețea",
       grid_idle: "Rețea inactivă", charging: "Se încarcă {v}", discharging: "Se descarcă {v}", battery_idle: "Baterie inactivă",
       grid: "Rețea", battery: "Baterie", throughput: "tranzit", of_supply: "{p} din alimentare", no_production: "fără producție", self_now: "Autonomie acum",
@@ -102,6 +102,7 @@
     energy: "M13 2 4 14h7l-1 8 9-12h-7z",
     lights: "M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z",
     climate: "M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z",
+    rooms: "M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0z",
     scenes: "M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5",
     media: "M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
     fan: "M12 10.5C12 6 13 3 15.5 3S19 6 12 10.5zM13.5 12c4.5 0 7.5 1 7.5 3.5S18 19 13.5 12zM12 13.5c0 4.5-1 7.5-3.5 7.5S5 18 12 13.5zM10.5 12C6 12 3 11 3 8.5S6 5 10.5 12z",
@@ -303,6 +304,12 @@
   .bar{height:4px;border-radius:99px;overflow:hidden;background:var(--track)}
   .bar i{display:block;height:100%;border-radius:99px;background:var(--acc);transition:width .4s}
   .dim{display:flex;align-items:center;gap:14px;padding:4px 4px 0}
+  /* rooms: tiles like the lights, the temperature large, the icon tinted by how warm the room is */
+  .room .bulb{background:color-mix(in srgb,var(--rc) 16%,transparent);color:var(--rc)}
+  .room .rv{font-size:28px;line-height:1.05;letter-spacing:-.03em}
+  .room .rh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .room .rhum{display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+  .room .bar i{background:var(--cool)}
   .dim input{flex:1;min-width:0}
   /* climate */
   .clim{display:flex;flex-wrap:wrap;align-items:center;gap:20px}
@@ -1899,6 +1906,28 @@
       return { body: `<div class="tiles">${tiles}</div>${dim}`, meta: this._t("n_of_m_on", { n: onCount, m: list.length }) };
     }
 
+    _w_rooms(w) {
+      // One tile per room: the temperature large with a thermometer that fills to it, the humidity with a drop and a bar.
+      const rooms = asList(w.rooms).map(entOf).filter((r) => r.temperature || r.humidity || r.entity);
+      const temps = [];
+      const tiles = rooms.map((r) => {
+        const tId = r.temperature || r.entity;
+        const ts = this._st(tId), hs = this._st(r.humidity);
+        if (!ts && !hs) return `<div class="tile"><div class="err">${esc(this._t("not_found", { e: tId || r.humidity }))}</div></div>`;
+        const t = ts ? parseFloat(ts.state) : NaN, h = hs ? parseFloat(hs.state) : NaN;
+        if (isFinite(t)) temps.push(t);
+        const rc = !isFinite(t) ? "var(--muted)" : t < (w.cool_below ?? 19) ? "var(--cool)" : t > (w.warm_above ?? 25) ? "var(--heat)" : "var(--acc)";
+        const icon = ts ? animIcon(ts, 20, 1.9).replace(/--ai:[^;"]*/, `--ai:${rc}`) : animIcon(hs, 20, 1.9);
+        const name = r.name || (ts || hs).attributes.friendly_name;
+        return `<button class="tile room" data-act="more" data-e="${esc(tId || r.humidity)}" style="--rc:${rc}">
+          <div class="rh"><div class="bulb">${icon}</div>${hs && ts ? `<div class="ts rhum">${animIcon(hs, 14, 2)}${isFinite(h) ? `${this._num(h, 0)}%` : esc(hs.state)}</div>` : ""}</div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><div class="rv disp">${ts ? (isFinite(t) ? `${this._num(t, 1)}°` : esc(ts.state)) : isFinite(h) ? `${this._num(h, 0)}%` : esc(hs.state)}</div><div class="tn">${esc(name)}</div></div>
+          ${hs && ts && isFinite(h) ? `<div class="bar"><i style="width:${clamp(h, 0, 100)}%"></i></div>` : ""}</button>`;
+      }).join("");
+      const avg = temps.length ? `${this._num(temps.reduce((a, b) => a + b, 0) / temps.length, 1)}°` : "";
+      return { body: `<div class="tiles">${tiles}</div>`, meta: avg ? this._t("rooms_avg", { v: avg }) : "" };
+    }
+
     _w_climate(w) {
       const s = this._st(w.entity);
       if (!s) return this._missing(w.entity);
@@ -2183,7 +2212,7 @@
   }
 
   /* ================================================================ visual editor */
-  const WIDGET_TYPES = ["energy", "lights", "climate", "scenes", "media", "fan", "floor", "security", "weather"];
+  const WIDGET_TYPES = ["energy", "lights", "climate", "rooms", "scenes", "media", "fan", "floor", "security", "weather"];
   const ED_LABELS = {
     en: {
       appearance: "Appearance", chips: "Header chips", widgets: "Widgets", add_widget: "Add widget", add_chip: "Add chip", add_light: "Add light", add_scene: "Add scene",
@@ -2194,7 +2223,7 @@
       grid_power: "Grid power", invert_battery: "Battery sensor is positive when discharging (GoodWe)", invert_grid: "Grid sensor is positive when exporting (GoodWe)",
       modes: "Mode buttons (empty = automatic)", active_hours: "Keep a scene marked active for (hours)", temperature: "Temperature sensor",
       lock: "Lock", lock_name: "Lock name", sensors: "Door and window sensors", move_up: "Move up", move_down: "Move down", delete: "Delete",
-      loading: "Loading Home Assistant editor components…", no_lights: "No lights yet.", no_scenes: "No scenes yet.", no_chips: "No chips yet.",
+      loading: "Loading Home Assistant editor components…", no_lights: "No lights yet.", no_scenes: "No scenes yet.", no_rooms: "No rooms yet.", add_room: "Add room", humidity: "Humidity sensor", no_chips: "No chips yet.",
       device_note: "Tip: the Customize button on the dashboard changes the layout only on that device. Settings here apply everywhere.",
       popup: "Hold a tile (or tap a chip, energy node or widget icon) to open", popup_aurora: "Aurora Glass pop-up", popup_native: "Home Assistant's dialog", popup_none: "Nothing",
       layout: "Layout", layout_tile: "Tile", layout_row: "Row", tap_action: "Tap", hold_action: "Hold", act_auto: "Automatic (toggle or run, else pop-up)", act_toggle: "Toggle",
@@ -2212,7 +2241,7 @@
       grid_power: "Putere rețea", invert_battery: "Senzorul bateriei e pozitiv la descărcare (GoodWe)", invert_grid: "Senzorul rețelei e pozitiv la injectare (GoodWe)",
       modes: "Butoane moduri (gol = automat)", active_hours: "Păstrează scena activă timp de (ore)", temperature: "Senzor temperatură",
       lock: "Încuietoare", lock_name: "Nume încuietoare", sensors: "Senzori uși și ferestre", move_up: "Mută sus", move_down: "Mută jos", delete: "Șterge",
-      loading: "Se încarcă editorul Home Assistant…", no_lights: "Nicio lumină încă.", no_scenes: "Nicio scenă încă.", no_chips: "Niciun indicator încă.",
+      loading: "Se încarcă editorul Home Assistant…", no_lights: "Nicio lumină încă.", no_scenes: "Nicio scenă încă.", no_rooms: "Nicio cameră încă.", add_room: "Adaugă cameră", humidity: "Senzor umiditate", no_chips: "Niciun indicator încă.",
       device_note: "Sfat: butonul Personalizează de pe tablou schimbă aranjarea doar pe acel dispozitiv. Setările de aici se aplică peste tot.",
       popup: "Ține apăsat pe un element (sau atinge un indicator, un nod sau iconița unui widget) pentru", popup_aurora: "Fereastra Aurora Glass", popup_native: "Fereastra Home Assistant", popup_none: "Nimic",
       layout: "Aspect", layout_tile: "Pătrat", layout_row: "Rând", tap_action: "Atingere", hold_action: "Ținere apăsată", act_auto: "Automat (comută sau rulează, altfel fereastră)", act_toggle: "Comută",
@@ -2343,6 +2372,7 @@
           { type: "grid", name: "", schema: [{ name: "inverter_status", selector: { entity: { domain: "sensor" } } }, power("inverter_temperature")] },
           { name: "invert_battery", selector: { boolean: {} } }, { name: "invert_grid", selector: { boolean: {} } }];
         case "lights": return [sizes, title];
+        case "rooms": return [sizes, title];
         case "climate": return [sizes, title, { name: "entity", selector: { entity: { domain: "climate" } } },
           { name: "modes", selector: { select: { multiple: true, mode: "list", options: ["cool", "heat", "heat_cool", "auto", "dry", "fan_only", "off"].map((m) => ({ value: m, label: this._hass?.localize?.(`component.climate.entity_component._.state.${m}`) || pretty(m) })) } } },
           subtitle];
@@ -2365,6 +2395,8 @@
     }
     _rowSchema(kind) {
       if (kind === "lights") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["light", "switch", "input_boolean"] } } }, { name: "name", selector: { text: {} } }, { name: "subtitle", selector: { text: {} } }] }];
+      if (kind === "rooms") return [{ type: "grid", name: "", schema: [{ name: "name", selector: { text: {} } },
+        { name: "temperature", selector: { entity: { domain: "sensor", device_class: "temperature" } } }, { name: "humidity", selector: { entity: { domain: "sensor", device_class: "humidity" } } }] }];
       if (kind === "scenes") return [{ type: "grid", name: "", schema: [{ name: "entity", selector: { entity: { domain: ["scene", "script", "button", "input_button"] } } }, { name: "name", selector: { text: {} } }] }, { name: "description", selector: { text: {} } }];
       if (kind === "buttons") return [{ type: "grid", name: "", schema: [{ name: "icon", selector: { icon: {} } }, { name: "name", selector: { text: {} } }, { name: "admin_only", selector: { boolean: {} } }] },
         { name: "tap_action", selector: { ui_action: {} } }];
@@ -2517,6 +2549,7 @@
           if (badge) badge.textContent = c.widgets[i].size || "M";
           if (typeChanged || sourceChanged) this._render();
         }));
+        if (w.type === "rooms") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "rooms", "rooms", "no_rooms", "add_room"); sec.body.appendChild(box); }
         if (w.type === "lights") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "entities", "lights", "no_lights", "add_light"); sec.body.appendChild(box); }
         if (w.type === "scenes") { const box = document.createElement("div"); box.className = "sub"; this._list(box, w, "entities", "scenes", "no_scenes", "add_scene"); sec.body.appendChild(box); }
         wl.body.appendChild(sec.d);
@@ -2529,7 +2562,7 @@
       addRow.appendChild(sel);
       addRow.appendChild(this._addBtn(this._l("add_widget"), () => {
         const t = sel.value;
-        c.widgets.push({ type: t, size: t === "energy" || t === "lights" ? "L" : ["fan", "floor", "security", "weather"].includes(t) ? "S" : "M" });
+        c.widgets.push({ type: t, size: t === "energy" || t === "lights" || t === "rooms" ? "L" : ["fan", "floor", "security", "weather"].includes(t) ? "S" : "M" });
         this._open.add("widgets");
         this._open.add(`w${c.widgets.length - 1}:${t}`);
         this._fire();
@@ -2607,6 +2640,10 @@
     const opens = of("binary_sensor").filter((id) => ["door", "window", "opening", "garage_door"].includes(st[id].attributes.device_class)).slice(0, 6);
     if (lock || opens.length) { const s = { type: "security", size: "S" }; if (lock) s.lock = lock; if (opens.length) s.sensors = opens; widgets.push(s); }
     const wx = of("weather")[0];
+    // rooms: each temperature sensor with the humidity sensor of the same device
+    const rooms = of("sensor").filter((id) => st[id].attributes.device_class === "temperature" && /temperature$/.test(id) && st[id.replace(/temperature$/, "humidity")])
+      .slice(0, 6).map((id) => ({ name: String(st[id].attributes.friendly_name || id).replace(/\s*temperature\s*$/i, "").replace(/^(senzor|sensor)\s+/i, ""), temperature: id, humidity: id.replace(/temperature$/, "humidity") }));
+    if (rooms.length) widgets.push({ type: "rooms", size: "L", rooms });
     widgets.push(wx ? { type: "weather", size: "S", entity: wx } : { type: "weather", size: "S", source: "open_meteo" });
     return { widgets };
   }
@@ -2625,6 +2662,7 @@
     floor: { size: "S", desc: "A heated floor with its temperature" },
     security: { size: "S", desc: "A lock and door and window sensors" },
     weather: { size: "S", desc: "Current weather and forecast" },
+    rooms: { size: "L", desc: "Temperature and humidity of each room" },
     header: { size: "XL", desc: "Greeting, date, chips and header buttons" }
   };
   const WIDGET_COLUMNS = { S: 6, M: 12, L: 12, XL: "full" };
@@ -2730,10 +2768,11 @@
           this._fire();
           if (sourceChanged) this._render();
         }));
-        if (kind === "lights" || kind === "scenes") {
+        if (kind === "lights" || kind === "scenes" || kind === "rooms") {
           const box = document.createElement("div");
           box.className = "sub";
-          this._list(box, c, "entities", kind, `no_${kind}`, kind === "lights" ? "add_light" : "add_scene");
+          if (kind === "rooms") this._list(box, c, "rooms", "rooms", "no_rooms", "add_room");
+          else this._list(box, c, "entities", kind, `no_${kind}`, kind === "lights" ? "add_light" : "add_scene");
           root.appendChild(box);
         }
       }
