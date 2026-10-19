@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.8.1
+ * Aurora Glass Card for Home Assistant — v0.8.2
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -10,7 +10,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.8.1";
+  const VERSION = "0.8.2";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -232,6 +232,25 @@
   .editing .w{outline-color:color-mix(in srgb,var(--acc) 75%,transparent);animation:agWiggle 2.6s ease-in-out infinite;animation-delay:calc(var(--i) * -0.37s)}
   @container (max-width:1099px){.grid{grid-template-columns:repeat(6,minmax(0,1fr))}.w,.w.S{grid-column:span 3}.w.L,.w.XL{grid-column:span 6}}
   @container (max-width:719px){.grid{grid-template-columns:minmax(0,1fr);gap:14px}.w,.w.S,.w.L,.w.XL{grid-column:auto;padding:16px}.wrap{gap:16px}}
+  /* Small widget cards: an S card is about 170px wide on a phone */
+  @container (max-width:300px){
+    .w,.w.S,.w.L,.w.XL{padding:14px;gap:12px}
+    .wh .meta{display:none}
+    .tiles,.scenes,.w.L .tiles,.w.XL .tiles{grid-template-columns:minmax(0,1fr)}
+    .big{font-size:28px}
+    .room .rv{font-size:24px}
+    .fanbtn{flex-direction:column;align-items:flex-start;gap:10px;min-height:0}
+    .fanbtn svg{width:64px;height:64px}
+    .fanbtn .disp{font-size:20px !important}
+    .lockbtn{gap:10px}
+    .lockb{width:44px;height:44px;border-radius:14px}
+    .wx{gap:10px}
+    .wx > svg:first-child{width:64px;height:48px}
+    .ring,.ring svg{width:120px;height:120px}
+    .ring .disp{font-size:32px}
+    .art{width:56px;height:56px;border-radius:14px}
+    .play{width:44px;height:44px}
+  }
   .single,.single .wrap{height:100%}.single .grid{grid-template-columns:minmax(0,1fr);height:100%}.single .grid:empty{display:none}.single .w{grid-column:1/-1;box-sizing:border-box;height:100%}
   .wh{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px}
   .wt{display:flex;align-items:center;gap:10px;min-width:0}
@@ -254,7 +273,7 @@
   .efn.big svg{width:var(--szb);height:var(--szb)}
   .efn.side svg{margin-top:calc((var(--szb) - var(--sz)) / 2)}
   .efn.act svg{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 45%,transparent))}
-  .efn .ring{fill:color-mix(in srgb,var(--c) 22%,var(--ground));stroke:var(--c);stroke-width:3}
+  .efn .efr{fill:color-mix(in srgb,var(--c) 22%,var(--ground));stroke:var(--c);stroke-width:3}
   .efn .ln{fill:none;stroke:var(--ci);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .efn .thin{stroke-width:1.2;opacity:.7}
   .efn .fl{fill:var(--ci)}
@@ -1831,19 +1850,19 @@
       const badge = (x, y, r, t, sm) => `<circle class="bdg" cx="${x}" cy="${y}" r="${r}"></circle><text class="bdt${sm ? " sm" : ""}" x="${x}" y="${y + 4}">${t}</text>`;
       const cells = soc == null ? [1, 0.55, 0.22] : [0, 1, 2].map((i) => (soc > i * 33 + 5 ? 1 : 0.2));
       const ART = {
-        pv: `<svg viewBox="12 14 116 116" aria-hidden="true"><circle class="ring" cx="68" cy="70" r="52"></circle><circle class="ln" cx="68" cy="48" r="8"></circle>
+        pv: `<svg viewBox="12 14 116 116" aria-hidden="true"><circle class="efr" cx="68" cy="70" r="52"></circle><circle class="ln" cx="68" cy="48" r="8"></circle>
           <path class="ln" d="M68 35V31M79 39l3-3M83 53h4M57 39l-3-3M53 53h-4"></path><rect class="ln" x="46" y="62" width="44" height="20" rx="3"></rect>
           <path class="ln thin" d="M61 62V82M75 62V82M46 72H90"></path>${badge(112, 102, 11, "PV")}</svg>`,
-        grid: `<svg viewBox="148 14 116 116" aria-hidden="true"><circle class="ring" cx="204" cy="70" r="52"></circle>
+        grid: `<svg viewBox="148 14 116 116" aria-hidden="true"><circle class="efr" cx="204" cy="70" r="52"></circle>
           <path class="ln" d="M192 94V60M184 70h16M185 78h14M184 70l8-10M200 70l-8-10M216 94V60M208 70h16M209 78h14M208 70l8-10M224 70l-8-10"></path>
           <path class="ln thin" d="M184 70Q204 80 224 70M185 78Q204 87 223 78"></path>${badge(248, 102, 11, "AC")}</svg>`,
-        inv: `<svg viewBox="278 8 132 132" aria-hidden="true"><circle class="ring" cx="340" cy="70" r="58"></circle><rect class="ln" x="308" y="54" width="64" height="34" rx="6"></rect>
+        inv: `<svg viewBox="278 8 132 132" aria-hidden="true"><circle class="efr" cx="340" cy="70" r="58"></circle><rect class="ln" x="308" y="54" width="64" height="34" rx="6"></rect>
           <polyline class="ln" points="315,80 315,64 323,64 323,80 329,80"></polyline><path class="ln thin" d="M340 57V85" stroke-dasharray="2.5 2"></path>
           <path class="ln" d="M348 71Q353 60 358 71Q363 82 368 71"></path>${badge(392, 106, 12, "INV", true)}</svg>`,
-        house: `<svg viewBox="420 14 116 116" aria-hidden="true"><circle class="ring" cx="476" cy="70" r="52"></circle><polygon class="ln" points="476,46 500,60 500,90 452,90 452,60"></polygon>
+        house: `<svg viewBox="420 14 116 116" aria-hidden="true"><circle class="efr" cx="476" cy="70" r="52"></circle><polygon class="ln" points="476,46 500,60 500,90 452,90 452,60"></polygon>
           <rect class="ln" x="468" y="72" width="16" height="18" rx="2"></rect><rect class="ln" x="457" y="66" width="10" height="9" rx="1.5"></rect>
           <path class="ln thin" d="M462 66v9M457 70.5h10"></path><circle class="ln" cx="490" cy="66" r="6"></circle><path class="ln" d="M487 71.5h6M487.5 75h5"></path>${badge(520, 102, 11, "~W", true)}</svg>`,
-        batt: `<svg viewBox="556 14 116 116" aria-hidden="true"><circle class="ring" cx="612" cy="70" r="52"></circle><rect class="ln" x="588" y="60" width="38" height="22" rx="4"></rect>
+        batt: `<svg viewBox="556 14 116 116" aria-hidden="true"><circle class="efr" cx="612" cy="70" r="52"></circle><rect class="ln" x="588" y="60" width="38" height="22" rx="4"></rect>
           <rect class="ln" x="626" y="66" width="6" height="10" rx="2.5"></rect>
           ${[592, 602, 612].map((x, i) => `<rect class="fl" x="${x}" y="64" width="${i < 2 ? 8 : 6}" height="14" rx="1.8" opacity="${cells[i]}"></rect>`).join("")}
           ${on(charge) ? `<polygon class="fl" points="608,42 602,53 607,53 604,66 615,51 609,51 613,42" opacity=".85"></polygon>` : ""}${badge(656, 102, 11, "DC")}</svg>`
@@ -2825,20 +2844,20 @@
   .bar i{display:block;height:100%;border-radius:99px;background:var(--ai);transition:width .5s}
   .ec.row{flex-direction:row;align-items:center;min-height:var(--minh,64px);padding:10px 12px 10px 10px;gap:12px}
   .ec.row .en{flex:1}
-  .ec.sens .eh{justify-content:flex-start;align-items:center;gap:12px}
-  .ec.sens .eic{width:40px;height:40px;border-radius:14px}
-  .ec.sens .en{flex:1}
+  .ec.snum .eh{justify-content:flex-start;align-items:center;gap:12px}
+  .ec.snum .eic{width:40px;height:40px;border-radius:14px}
+  .ec.snum .en{flex:1}
   .ev2{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
   .ehum{display:flex;align-items:center;gap:4px;font-size:15px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
   /* Sensor tiles fit their own width: the area goes first, then everything gets smaller, then the humidity moves under the value */
   .host{container-type:inline-size}
-  @container (max-width:260px){.ec.sens .en span{display:none}}
+  @container (max-width:260px){.ec.snum .en span{display:none}}
   @container (max-width:200px){
-    .ec.sens{padding:12px;gap:8px}
-    .ec.sens .eh{gap:8px}
-    .ec.sens .eic{width:34px;height:34px;border-radius:12px}
-    .ec.sens .en b{font-size:14px}
-    .ec.sens .ebig{font-size:22px}
+    .ec.snum{padding:12px;gap:8px}
+    .ec.snum .eh{gap:8px}
+    .ec.snum .eic{width:34px;height:34px;border-radius:12px}
+    .ec.snum .en b{font-size:14px}
+    .ec.snum .ebig{font-size:22px}
     .ehum{font-size:13px;gap:2px}
   }
   @container (max-width:150px){.ev2{flex-direction:column;align-items:flex-start;gap:0}}
@@ -2929,7 +2948,7 @@
             <div class="en"><b>${esc(name)}</b>${c.show_state !== false ? `<span>${esc([stTxt, area].filter(Boolean).join(" · "))}</span>` : ""}</div>
             ${canToggle ? `<button class="tg ${st.state === "on" ? "on" : ""}" data-act="toggle" role="switch" aria-checked="${st.state === "on"}" aria-label="${esc(name)}"><i></i></button>` : numeric ? `<span class="ebig" style="font-size:20px">${esc(valTxt)}</span>` : ""}</div>`;
         } else if (numeric) {
-          html = `<div class="${cls} sens" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
+          html = `<div class="${cls} snum" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
             <div class="eh">${icon}<div class="en"><b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div></div>
             ${c.show_state !== false ? `<div class="ev2"><span class="ebig">${esc(valTxt)}</span>${humTxt}</div>` : ""}</div>`;
         } else {
