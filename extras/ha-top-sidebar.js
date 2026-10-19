@@ -129,11 +129,12 @@
       overflow-y: hidden;
       scrollbar-width: none;
     }
-    :host(:not([narrow])) ha-list-item-button,
-    :host(:not([narrow])[expanded]) ha-list-item-button {
-      width: auto !important;
+    /* Icons only: HA's own 48px square, which centres the icon. With labels: as wide as the label. */
+    :host(:not([narrow])) ha-list-item-button {
+      width: var(--ha-space-12, 48px) !important;
       margin: 0 !important;
     }
+    :host(:not([narrow])[expanded]) ha-list-item-button { width: auto !important; }
     :host(:not([narrow])) ha-list-item-button .item-text { max-width: none; }
     :host(:not([narrow]):not([expanded])) ha-list-item-button .item-text { display: none; }
   `;
