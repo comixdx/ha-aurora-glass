@@ -1,0 +1,385 @@
+# Aurora Glass — a dashboard with pages and a navbar at the top
+# (Settings → Dashboards → your dashboard → ✏️ → ⋮ → Raw configuration editor)
+#
+# Needs from HACS → Frontend: Aurora Glass, navbar-card and Bubble Card.
+# The Aurora Glass theme (themes/aurora_glass.yaml) is optional; the cards bring the glass look anyway.
+#
+#   • A navbar of pages at the top: centred with labels on wide screens; on a phone icons only,
+#     swipe it sideways when the pages don't fit.
+#   • An account button at the top right that opens a menu with Log out and Power.
+#   • Power opens a glass menu in the middle of the screen: Restart, Reboot host, Shut down
+#     (each asks first; Home Assistant lets only administrators run them).
+#   • Pages built from Aurora Glass widget cards.
+#
+# Before saving: replace "dashboard-aurora" in the routes with your dashboard's address
+# (the part after the first / in the browser), and the entity ids with yours.
+#
+# To add a page later: copy one of the views below, change its title and path, and add a route for it
+# to the list under "routes: &pages". After saving, every page has its own copy of that list, so a
+# route added later in one page's navbar editor shows on that page only.
+
+navbar-templates:
+  # The look of the pages bar; the pages themselves are listed in each page's navbar card
+  pages:
+    desktop:
+      position: top
+      mode: floating
+      min_width: 0
+      show_labels: true
+    layout: &navbar_layout       # both bars share one padding style, so they need the same settings
+      auto_padding:
+        enabled: true
+        desktop_px: 88
+        mobile_px: 0
+    styles: |
+      :host {
+        --navbar-background-color: var(--ha-card-background, rgba(255,255,255,0.07));
+        --navbar-primary-color: var(--primary-color);
+        --navbar-border-radius: var(--ha-card-border-radius, 28px);
+        --navbar-box-shadow-desktop: var(--ha-card-box-shadow, none);
+      }
+      /* At the top of the page, under Home Assistant's header when it is shown (kiosk-mode hides it for guests) */
+      .navbar.desktop.top {
+        top: calc(var(--kiosk-header-height, var(--header-height, 56px)) + var(--safe-area-inset-top, 0px) + 12px) !important;
+      }
+      .navbar-card {
+        backdrop-filter: blur(24px) saturate(170%);
+        -webkit-backdrop-filter: blur(24px) saturate(170%);
+        border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13)) !important;
+        font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+      }
+      .route {
+        border-radius: 18px;
+        --icon-primary-color: var(--secondary-text-color);
+      }
+      .button.active {
+        color: var(--primary-color);
+        background: color-mix(in srgb, var(--primary-color) 18%, transparent) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
+        border-radius: 18px;
+      }
+      .label {
+        font-weight: 600 !important;
+      }
+
+
+      /* Phones: icons only, the bar stops before the account button and scrolls sideways */
+      @media (max-width: 600px) {
+        .navbar.desktop.top {
+          left: calc(var(--safe-area-inset-left, 0px) + 10px) !important;
+          transform: none !important;
+          max-width: calc(100vw - 94px - var(--safe-area-inset-left, 0px) - var(--safe-area-inset-right, 0px)) !important;
+        }
+        .navbar-card {
+          max-width: 100% !important;
+          min-width: 0 !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          justify-content: flex-start !important;
+          gap: 2px !important;
+          padding: 6px !important;
+          scrollbar-width: none;
+          scroll-snap-type: x proximity;
+          -webkit-overflow-scrolling: touch;
+        }
+        .navbar-card::-webkit-scrollbar { display: none; }
+        .route { flex: none !important; scroll-snap-align: start; }
+        .label { display: none !important; }
+      }
+  # One round button at the top right, with a menu
+  account:
+    routes:
+      - icon: mdi:account-circle-outline
+        tap_action:
+          action: open-popup
+        popup:
+          - icon: mdi:logout
+            label: Log out
+            tap_action:
+              action: navigate
+              navigation_path: /profile
+          - icon: mdi:power
+            label: Power
+            tap_action:
+              action: navigate
+              navigation_path: "#power"
+    desktop:
+      position: top
+      mode: floating
+      min_width: 0
+      show_labels: popup_only
+      show_popup_label_backgrounds: true
+    layout: *navbar_layout
+    styles: |
+      :host {
+        --navbar-background-color: var(--ha-card-background, rgba(255,255,255,0.07));
+        --navbar-primary-color: var(--primary-color);
+        --navbar-border-radius: var(--ha-card-border-radius, 28px);
+        --navbar-box-shadow-desktop: var(--ha-card-box-shadow, none);
+      }
+      /* At the top of the page, under Home Assistant's header when it is shown (kiosk-mode hides it for guests) */
+      .navbar.desktop.top {
+        top: calc(var(--kiosk-header-height, var(--header-height, 56px)) + var(--safe-area-inset-top, 0px) + 12px) !important;
+      }
+      .navbar-card {
+        backdrop-filter: blur(24px) saturate(170%);
+        -webkit-backdrop-filter: blur(24px) saturate(170%);
+        border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13)) !important;
+        font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+      }
+      .route {
+        border-radius: 18px;
+        --icon-primary-color: var(--secondary-text-color);
+      }
+      .button.active {
+        color: var(--primary-color);
+        background: color-mix(in srgb, var(--primary-color) 18%, transparent) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
+        border-radius: 18px;
+      }
+      .label {
+        font-weight: 600 !important;
+      }
+
+      /* Pinned to the top right, away from the page navbar */
+      .navbar.desktop.top {
+        left: auto !important;
+        right: calc(var(--safe-area-inset-right, 0px) + 12px) !important;
+        transform: none !important;
+      }
+
+      /* The menu: glass items like the cards */
+      .navbar-popup-backdrop { background: transparent !important; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+      .popup-item {
+        background-color: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+        border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+        box-shadow: var(--ha-card-box-shadow, none);
+        border-radius: 18px !important;
+        backdrop-filter: blur(24px) saturate(170%);
+        -webkit-backdrop-filter: blur(24px) saturate(170%);
+      }
+      .popup-item .button { background: transparent !important; box-shadow: none !important; }
+      .popup-item .label { padding: 0 14px 0 4px !important; font-weight: 600 !important; }
+
+      /* The menu hangs from the right edge of the screen, labels left of the icons, so it never runs off-screen */
+      .navbar-popup.open-bottom {
+        left: auto !important;
+        right: calc(var(--safe-area-inset-right, 0px) + 12px) !important;
+        align-items: flex-end !important;
+        margin-top: 10px !important;
+        max-width: calc(100vw - 24px);
+      }
+      .navbar-popup.open-bottom .popup-item { flex-direction: row-reverse !important; }
+      .navbar-popup.open-bottom .popup-item .label { text-align: end !important; }
+
+      /* Phones: a compact square, 64px wide, at the top right */
+      @media (max-width: 600px) {
+        .navbar.desktop.top { right: calc(var(--safe-area-inset-right, 0px) + 10px) !important; }
+        .navbar-card { padding: 6px !important; width: 64px !important; min-width: 0 !important; box-sizing: border-box; justify-content: center !important; }
+      }
+
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    max_columns: 4
+    sections:
+      # Every page starts with this section: the navbar, the account button and the power menu
+      - type: grid
+        column_span: 4
+        cards: &top
+          - type: custom:navbar-card
+            template: pages
+            routes: &pages
+              - { url: /dashboard-aurora/home, label: Home, icon: mdi:home-outline, icon_selected: mdi:home }
+              - { url: /dashboard-aurora/lights, label: Lights, icon: mdi:lightbulb-group-outline, icon_selected: mdi:lightbulb-group }
+              - { url: /dashboard-aurora/climate, label: Climate, icon: mdi:thermometer }
+              - { url: /dashboard-aurora/security, label: Security, icon: mdi:shield-home-outline, icon_selected: mdi:shield-home }
+          - type: custom:navbar-card
+            template: account
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#power"
+            name: Power
+            icon: mdi:power
+            popup_mode: centered
+            width_desktop: 420px
+            bg_blur: 24
+            shadow_opacity: 0
+            styles: |
+              .bubble-pop-up {
+                --bubble-pop-up-main-background-color: color-mix(in srgb, var(--primary-background-color) 66%, transparent);
+                --bubble-pop-up-border-radius: var(--ha-card-border-radius, 28px);
+                font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+              }
+              .bubble-pop-up-background {
+                border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                box-shadow: var(--ha-card-box-shadow, none);
+              }
+              .bubble-header-container {
+                background: none !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              .bubble-button-card-container {
+                background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                border-radius: 20px !important;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+              }
+              .bubble-name {
+                color: var(--primary-text-color) !important;
+                font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+                font-weight: 600 !important;
+              }
+              .bubble-icon-container { background: color-mix(in srgb, var(--primary-color) 18%, transparent) !important; }
+              .bubble-icon { color: var(--primary-color) !important; }
+              .bubble-close-button {
+                background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+              }
+              .bubble-close-button, .bubble-close-button ha-icon { color: var(--primary-text-color) !important; }
+            cards:
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Restart Home Assistant
+                icon: mdi:home-assistant
+                styles: &menu_button |
+                  .bubble-button-card-container {
+                    --ag: var(--primary-color);
+                    background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                    border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                    border-radius: 20px !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+                    font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+                  }
+                  .bubble-name { color: var(--primary-text-color) !important; font-weight: 600 !important; }
+                  .bubble-icon-container { background: color-mix(in srgb, var(--ag) 18%, transparent) !important; }
+                  .bubble-icon { color: var(--ag) !important; }
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.restart
+                  confirmation:
+                    text: Restart Home Assistant?
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Reboot host
+                icon: mdi:restart
+                styles: *menu_button
+                tap_action:
+                  action: perform-action
+                  perform_action: hassio.host_reboot
+                  confirmation:
+                    text: Reboot the Home Assistant host?
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Shut down
+                icon: mdi:power
+                styles: |   # like the others, with the theme's alert colour
+                  .bubble-button-card-container {
+                    --ag: var(--error-color);
+                    background: var(--ha-card-background, rgba(255,255,255,0.07)) !important;
+                    border: 1px solid var(--ha-card-border-color, rgba(255,255,255,0.13));
+                    border-radius: 20px !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+                    font-family: 'Figtree', var(--ha-font-family-body, system-ui), sans-serif;
+                  }
+                  .bubble-name { color: var(--primary-text-color) !important; font-weight: 600 !important; }
+                  .bubble-icon-container { background: color-mix(in srgb, var(--ag) 18%, transparent) !important; }
+                  .bubble-icon { color: var(--ag) !important; }
+                tap_action:
+                  action: perform-action
+                  perform_action: hassio.host_shutdown
+                  confirmation:
+                    text: Shut down Home Assistant?
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:aurora-glass-header
+            greeting: false            # only the date, the chips stay
+            chips:
+              - { entity: sensor.living_room_temperature, name: Inside, color: cool }
+              - { entity: sensor.outside_temperature, name: Outside }
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-energy
+            grid_power: sensor.grid_power
+            battery_power: sensor.battery_power      # solar_power too if you have panels
+            battery_soc: sensor.battery_state_of_charge
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-weather
+            source: open_meteo
+            size: L
+
+  - title: Lights
+    path: lights
+    icon: mdi:lightbulb-group
+    type: sections
+    max_columns: 4
+    visible: false                     # no tab: the navbar is the way in
+    sections:
+      - { type: grid, column_span: 4, cards: *top }
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-lights
+            entities:
+              - { entity: light.living_room_ceiling, subtitle: Living room }
+              - { entity: light.kitchen_worktop, subtitle: Kitchen }
+              - { entity: light.bedroom_bedside, subtitle: Bedroom }
+
+  - title: Climate
+    path: climate
+    icon: mdi:thermometer
+    type: sections
+    max_columns: 4
+    visible: false
+    sections:
+      - { type: grid, column_span: 4, cards: *top }
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-room
+            name: Living room
+            temperature: sensor.living_room_temperature
+            humidity: sensor.living_room_humidity
+          - type: custom:aurora-glass-room
+            name: Bedroom
+            temperature: sensor.bedroom_temperature
+            humidity: sensor.bedroom_humidity
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-climate
+            entity: climate.living_room_ac
+
+  - title: Security
+    path: security
+    icon: mdi:shield-home
+    type: sections
+    max_columns: 4
+    visible: false
+    sections:
+      - { type: grid, column_span: 4, cards: *top }
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-alarm
+            entity: alarm_control_panel.home
+          - type: custom:aurora-glass-openings     # every door and window
+          - type: custom:aurora-glass-safety       # every smoke, gas, CO and leak sensor
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:aurora-glass-presence
+            script: script.leave_home
+          - type: custom:aurora-glass-health
+          - type: custom:aurora-glass-leaving
+            script: script.leave_home

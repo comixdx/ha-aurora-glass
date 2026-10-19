@@ -4,7 +4,7 @@ A frosted-glass dashboard card whose animations follow real entity states: dots 
 
 ![The finished Aurora Glass dashboard: header with chips, energy flow, lights, climate and more](docs/images/shot-dashboard-result-v2.svg)
 
-**Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. Home security](#9-home-security) · [10. The theme](#10-the-theme-for-all-of-home-assistant) · [11. The complete example](#11-the-complete-example)
+**Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. Home security](#9-home-security) · [10. The theme](#10-the-theme-for-all-of-home-assistant) · [11. The complete example](#11-the-complete-example) · [12. Pages and a navbar](#12-a-dashboard-with-pages-and-a-navbar)
 
 **Part 2 — with YAML:** [Where the YAML goes](#where-the-yaml-goes) · [The smallest card](#the-smallest-working-card) · [The parts of the card](#the-parts-of-the-card) · [Widget sizes](#widget-sizes) · [Energy flow](#energy-flow) · [Lights and scenes](#lights-and-scenes) · [The other widgets](#the-other-widgets) · [Pop-ups and the entity card](#pop-ups-and-the-entity-card-in-yaml) · [Security widgets](#security-widgets) · [Widget cards](#widget-cards-in-yaml) · [All card options](#all-card-options) · [When something doesn't work](#when-something-doesnt-work)
 
@@ -201,6 +201,31 @@ Not needed for the Aurora Glass dashboard itself.
 3. Replace the entity ids with yours and `YOUR_ADMIN_USER_ID` with your user id (Settings → People → Users → open the user; the id is in the address bar).
 
 ![The example dashboard](docs/images/shot-dashboard-result-v2.svg)
+
+## 12. A dashboard with pages and a navbar
+
+[`examples/dashboard-pages.yaml`](examples/dashboard-pages.yaml) is a dashboard of several pages (Home, Lights, Climate, Security) with a navbar at the top instead of view tabs, an account button with **Log out** and **Power**, and the pages built from the separate widget cards. It needs [navbar-card](https://github.com/joseluis9595/lovelace-navbar-card) and Bubble Card from HACS → Frontend.
+
+1. Create an empty dashboard ([step 2](#2-create-a-dashboard)) and open it.
+2. ✏️ → ⋮ → **Raw configuration editor** → paste the file.
+3. Replace `dashboard-aurora` in the routes with your dashboard's address (what follows the first `/` in the browser) and the entity ids with yours → **Save**.
+
+![The pages navbar and the account menu, on a computer and on a phone](docs/images/shot-navbar-pages.svg)
+
+- **The navbar** sits at the top of every page, as frosted glass like the cards, and marks the page you are on. On a computer it is centred with labels; on a phone it shows icons only, leaves room for the account button and scrolls sideways when the pages don't fit.
+- **The account button** (top right) opens a small menu: **Log out** (your profile, where the log-out button is) and **Power**.
+- **Power** opens a glass menu in the middle of the screen with Restart Home Assistant, Reboot host and Shut down; each asks first, and only administrators can run them.
+- The look of both bars is in `navbar-templates` at the top of the file, shared by every page. The pages other than Home have no view tab (`visible: false`); the navbar is the way in.
+
+**Adding a page:**
+
+1. ✏️ → ⋮ → **Raw configuration editor**.
+2. Copy one of the pages under `views:` (from `- title:` to the next one), change its `title` and `path`, and replace its cards with yours. Its first section is the navbar, the account button and the power menu; keep it.
+3. Add the page to the navbar of **every** page: a line like `- { url: /dashboard-aurora/garden, label: Garden, icon: mdi:flower }` in each page's navbar card → **Save**.
+
+Each page keeps its own list of pages, so its navbar editor shows all of them and adding one there keeps the others — but only on that page. That's why step 3 adds the new page everywhere.
+
+Optional: with [kiosk-mode](https://github.com/NemesisRE/kiosk-mode) (`kiosk_mode:` at the top, as in [`examples/dashboard.yaml`](examples/dashboard.yaml)) guests get the dashboard without Home Assistant's sidebar and header; the navbar then sits at the very top.
 
 ---
 
@@ -579,4 +604,6 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | Changes in the editor don't show on one device | That device has its own Customize layout; open Customize → **Reset layout**. |
 | The whole YAML turns red | Usually a tab character or a missing space after `:`. Use two spaces per level. |
 | HACS shows the new version but the card still looks old | The browser (or the phone app) still has the old file. Reload with Ctrl+Shift+R, or Settings → Companion app → Troubleshooting → **Reset frontend cache**. If it persists, HACS → Aurora Glass → ⋮ → **Redownload**. |
+| A new page isn't in the navbar, or only on one page | Each page has its own list of pages: add the new one to the navbar card of every page ([step 12](#12-a-dashboard-with-pages-and-a-navbar)). |
+| On a phone the navbar runs under the account button | The phone rules are in the `pages` style of `navbar-templates`; copy them from [`examples/dashboard-pages.yaml`](examples/dashboard-pages.yaml) and reset the app's frontend cache. |
 | The card shows texts in English | Your profile language isn't one of the nine built in. Pick one under **Language** in the card's Appearance, or add your own words with `translations:`. |
