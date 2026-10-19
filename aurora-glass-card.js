@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.7.0
+ * Aurora Glass Card for Home Assistant — v0.7.1
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -9,7 +9,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.7.0";
+  const VERSION = "0.7.1";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -247,20 +247,20 @@
   .ef{container-type:inline-size;display:flex;flex-direction:column;gap:14px;--sz:clamp(58px,15cqw,96px);--szb:calc(var(--sz) * 1.125);--leg:clamp(28px,11cqw,84px)}
   .efsum{font-size:13px;line-height:1.4;color:var(--muted)}
   .efg{display:grid;grid-template-columns:minmax(0,1fr) var(--leg) minmax(0,1fr) var(--leg) minmax(0,1fr);grid-template-rows:auto var(--leg) auto var(--leg) auto;justify-items:center}
-  .en{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;max-width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
-  .en.up{flex-direction:column-reverse}
-  .en svg{width:var(--sz);height:var(--sz);flex:none;overflow:visible;transition:filter .6s}
-  .en.big svg{width:var(--szb);height:var(--szb)}
-  .en.side svg{margin-top:calc((var(--szb) - var(--sz)) / 2)}
-  .en.act svg{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 45%,transparent))}
-  .en .ring{fill:color-mix(in srgb,var(--c) 22%,var(--ground));stroke:var(--c);stroke-width:3}
-  .en .ln{fill:none;stroke:var(--ci);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .en .thin{stroke-width:1.2;opacity:.7}
-  .en .fl{fill:var(--ci)}
-  .en .bdg{fill:var(--c)}
-  .en .bdt{fill:#fff;font:700 9px 'Figtree',system-ui,sans-serif;text-anchor:middle}
-  .en .bdt.sm{font-size:8px}
-  .en{--ci:color-mix(in srgb,var(--c) 62%,var(--text))}
+  .efn{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;max-width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
+  .efn.up{flex-direction:column-reverse}
+  .efn svg{width:var(--sz);height:var(--sz);flex:none;overflow:visible;transition:filter .6s}
+  .efn.big svg{width:var(--szb);height:var(--szb)}
+  .efn.side svg{margin-top:calc((var(--szb) - var(--sz)) / 2)}
+  .efn.act svg{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 45%,transparent))}
+  .efn .ring{fill:color-mix(in srgb,var(--c) 22%,var(--ground));stroke:var(--c);stroke-width:3}
+  .efn .ln{fill:none;stroke:var(--ci);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .efn .thin{stroke-width:1.2;opacity:.7}
+  .efn .fl{fill:var(--ci)}
+  .efn .bdg{fill:var(--c)}
+  .efn .bdt{fill:#fff;font:700 9px 'Figtree',system-ui,sans-serif;text-anchor:middle}
+  .efn .bdt.sm{font-size:8px}
+  .efn{--ci:color-mix(in srgb,var(--c) 62%,var(--text))}
   .el{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:600;color:var(--ci)}
   .el small{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
   .ev{display:flex;align-items:baseline;gap:6px;font-size:clamp(15px,4.4cqw,20px);line-height:1.1;white-space:nowrap}
@@ -1848,7 +1848,7 @@
           ${on(charge) ? `<polygon class="fl" points="608,42 602,53 607,53 604,66 615,51 609,51 613,42" opacity=".85"></polygon>` : ""}${badge(656, 102, 11, "DC")}</svg>`
       };
       const node = (col, row, c, e, act, inner, cls = "") =>
-        `<button class="en ${cls} ${act ? "act" : ""}" style="grid-column:${col};grid-row:${row};--c:var(--ef-${c})" data-act="more" data-e="${esc(e || "")}">${ART[c]}${inner}</button>`;
+        `<button class="efn ${cls} ${act ? "act" : ""}" style="grid-column:${col};grid-row:${row};--c:var(--ef-${c})" data-act="more" data-e="${esc(e || "")}">${ART[c]}${inner}</button>`;
       const lbl = (t, extra = "") => `<div class="el">${esc(t)}${extra}</div>`;
       const val = (t, sub = "") => `<div class="ev disp">${esc(t)}${sub}</div>`;
       const sub = (t) => (t ? `<div class="es">${esc(t)}</div>` : "");
@@ -2814,7 +2814,7 @@
   .en{display:flex;flex-direction:column;gap:2px;min-width:0}
   .en b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .en span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ebig{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;font-weight:600;font-size:26px;letter-spacing:-.03em;color:var(--text)}
+  .ebig,.en .ebig{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;font-weight:600;font-size:26px;letter-spacing:-.03em;color:var(--text);overflow:visible}
   .bar{height:4px;border-radius:99px;overflow:hidden;background:var(--track)}
   .bar i{display:block;height:100%;border-radius:99px;background:var(--ai);transition:width .5s}
   .ec.row{flex-direction:row;align-items:center;min-height:var(--minh,64px);padding:10px 12px 10px 10px;gap:12px}
@@ -2883,20 +2883,30 @@
         const a = st.attributes;
         const area = c.subtitle ?? areaOf(this._hass, id);
         const numeric = d === "sensor" && isFinite(parseFloat(st.state));
+        // Sensors read like the widgets: one decimal (none for %), "°" for temperatures, and the tile stays neutral glass.
+        let valTxt = stTxt, level = null;
+        if (numeric) {
+          const n = parseFloat(st.state), u = a.unit_of_measurement || "";
+          const dec = c.decimals ?? (u === "%" ? 0 : Math.abs(n) < 100 ? 1 : 0);
+          let num;
+          try { num = n.toLocaleString(this._hass?.locale?.language || "en", { minimumFractionDigits: dec, maximumFractionDigits: dec }); } catch (e) { num = n.toFixed(dec); }
+          valTxt = u === "°C" || u === "°F" ? `${num}°` : u === "%" ? `${num}%` : u ? `${num} ${u}` : num;
+          if (u === "%") level = clamp(n, 0, 100);
+        }
         const bri = d === "light" && on && a.brightness != null ? Math.round(a.brightness / 2.55) : null;
         const pct = bri ?? (d === "fan" && on && a.percentage != null ? a.percentage : d === "cover" && a.current_position != null ? a.current_position : null);
         const canToggle = TOGGLE_DOMAINS.includes(d) && !["climate", "media_player", "vacuum", "cover"].includes(d);
-        const cls = `ec ${c.glass === false ? "flat" : "glass"} ${c.layout === "row" ? "row" : ""} ${on ? "on" : ""} ${this._pulse ? "pulse" : ""}`;
+        const cls = `ec ${c.glass === false ? "flat" : "glass"} ${c.layout === "row" ? "row" : ""} ${on && !numeric ? "on" : ""} ${this._pulse ? "pulse" : ""}`;
         const icon = `<div class="eic">${animIcon(st, c.layout === "row" ? 24 : 26, 1.8, c.icon)}</div>`;
         if (c.layout === "row") {
           html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">${icon}
             <div class="en"><b>${esc(name)}</b>${c.show_state !== false ? `<span>${esc([stTxt, area].filter(Boolean).join(" · "))}</span>` : ""}</div>
-            ${canToggle ? `<button class="tg ${st.state === "on" ? "on" : ""}" data-act="toggle" role="switch" aria-checked="${st.state === "on"}" aria-label="${esc(name)}"><i></i></button>` : numeric ? `<span class="ebig" style="font-size:20px">${esc(stTxt)}</span>` : ""}</div>`;
+            ${canToggle ? `<button class="tg ${st.state === "on" ? "on" : ""}" data-act="toggle" role="switch" aria-checked="${st.state === "on"}" aria-label="${esc(name)}"><i></i></button>` : numeric ? `<span class="ebig" style="font-size:20px">${esc(valTxt)}</span>` : ""}</div>`;
         } else {
           html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
             <div class="eh">${icon}${c.show_state !== false && !numeric ? `<span class="eval">${esc(pct != null ? pct + "%" : stTxt)}</span>` : ""}</div>
-            <div class="en">${numeric && c.show_state !== false ? `<span class="ebig">${esc(stTxt)}</span>` : ""}<b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div>
-            ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}</div>`;
+            <div class="en">${numeric && c.show_state !== false ? `<span class="ebig">${esc(valTxt)}</span>` : ""}<b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div>
+            ${pct != null || level != null ? `<div class="bar"><i style="width:${pct ?? level}%"></i></div>` : ""}</div>`;
         }
       }
       const tpl = document.createElement("template");
