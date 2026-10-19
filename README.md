@@ -151,13 +151,13 @@ They look and animate exactly like the widgets on the board, pop-ups included. T
 3. Developer tools → Actions → `frontend.reload_themes` → **Perform action**.
 4. Your profile (1) → **Theme** → **Aurora Glass** (2). Leave **Mode** on **Auto** (3) to get Midnight in dark mode and Dawn in light mode.
 
-![Choosing the Aurora Glass theme in the profile](docs/images/shot-profile-theme.svg)
+![Choosing the Aurora Glass theme in the profile](docs/images/shot-profile-theme-v2.svg)
 
 Not needed for the Aurora Glass dashboard itself.
 
 ## 10. The sidebar as a top bar
 
-[`extras/ha-top-sidebar.js`](extras/ha-top-sidebar.js) moves Home Assistant's own sidebar to the top of the screen, as a floating glass bar over the dashboard background: the menu button, your dashboards and panels in a row, and Settings, notifications and your profile at the end. It works on phones and in the companion app too. "Hide sidebar" in your profile and Home Assistant's kiosk mode still hide it. It takes its colours from the active theme, so it matches best with [the theme](#9-the-theme-for-all-of-home-assistant).
+[`extras/ha-top-sidebar.js`](extras/ha-top-sidebar.js) moves Home Assistant's own sidebar to the top of the screen, as a floating glass bar over the dashboard background: your dashboards and panels as a row of icons, and Settings, notifications and your profile at the end. It works on phones and in the companion app too. "Hide sidebar" in your profile and Home Assistant's kiosk mode still hide it. It takes its colours from the active theme, so it matches best with [the theme](#9-the-theme-for-all-of-home-assistant).
 
 1. Copy the file to `/config/www/ha-top-sidebar.js` (with the File editor or Samba add-on).
 2. Add it to `configuration.yaml`:
@@ -169,9 +169,9 @@ Not needed for the Aurora Glass dashboard itself.
 3. Settings → System → ⏻ → **Restart Home Assistant**.
 4. Reload the browser (on the phone app: Settings → Companion app → Troubleshooting → **Reset frontend cache**).
 
-![The glass top bar: menu button (1), Settings and notifications (2), your profile (3)](docs/images/shot-top-bar.svg)
+![The glass top bar: your pages, Settings and notifications (1), your profile (2)](docs/images/shot-top-bar-v2.svg)
 
-The menu button (1) switches between icons only and icons with labels. On a phone the bar looks the same, and pages that don't fit scroll sideways.
+The bar has no collapse/expand button; it keeps the mode the sidebar was last in (icons only, or icons with labels). On a phone the bar looks the same, and pages that don't fit scroll sideways.
 
 Browsers keep `/local/` files for a month, so after replacing the file raise `?v=` and restart. The file restyles Home Assistant's own interface, so a frontend update can change what it needs; it is made for Home Assistant 2026.10. To remove it, delete the line from `configuration.yaml` and restart.
 

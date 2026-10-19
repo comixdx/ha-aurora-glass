@@ -8,7 +8,7 @@
  * then restart Home Assistant. Raise ?v= after replacing the file, since browsers cache /local/ files.
  * Phones and the companion app get the same top bar instead of the slide-out drawer.
  * HA kiosk mode and the profile's "Hide sidebar" setting still hide it.
- * The menu button switches between icons only and icons with labels.
+ * The collapse/expand button is hidden: the bar keeps the mode the sidebar was last in.
  * Written for the HA 2026.10 frontend (ha-drawer .sidebar-shell / .app-content, ha-sidebar with ha-list-nav).
  */
 (() => {
@@ -57,7 +57,7 @@
       width: calc(100% - 2 * var(--ha-top-sidebar-gap, 10px));
       height: calc(100% - 2 * var(--ha-top-sidebar-gap, 10px) - var(--safe-area-inset-top, 0px));
       margin: calc(var(--ha-top-sidebar-gap, 10px) + var(--safe-area-inset-top, 0px)) var(--ha-top-sidebar-gap, 10px) var(--ha-top-sidebar-gap, 10px);
-      padding: 0 var(--ha-space-2, 8px) 0 var(--ha-space-1, 4px);
+      padding: 0 var(--ha-space-2, 8px);
       overflow: visible;
       border-radius: 22px;
       background: var(--ha-card-background, rgba(255,255,255,0.07));
@@ -76,7 +76,8 @@
       letter-spacing: -0.02em;
       color: var(--primary-text-color);
     }
-    :host(:not([narrow])) .menu { background: transparent; }
+    /* No collapse/expand button: the bar keeps the mode it was last left in */
+    :host(:not([narrow])) .menu { display: none !important; }
     :host(:not([narrow])) ha-list-item-button { border-radius: 14px; }
     :host(:not([narrow])) ha-list-item-button .item-text { font-weight: 600; }
     /* Selected page: an accent-tinted glass chip, like the dashboard's active toggles */
