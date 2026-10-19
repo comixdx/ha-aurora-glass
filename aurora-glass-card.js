@@ -1,5 +1,5 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.9.0
+ * Aurora Glass Card for Home Assistant — v0.9.1
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
@@ -10,7 +10,7 @@
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.9.0";
+  const VERSION = "0.9.1";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -2111,7 +2111,7 @@
       let home = this._kw(w.home_power);
       if (home == null) home = Math.max(0, solar + (grid ?? 0) - (batt ?? 0));
       let inv = this._kw(w.inverter_power);            // AC side of the inverter
-      if (inv == null) inv = Math.max(0, solar - (batt ?? 0));
+      if (inv == null) inv = w.solar_power ? Math.max(0, solar - (batt ?? 0)) : Math.abs(batt ?? 0);
       const socS = this._st(w.battery_soc);
       const soc = socS && isFinite(parseFloat(socS.state)) ? clamp(Math.round(parseFloat(socS.state)), 0, 100) : null;
       const stS = this._st(w.inverter_status);
@@ -2119,6 +2119,16 @@
       const invTemp = tS && isFinite(parseFloat(tS.state)) ? `${this._num(parseFloat(tS.state), 0)}°` : "";
       const invSub = [stS && !["unknown", "unavailable"].includes(stS.state) ? stS.state : "", invTemp].filter(Boolean).join(" · ") || this._t("throughput");
       const hasGrid = grid != null, hasBatt = batt != null || soc != null;
+      // Every node but the house is optional. Without solar or a battery there is no inverter to show:
+      // the grid then runs straight to the house.
+      const hasSolar = !!w.solar_power;
+      const hasInv = hasSolar || hasBatt || !!(w.inverter_power || w.inverter_status);
+      // Rows only for the nodes there are, so a missing solar or battery leaves no gap
+      const R = {}, rows = [];
+      let r = 1;
+      if (hasSolar) { R.pv = r++; R.pvLeg = r++; rows.push("auto", "var(--leg)"); }
+      R.mid = r++; rows.push("auto");
+      if (hasBatt) { R.battLeg = r++; R.batt = r++; rows.push("var(--leg)", "auto"); }
 
       const on = (kw) => kw != null && Math.abs(kw) > 0.02;
       const imp = Math.max(0, grid ?? 0), exp = Math.max(0, -(grid ?? 0));
@@ -2172,23 +2182,23 @@
       const battSub = batt == null ? "" : on(charge) ? this._t("charging", { v: "" }).trim() : on(discharge) ? this._t("discharging", { v: "" }).trim() : this._t("idle");
       const grid3 = [
         // Solar sits above its line with the icon at the bottom, next to the line.
-        node(3, 1, "pv", w.solar_power, on(solar), `${sub(on(solar) ? this._t("of_supply", { p: pct(solar) }) : this._t("no_production"))}${val(kw(solar))}${lbl(w.solar_name || this._t("solar"))}`, "up"),
-        leg("v", 3, 2, "pv", solar, false),
-        hasGrid ? node(1, 3, "grid", w.grid_power, on(grid), `${lbl(this._t("grid"))}${val(kw(grid))}${sub(on(exp) ? this._t("exporting") : on(imp) ? this._t("importing") : this._t("grid_idle"))}`, "side") : "",
-        hasGrid ? leg("h", 2, 3, "grid", grid, on(exp)) : "",
-        node(3, 3, "inv", w.inverter_power || w.inverter_status, on(inv), `${lbl(w.inverter_name || this._t("inverter"))}${val(kw(inv))}${sub(invSub)}`, "big"),
-        leg("h", 4, 3, "house", home, false),
-        node(5, 3, "house", w.home_power, on(home), `${lbl(w.load_name || this._t("load"))}${val(kw(home))}`, "side"),
-        hasBatt ? leg("v", 3, 4, "batt", batt ?? 0, on(discharge)) : "",
-        hasBatt ? node(3, 5, "batt", w.battery_soc || w.battery_power, on(batt),
+        hasSolar ? node(3, R.pv, "pv", w.solar_power, on(solar), `${sub(on(solar) ? this._t("of_supply", { p: pct(solar) }) : this._t("no_production"))}${val(kw(solar))}${lbl(w.solar_name || this._t("solar"))}`, "up") : "",
+        hasSolar ? leg("v", 3, R.pvLeg, "pv", solar, false) : "",
+        hasGrid ? node(1, R.mid, "grid", w.grid_power, on(grid), `${lbl(this._t("grid"))}${val(kw(grid))}${sub(on(exp) ? this._t("exporting") : on(imp) ? this._t("importing") : this._t("grid_idle"))}`, "side") : "",
+        hasGrid ? leg("h", hasInv ? 2 : "2 / 5", R.mid, "grid", grid, on(exp)) : "",
+        hasInv ? node(3, R.mid, "inv", w.inverter_power || w.inverter_status, on(inv), `${lbl(w.inverter_name || this._t("inverter"))}${val(kw(inv))}${sub(invSub)}`, "big") : "",
+        hasInv ? leg("h", 4, R.mid, "house", home, false) : "",
+        node(hasInv || hasGrid ? 5 : 3, R.mid, "house", w.home_power, on(home), `${lbl(w.load_name || this._t("load"))}${val(kw(home))}`, "side"),
+        hasBatt ? leg("v", 3, R.battLeg, "batt", batt ?? 0, on(discharge)) : "",
+        hasBatt ? node(3, R.batt, "batt", w.battery_soc || w.battery_power, on(batt),
           `${lbl(this._t("battery"), soc != null && batt != null ? `<small>${soc}%</small>` : "")}${soc != null ? `<div class="esoc"><i style="width:${soc}%"></i></div>` : ""}${val(battVal, battSub ? `<span class="es">${esc(battSub)}</span>` : "")}`) : ""
       ].join("");
-      const legend = [["pv", this._t("solar")], hasGrid ? ["grid", this._t("grid")] : null, hasBatt ? ["batt", this._t("battery")] : null, ["house", this._t("load")]]
+      const legend = [hasSolar ? ["pv", this._t("solar")] : null, hasGrid ? ["grid", this._t("grid")] : null, hasBatt ? ["batt", this._t("battery")] : null, ["house", this._t("load")]]
         .filter(Boolean).map(([c, t]) => `<span><i style="--c:var(--ef-${c})"></i>${esc(t)}</span>`).join("");
       const self = supply > 0 ? `${Math.round((supply - imp) / supply * 100)}%` : "—";
       return {
-        body: `<div class="ef"><div class="efsum">${esc(summary)}</div><div class="efg">${grid3}</div>
-          <div class="efoot"><div class="elg">${legend}</div><div>${esc(this._t("self_now"))} <b>${self}</b></div></div></div>`,
+        body: `<div class="ef"><div class="efsum">${esc(summary)}</div><div class="efg" style="grid-template-rows:${rows.join(" ")}">${grid3}</div>
+          <div class="efoot"><div class="elg">${legend}</div>${hasSolar || hasBatt ? `<div>${esc(this._t("self_now"))} <b>${self}</b></div>` : ""}</div></div>`,
         meta: this._t("live")
       };
     }
@@ -2534,7 +2544,7 @@
       preset: "Theme preset", accent: "Accent colour", blur: "Glass blur", motion: "Animations", background: "Draw the glass background", header: "Show header", greeting: "Show the greeting",
       customize: "Show the Customize button", dashboard_theme: "Apply the glass theme to the whole dashboard (no theme file needed)", title: "Title", top_title: "Title (empty = greeting)", min_height: "Minimum height (e.g. 100vh for a Panel view)", language: "Language",
       type: "Widget type", size: "Size", entity: "Entity", name: "Name", subtitle: "Subtitle", color: "Dot colour", decimals: "Decimals", description: "Description",
-      solar_power: "Solar power", home_power: "Load / house consumption (optional, computed if empty)", inverter_power: "Inverter output power (optional)", inverter_status: "Inverter status (optional, e.g. work mode)", inverter_temperature: "Inverter temperature (optional)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
+      solar_power: "Solar power (optional)", home_power: "Load / house consumption (optional, computed if empty)", inverter_power: "Inverter output power (optional)", inverter_status: "Inverter status (optional, e.g. work mode)", inverter_temperature: "Inverter temperature (optional)", battery_power: "Battery power", battery_soc: "Battery charge (%)",
       grid_power: "Grid power", invert_battery: "Battery sensor is positive when discharging (GoodWe)", invert_grid: "Grid sensor is positive when exporting (GoodWe)",
       modes: "Mode buttons (empty = automatic)", active_hours: "Keep a scene marked active for (hours)", temperature: "Temperature sensor",
       lock: "Lock", lock_name: "Lock name", sensors: "Door and window sensors", move_up: "Move up", move_down: "Move down", delete: "Delete",
@@ -2554,7 +2564,7 @@
       preset: "Temă", accent: "Culoare de accent", blur: "Estompare sticlă", motion: "Animații", background: "Fundal de sticlă", header: "Afișează antetul", greeting: "Afișează salutul",
       customize: "Afișează butonul Personalizează", dashboard_theme: "Aplică tema de sticlă pe tot tabloul (fără fișier de temă)", title: "Titlu", top_title: "Titlu (gol = salut)", min_height: "Înălțime minimă (ex. 100vh pentru vizualizare Panou)", language: "Limbă",
       type: "Tip widget", size: "Mărime", entity: "Entitate", name: "Nume", subtitle: "Subtitlu", color: "Culoare punct", decimals: "Zecimale", description: "Descriere",
-      solar_power: "Putere solară", home_power: "Consum / sarcină (opțional, calculat dacă e gol)", inverter_power: "Putere ieșire invertor (opțional)", inverter_status: "Stare invertor (opțional, ex. mod de lucru)", inverter_temperature: "Temperatură invertor (opțional)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
+      solar_power: "Putere solară (opțional)", home_power: "Consum / sarcină (opțional, calculat dacă e gol)", inverter_power: "Putere ieșire invertor (opțional)", inverter_status: "Stare invertor (opțional, ex. mod de lucru)", inverter_temperature: "Temperatură invertor (opțional)", battery_power: "Putere baterie", battery_soc: "Încărcare baterie (%)",
       grid_power: "Putere rețea", invert_battery: "Senzorul bateriei e pozitiv la descărcare (GoodWe)", invert_grid: "Senzorul rețelei e pozitiv la injectare (GoodWe)",
       modes: "Butoane moduri (gol = automat)", active_hours: "Păstrează scena activă timp de (ore)", temperature: "Senzor temperatură",
       lock: "Încuietoare", lock_name: "Nume încuietoare", sensors: "Senzori uși și ferestre", move_up: "Mută sus", move_down: "Mută jos", delete: "Șterge",
@@ -2577,7 +2587,7 @@
       title: "Titel", top_title: "Titel (leer = Begrüßung)", min_height: "Mindesthöhe (z. B. 100vh für eine Panel-Ansicht)", language: "Sprache",
       type: "Widget-Typ", size: "Größe", entity: "Entität", name: "Name",
       subtitle: "Untertitel", color: "Punktfarbe", decimals: "Dezimalstellen", description: "Beschreibung",
-      solar_power: "Solarleistung", home_power: "Hausverbrauch (optional, sonst berechnet)", inverter_power: "Ausgangsleistung Wechselrichter (optional)", inverter_status: "Status Wechselrichter (optional, z. B. Betriebsmodus)",
+      solar_power: "Solarleistung (optional)", home_power: "Hausverbrauch (optional, sonst berechnet)", inverter_power: "Ausgangsleistung Wechselrichter (optional)", inverter_status: "Status Wechselrichter (optional, z. B. Betriebsmodus)",
       inverter_temperature: "Temperatur Wechselrichter (optional)", battery_power: "Batterieleistung", battery_soc: "Batterieladung (%)", grid_power: "Netzleistung",
       invert_battery: "Batteriesensor ist beim Entladen positiv (GoodWe)", invert_grid: "Netzsensor ist bei Einspeisung positiv (GoodWe)", modes: "Modustasten (leer = automatisch)", active_hours: "Szene als aktiv markieren für (Stunden)",
       temperature: "Temperatursensor", lock: "Schloss", lock_name: "Name des Schlosses", sensors: "Tür- und Fenstersensoren",
@@ -2602,7 +2612,7 @@
       title: "Titre", top_title: "Titre (vide = salutation)", min_height: "Hauteur minimale (ex. 100vh pour une vue Panneau)", language: "Langue",
       type: "Type de widget", size: "Taille", entity: "Entité", name: "Nom",
       subtitle: "Sous-titre", color: "Couleur du point", decimals: "Décimales", description: "Description",
-      solar_power: "Puissance solaire", home_power: "Consommation de la maison (facultatif, calculée si vide)", inverter_power: "Puissance de sortie de l'onduleur (facultatif)", inverter_status: "État de l'onduleur (facultatif, ex. mode de fonctionnement)",
+      solar_power: "Puissance solaire (facultatif)", home_power: "Consommation de la maison (facultatif, calculée si vide)", inverter_power: "Puissance de sortie de l'onduleur (facultatif)", inverter_status: "État de l'onduleur (facultatif, ex. mode de fonctionnement)",
       inverter_temperature: "Température de l'onduleur (facultatif)", battery_power: "Puissance de la batterie", battery_soc: "Charge de la batterie (%)", grid_power: "Puissance du réseau",
       invert_battery: "Le capteur de batterie est positif en décharge (GoodWe)", invert_grid: "Le capteur réseau est positif en injection (GoodWe)", modes: "Boutons de mode (vide = automatique)", active_hours: "Garder une scène active pendant (heures)",
       temperature: "Capteur de température", lock: "Serrure", lock_name: "Nom de la serrure", sensors: "Capteurs de portes et fenêtres",
@@ -2627,7 +2637,7 @@
       title: "Título", top_title: "Título (vacío = saludo)", min_height: "Altura mínima (p. ej. 100vh para una vista Panel)", language: "Idioma",
       type: "Tipo de widget", size: "Tamaño", entity: "Entidad", name: "Nombre",
       subtitle: "Subtítulo", color: "Color del punto", decimals: "Decimales", description: "Descripción",
-      solar_power: "Potencia solar", home_power: "Consumo de la casa (opcional, se calcula si está vacío)", inverter_power: "Potencia de salida del inversor (opcional)", inverter_status: "Estado del inversor (opcional, p. ej. modo de trabajo)",
+      solar_power: "Potencia solar (opcional)", home_power: "Consumo de la casa (opcional, se calcula si está vacío)", inverter_power: "Potencia de salida del inversor (opcional)", inverter_status: "Estado del inversor (opcional, p. ej. modo de trabajo)",
       inverter_temperature: "Temperatura del inversor (opcional)", battery_power: "Potencia de la batería", battery_soc: "Carga de la batería (%)", grid_power: "Potencia de red",
       invert_battery: "El sensor de batería es positivo al descargar (GoodWe)", invert_grid: "El sensor de red es positivo al verter (GoodWe)", modes: "Botones de modo (vacío = automático)", active_hours: "Mantener una escena activa durante (horas)",
       temperature: "Sensor de temperatura", lock: "Cerradura", lock_name: "Nombre de la cerradura", sensors: "Sensores de puertas y ventanas",
@@ -2652,7 +2662,7 @@
       title: "Titolo", top_title: "Titolo (vuoto = saluto)", min_height: "Altezza minima (es. 100vh per una vista Pannello)", language: "Lingua",
       type: "Tipo di widget", size: "Dimensione", entity: "Entità", name: "Nome",
       subtitle: "Sottotitolo", color: "Colore del punto", decimals: "Decimali", description: "Descrizione",
-      solar_power: "Potenza solare", home_power: "Consumo della casa (facoltativo, calcolato se vuoto)", inverter_power: "Potenza in uscita dell'inverter (facoltativo)", inverter_status: "Stato dell'inverter (facoltativo, es. modalità di lavoro)",
+      solar_power: "Potenza solare (facoltativo)", home_power: "Consumo della casa (facoltativo, calcolato se vuoto)", inverter_power: "Potenza in uscita dell'inverter (facoltativo)", inverter_status: "Stato dell'inverter (facoltativo, es. modalità di lavoro)",
       inverter_temperature: "Temperatura dell'inverter (facoltativo)", battery_power: "Potenza della batteria", battery_soc: "Carica della batteria (%)", grid_power: "Potenza di rete",
       invert_battery: "Il sensore batteria è positivo in scarica (GoodWe)", invert_grid: "Il sensore di rete è positivo in immissione (GoodWe)", modes: "Pulsanti di modalità (vuoto = automatico)", active_hours: "Tieni una scena attiva per (ore)",
       temperature: "Sensore di temperatura", lock: "Serratura", lock_name: "Nome della serratura", sensors: "Sensori di porte e finestre",
@@ -2677,7 +2687,7 @@
       title: "Titel", top_title: "Titel (leeg = begroeting)", min_height: "Minimale hoogte (bijv. 100vh voor een paneelweergave)", language: "Taal",
       type: "Type widget", size: "Grootte", entity: "Entiteit", name: "Naam",
       subtitle: "Ondertitel", color: "Kleur van de stip", decimals: "Decimalen", description: "Beschrijving",
-      solar_power: "Zonnevermogen", home_power: "Verbruik van het huis (optioneel, anders berekend)", inverter_power: "Uitgangsvermogen omvormer (optioneel)", inverter_status: "Status omvormer (optioneel, bijv. werkmodus)",
+      solar_power: "Zonnevermogen (optioneel)", home_power: "Verbruik van het huis (optioneel, anders berekend)", inverter_power: "Uitgangsvermogen omvormer (optioneel)", inverter_status: "Status omvormer (optioneel, bijv. werkmodus)",
       inverter_temperature: "Temperatuur omvormer (optioneel)", battery_power: "Accuvermogen", battery_soc: "Accuniveau (%)", grid_power: "Netvermogen",
       invert_battery: "Accusensor is positief bij ontladen (GoodWe)", invert_grid: "Netsensor is positief bij teruglevering (GoodWe)", modes: "Modusknoppen (leeg = automatisch)", active_hours: "Scène actief houden gedurende (uren)",
       temperature: "Temperatuursensor", lock: "Slot", lock_name: "Naam van het slot", sensors: "Sensoren voor deuren en ramen",
@@ -2702,7 +2712,7 @@
       title: "Tytuł", top_title: "Tytuł (pusty = powitanie)", min_height: "Minimalna wysokość (np. 100vh dla widoku Panel)", language: "Język",
       type: "Typ widżetu", size: "Rozmiar", entity: "Encja", name: "Nazwa",
       subtitle: "Podtytuł", color: "Kolor kropki", decimals: "Miejsca po przecinku", description: "Opis",
-      solar_power: "Moc fotowoltaiki", home_power: "Zużycie domu (opcjonalnie, obliczane, gdy puste)", inverter_power: "Moc wyjściowa falownika (opcjonalnie)", inverter_status: "Stan falownika (opcjonalnie, np. tryb pracy)",
+      solar_power: "Moc fotowoltaiki (opcjonalnie)", home_power: "Zużycie domu (opcjonalnie, obliczane, gdy puste)", inverter_power: "Moc wyjściowa falownika (opcjonalnie)", inverter_status: "Stan falownika (opcjonalnie, np. tryb pracy)",
       inverter_temperature: "Temperatura falownika (opcjonalnie)", battery_power: "Moc baterii", battery_soc: "Naładowanie baterii (%)", grid_power: "Moc sieci",
       invert_battery: "Czujnik baterii jest dodatni przy rozładowaniu (GoodWe)", invert_grid: "Czujnik sieci jest dodatni przy oddawaniu (GoodWe)", modes: "Przyciski trybów (puste = automatycznie)", active_hours: "Oznaczaj scenę jako aktywną przez (godziny)",
       temperature: "Czujnik temperatury", lock: "Zamek", lock_name: "Nazwa zamka", sensors: "Czujniki drzwi i okien",
@@ -2727,7 +2737,7 @@
       title: "Título", top_title: "Título (vazio = saudação)", min_height: "Altura mínima (ex. 100vh para uma vista Painel)", language: "Idioma",
       type: "Tipo de widget", size: "Tamanho", entity: "Entidade", name: "Nome",
       subtitle: "Subtítulo", color: "Cor do ponto", decimals: "Casas decimais", description: "Descrição",
-      solar_power: "Potência solar", home_power: "Consumo da casa (opcional, calculado se vazio)", inverter_power: "Potência de saída do inversor (opcional)", inverter_status: "Estado do inversor (opcional, ex. modo de trabalho)",
+      solar_power: "Potência solar (opcional)", home_power: "Consumo da casa (opcional, calculado se vazio)", inverter_power: "Potência de saída do inversor (opcional)", inverter_status: "Estado do inversor (opcional, ex. modo de trabalho)",
       inverter_temperature: "Temperatura do inversor (opcional)", battery_power: "Potência da bateria", battery_soc: "Carga da bateria (%)", grid_power: "Potência da rede",
       invert_battery: "O sensor da bateria é positivo ao descarregar (GoodWe)", invert_grid: "O sensor da rede é positivo ao injetar (GoodWe)", modes: "Botões de modo (vazio = automático)", active_hours: "Manter uma cena ativa durante (horas)",
       temperature: "Sensor de temperatura", lock: "Fechadura", lock_name: "Nome da fechadura", sensors: "Sensores de portas e janelas",
@@ -3111,18 +3121,23 @@
     const pick = (list, re) => list.find((id) => re.test(nm(id)));
     const widgets = [];
     const solar = pick(power, /pv|solar|fotovolt/);
-    if (solar) {
-      const e = { type: "energy", size: "L", solar_power: solar };
-      const bat = pick(power, /batt/); if (bat) e.battery_power = bat;
-      const grid = pick(power, /grid|meter|active_power|retea/); if (grid) e.grid_power = grid;
+    const bat = pick(power, /batt/);
+    const gridP = pick(power, /grid|meter|active_power|retea/);
+    if (solar || bat || gridP) {
+      // solar is optional: a house with only a grid meter, or a battery, gets the flow too
+      const e = { type: "energy", size: "L" };
+      if (solar) e.solar_power = solar;
+      if (bat) e.battery_power = bat;
+      if (gridP) e.grid_power = gridP;
       const home = pick(power, /load|house|home|consum/); if (home) e.home_power = home;
-      const soc = ids.find((id) => id.startsWith("sensor.") && st[id].attributes.device_class === "battery" && /batt|soc|charge/.test(nm(id)));
+      // the charge level only next to a battery power sensor (sensor batteries share the device class)
+      const soc = bat && ids.find((id) => id.startsWith("sensor.") && st[id].attributes.device_class === "battery" && /batt|soc|charge/.test(nm(id)) && !/senzor|sensor|remote|phone/.test(nm(id)));
       if (soc) e.battery_soc = soc;
       const sensors = ids.filter((id) => id.startsWith("sensor."));
       const ist = sensors.find((id) => /work.?mode|inverter.*(status|state)|(status|state).*inverter/.test(nm(id)));
-      if (ist) e.inverter_status = ist;
+      if (ist && (solar || bat)) e.inverter_status = ist;
       const itemp = sensors.find((id) => st[id].attributes.device_class === "temperature" && /inverter|radiator|module|goodwe/.test(nm(id)));
-      if (itemp) e.inverter_temperature = itemp;
+      if (itemp && (solar || bat)) e.inverter_temperature = itemp;
       widgets.push(e);
     }
     const lights = of("light").filter((id) => !st[id].attributes.entity_id).slice(0, 6);

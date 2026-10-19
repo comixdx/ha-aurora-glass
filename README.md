@@ -274,7 +274,7 @@ The entity ids above are examples. Use the ones from **Settings → Devices & se
 
 **Which way the dots run.** The card expects the battery to be positive while charging and the grid positive while importing. If a line flows the wrong way on your dashboard, set `invert_battery: true` or `invert_grid: true`. Most GoodWe setups need both.
 
-**Missing sensors are fine.** Without `grid_power` the grid node disappears; without `battery_power` and `battery_soc` the battery node disappears. Without `home_power` the load is calculated as solar + grid import − battery charging. Without `inverter_power` the inverter shows solar minus battery charging.
+**Missing sensors are fine, solar included.** Without `solar_power` the solar node disappears (no solar panels? leave it empty); without `grid_power` the grid node disappears; without `battery_power` and `battery_soc` the battery node disappears. The inverter stays in the middle while there is solar, a battery or an inverter sensor; a house with only a grid meter gets a single line from the grid to the house. Without `home_power` the load is calculated as solar + grid import − battery charging. Without `inverter_power` the inverter shows solar minus battery charging.
 
 ## Lights and scenes
 
@@ -460,7 +460,7 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 
 | type | Keys |
 |---|---|
-| `energy` | Five nodes with the inverter in the middle: solar, grid and battery connect to the inverter, the inverter feeds the load. `solar_power`, `grid_power`, `battery_power`, `battery_soc`, `home_power` (load, optional), `inverter_power`, `inverter_status`, `inverter_temperature` (all three optional), `invert_battery`, `invert_grid`. W or kW. Battery + = charging, grid + = import, unless inverted. |
+| `energy` | Up to five nodes with the inverter in the middle: solar, grid and battery connect to the inverter, the inverter feeds the load. Every node but the load is optional. `solar_power` (optional), `grid_power`, `battery_power`, `battery_soc`, `home_power` (load, optional), `inverter_power`, `inverter_status`, `inverter_temperature` (all three optional), `invert_battery`, `invert_grid`. W or kW. Battery + = charging, grid + = import, unless inverted. |
 | `lights` | `entities`: lights, switches or input_booleans, as an entity id or `{entity, name, subtitle}`. Tap toggles; the slider dims the last tapped light. |
 | `climate` | `entity`, `modes` (up to 4, e.g. `[cool, heat, dry, off]`). +/− taps are bundled into one command. |
 | `rooms` | `rooms`: a list of `{name, temperature, humidity}` (sensor ids; `humidity` optional). Each room is a tile with the temperature, a thermometer that fills to it and is tinted blue below `cool_below` (default 19°), orange above `warm_above` (default 25°) and in the accent colour in between, and the humidity with a bar. The header shows the average temperature. |
