@@ -1,10 +1,10 @@
 # Aurora Glass for Home Assistant
 
-A frosted-glass dashboard card whose animations follow real entity states: dots flow along the energy lines at a speed set by the kW, the fan spins at its set speed, air streaks while the AC cools, the floor shimmers while it heats, the music bars move while a speaker plays. Hold any tile for a glass pop-up with its controls, place each widget as its own card, and give the whole of Home Assistant the same look, down to a glass top bar in place of the sidebar. Everything is set up with clicks — YAML is optional.
+A frosted-glass dashboard card whose animations follow real entity states: dots flow along the energy lines at a speed set by the kW, the fan spins at its set speed, air streaks while the AC cools, the floor shimmers while it heats, the music bars move while a speaker plays. Hold any tile for a glass pop-up with its controls, place each widget as its own card, and give the whole of Home Assistant the same look. Everything is set up with clicks — YAML is optional.
 
 ![The finished Aurora Glass dashboard: header with chips, energy flow, lights, climate and more](docs/images/shot-dashboard-result-v2.svg)
 
-**Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. The theme](#9-the-theme-for-all-of-home-assistant) · [10. The sidebar as a top bar](#10-the-sidebar-as-a-top-bar) · [11. The complete example](#11-the-complete-example)
+**Part 1 — with clicks:** [1. Install](#1-install-with-hacs) · [2. Create a dashboard](#2-create-a-dashboard) · [3. Add the card](#3-add-the-card) · [4. The visual editor](#4-the-visual-editor) · [5. Customize mode](#5-customize-mode-on-one-device) · [6. Pop-ups](#6-pop-ups) · [7. The entity card](#7-the-entity-card) · [8. Widgets as separate cards](#8-widgets-as-separate-cards) · [9. The theme](#9-the-theme-for-all-of-home-assistant) · [10. The complete example](#10-the-complete-example)
 
 **Part 2 — with YAML:** [Where the YAML goes](#where-the-yaml-goes) · [The smallest card](#the-smallest-working-card) · [The parts of the card](#the-parts-of-the-card) · [Widget sizes](#widget-sizes) · [Energy flow](#energy-flow) · [Lights and scenes](#lights-and-scenes) · [The other widgets](#the-other-widgets) · [Pop-ups and the entity card](#pop-ups-and-the-entity-card-in-yaml) · [Widget cards](#widget-cards-in-yaml) · [All card options](#all-card-options) · [When something doesn't work](#when-something-doesnt-work)
 
@@ -140,7 +140,7 @@ They look and animate exactly like the widgets on the board, pop-ups included. T
 
 ## 9. The theme for all of Home Assistant
 
-`themes/aurora_glass.yaml` puts the same look on every dashboard and on the rest of the interface: the sidebar (or [top bar](#10-the-sidebar-as-a-top-bar)), settings pages and dialogs. It has four themes: **Aurora Glass** (Midnight in dark mode, Dawn in light mode), **Aurora Glass Lagoon** and **Aurora Glass Ember**.
+`themes/aurora_glass.yaml` puts the same look on every dashboard and on the rest of the interface: the sidebar, settings pages and dialogs. It has four themes: **Aurora Glass** (Midnight in dark mode, Dawn in light mode), **Aurora Glass Lagoon** and **Aurora Glass Ember**.
 
 1. Copy the file to `/config/themes/`.
 2. Make sure `configuration.yaml` has:
@@ -151,33 +151,13 @@ They look and animate exactly like the widgets on the board, pop-ups included. T
 3. Developer tools → Actions → `frontend.reload_themes` → **Perform action**.
 4. Your profile (1) → **Theme** → **Aurora Glass** (2). Leave **Mode** on **Auto** (3) to get Midnight in dark mode and Dawn in light mode.
 
-![Choosing the Aurora Glass theme in the profile](docs/images/shot-profile-theme-v2.svg)
+![Choosing the Aurora Glass theme in the profile](docs/images/shot-profile-theme-v3.svg)
 
 Not needed for the Aurora Glass dashboard itself.
 
-## 10. The sidebar as a top bar
+## 10. The complete example
 
-[`extras/ha-top-sidebar.js`](extras/ha-top-sidebar.js) moves Home Assistant's own sidebar to the top of the screen, as a floating glass bar over the dashboard background: your dashboards and panels as a row of icons, and Settings, notifications and your profile at the end. It works on phones and in the companion app too. "Hide sidebar" in your profile and Home Assistant's kiosk mode still hide it. It takes its colours from the active theme, so it matches best with [the theme](#9-the-theme-for-all-of-home-assistant).
-
-1. Copy the file to `/config/www/ha-top-sidebar.js` (with the File editor or Samba add-on).
-2. Add it to `configuration.yaml`:
-   ```yaml
-   frontend:
-     extra_module_url:
-       - /local/ha-top-sidebar.js?v=1
-   ```
-3. Settings → System → ⏻ → **Restart Home Assistant**.
-4. Reload the browser (on the phone app: Settings → Companion app → Troubleshooting → **Reset frontend cache**).
-
-![The glass top bar: your pages, Settings and notifications (1), your profile (2)](docs/images/shot-top-bar-v2.svg)
-
-The bar has no collapse/expand button; it keeps the mode the sidebar was last in (icons only, or icons with labels). On a phone the bar looks the same, and pages that don't fit scroll sideways.
-
-Browsers keep `/local/` files for a month, so after replacing the file raise `?v=` and restart. The file restyles Home Assistant's own interface, so a frontend update can change what it needs; it is made for Home Assistant 2026.10. To remove it, delete the line from `configuration.yaml` and restart.
-
-## 11. The complete example
-
-[`examples/dashboard.yaml`](examples/dashboard.yaml) is a whole dashboard: the Aurora Glass card with every widget, kiosk mode (guests get it full screen without the sidebar and top bar) and a small round power button next to the Customize button (`header_buttons`) that opens a glass menu with Restart, Reboot host and Shut down (with confirmation), visible only to the users you list. Kiosk mode needs kiosk-mode; the power menu needs Bubble Card.
+[`examples/dashboard.yaml`](examples/dashboard.yaml) is a whole dashboard: the Aurora Glass card with every widget, kiosk mode (guests get it full screen without the sidebar and header) and a small round power button next to the Customize button (`header_buttons`) that opens a glass menu with Restart, Reboot host and Shut down (with confirmation), visible only to the users you list. Kiosk mode needs kiosk-mode; the power menu needs Bubble Card.
 
 1. Create an empty dashboard ([step 2](#2-create-a-dashboard)).
 2. ✏️ → ⋮ → **Raw configuration editor** → paste the file → **Save**.
@@ -478,4 +458,3 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | The energy dots run the wrong way | Set `invert_battery` or `invert_grid` ([energy flow](#energy-flow)). |
 | Changes in the editor don't show on one device | That device has its own Customize layout; open Customize → **Reset layout**. |
 | The whole YAML turns red | Usually a tab character or a missing space after `:`. Use two spaces per level. |
-| The sidebar is still on the left | `extras/ha-top-sidebar.js` isn't loaded: check the `extra_module_url` line, restart, and reset the browser or app cache. |

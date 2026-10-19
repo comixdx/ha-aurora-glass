@@ -30,7 +30,7 @@ Aurora Glass:
   error-color: "var(--ag-alert)"
   ha-card-backdrop-filter: "blur(24px) saturate(170%)"
   app-header-backdrop-filter: "blur(24px) saturate(170%)"
-  # Sidebar (also the top bar from ha-top-sidebar.js)
+  # Sidebar
   sidebar-selected-text-color: "var(--primary-color)"
   sidebar-selected-icon-color: "var(--primary-color)"
   sidebar-menu-button-background-color: "transparent"

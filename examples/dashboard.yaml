@@ -2,7 +2,7 @@
 # Replace the entity IDs with yours. Unused widgets can simply be deleted.
 #
 # Also included:
-#   • Kiosk mode — guests get a clean, full-screen dashboard without the sidebar and top bar;
+#   • Kiosk mode — guests get a clean, full-screen dashboard without the sidebar and header;
 #     admins keep them. Needs kiosk-mode (HACS → Frontend).
 #   • A small power menu next to the Customize button: one round button opens a glass menu
 #     in the middle of the screen with Restart Home Assistant, Reboot host and Shut down

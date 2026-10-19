@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="900" height="520" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" role="img" aria-label="Choose the Aurora Glass theme in your profile">
+<title>Choose the Aurora Glass theme in your profile</title>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#232a66"/><stop offset=".55" stop-color="#0d1226"/><stop offset="1" stop-color="#3a1f40"/></linearGradient>
+<radialGradient id="g1" cx=".85" cy=".2" r=".6"><stop offset="0" stop-color="#2fd3b0" stop-opacity=".35"/><stop offset="1" stop-color="#2fd3b0" stop-opacity="0"/></radialGradient>
+<radialGradient id="g2" cx=".15" cy=".95" r=".6"><stop offset="0" stop-color="#d0509a" stop-opacity=".3"/><stop offset="1" stop-color="#d0509a" stop-opacity="0"/></radialGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".45"/></filter>
+</defs>
+<rect x="0" y="0" width="900" height="520" fill="url(#bg)"/><rect x="0" y="0" width="900" height="520" fill="url(#g1)"/><rect x="0" y="0" width="900" height="520" fill="url(#g2)"/>
+<!-- Home Assistant's sidebar on the left, the profile at the bottom -->
+<rect x="0" y="0" width="64" height="520" fill="#0a0e1c" fill-opacity=".9"/><rect x="64" y="0" width="1" height="520" fill="#ffffff" fill-opacity=".09"/>
+<g transform="translate(32 28) scale(0.9)"><path d="M-10 -7H10M-10 0H10M-10 7H10" stroke="#eef2ff" stroke-width="2.2" stroke-linecap="round"/></g>
+<g transform="translate(32 84) scale(0.85)"><rect x="-10" y="-10" width="9" height="12" rx="2" fill="#aeb6cb"/><rect x="1" y="-10" width="9" height="7" rx="2" fill="#aeb6cb"/><rect x="-10" y="4" width="9" height="6" rx="2" fill="#aeb6cb"/><rect x="1" y="-1" width="9" height="11" rx="2" fill="#aeb6cb"/></g>
+<g transform="translate(32 132) scale(0.85)"><path d="M-10 -8 L-3 -11 L3 -8 L10 -11 V8 L3 11 L-3 8 L-10 11Z" fill="#aeb6cb"/></g>
+<g transform="translate(32 180) scale(0.85)"><path d="M3 -12 L-6 2 H0 L-3 12 L7 -3 H1 Z" fill="#aeb6cb"/></g>
+<g transform="translate(32 400) scale(0.8)"><circle r="5" fill="none" stroke="#aeb6cb" stroke-width="2.5"/><path d="M0 -8V-12M0 8V12M-8 0H-12M8 0H12M-5.7 -5.7l-2.8 -2.8M5.7 5.7l2.8 2.8M-5.7 5.7l-2.8 2.8M5.7 -5.7l2.8 -2.8" stroke="#aeb6cb" stroke-width="3" stroke-linecap="round"/></g>
+<g transform="translate(32 444) scale(0.8)"><path d="M-8 6 Q-5 3 -5 -3 A5 5 0 0 1 5 -3 Q5 3 8 6Z" fill="#aeb6cb"/><circle cy="9" r="2" fill="#aeb6cb"/></g>
+<rect x="10" y="470" width="44" height="40" rx="12" fill="#ffb27a" fill-opacity=".28"/>
+<circle cx="32" cy="490" r="14" fill="#ffb27a"/><text x="32" y="495" font-size="13" font-weight="700" fill="#1a1020" text-anchor="middle">A</text>
+<circle cx="56" cy="470" r="13" fill="#ffb27a"/><text x="56" y="475" font-size="14" font-weight="700" fill="#1a1020" text-anchor="middle">1</text>
+<!-- profile page -->
+<text x="100" y="62" font-size="26" font-weight="700" fill="#eef2ff">Profile</text>
+<text x="100" y="86" font-size="13" fill="#9aa6c7">General · Security</text>
+<g filter="url(#sh)"><rect x="100" y="110" width="760" height="370" rx="22" fill="#ffffff" fill-opacity="0.09" stroke="#ffffff" stroke-opacity="0.2"/></g>
+<text x="128" y="150" font-size="16" font-weight="600" fill="#eef2ff">Browser settings</text>
+<text x="128" y="190" font-size="14" font-weight="600" fill="#eef2ff">Theme</text>
+<text x="128" y="210" font-size="12" fill="#9aa6c7">Choose a theme or use the backend default.</text>
+<rect x="550" y="172" width="280" height="48" rx="8" fill="#ffffff" fill-opacity=".05" stroke="#ffffff" stroke-opacity=".28"/>
+<text x="564" y="188" font-size="10.5" font-weight="500" fill="#9aa6c7">Theme</text>
+<text x="564" y="208" font-size="14" fill="#eef2ff">Aurora Glass</text>
+<path d="M804 192 l6 6 l6 -6" fill="none" stroke="#9aa6c7" stroke-width="2"/>
+<rect x="546" y="168" width="288" height="56" rx="11" fill="none" stroke="#ffb27a" stroke-width="2.5" stroke-dasharray="7 5"/>
+<circle cx="542" cy="180" r="13" fill="#ffb27a"/><text x="542" y="185" font-size="14" font-weight="700" fill="#1a1020" text-anchor="middle">2</text>
+<text x="128" y="270" font-size="14" font-weight="600" fill="#eef2ff">Mode</text>
+<text x="128" y="290" font-size="12" fill="#9aa6c7">Auto follows your device: Midnight in dark mode, Dawn in light mode.</text>
+<rect x="550" y="258" width="280" height="40" rx="20" fill="#ffffff" fill-opacity=".05" stroke="#ffffff" stroke-opacity=".28"/>
+<rect x="554" y="262" width="88" height="32" rx="16" fill="#ffb27a"/>
+<text x="598" y="283" font-size="13" font-weight="700" fill="#1a1020" text-anchor="middle">Auto</text>
+<text x="690" y="283" font-size="13" fill="#eef2ff" text-anchor="middle">Light</text>
+<text x="780" y="283" font-size="13" fill="#eef2ff" text-anchor="middle">Dark</text>
+<circle cx="542" cy="266" r="13" fill="#ffb27a"/><text x="542" y="271" font-size="14" font-weight="700" fill="#1a1020" text-anchor="middle">3</text>
+<text x="128" y="350" font-size="14" font-weight="600" fill="#eef2ff">Also in the file</text>
+<rect x="128" y="366" width="190" height="40" rx="20" fill="#2fd3b0" fill-opacity=".18" stroke="#6fe0b0" stroke-opacity=".6"/>
+<circle cx="150" cy="386" r="7" fill="#6fe0b0"/><text x="166" y="391" font-size="13" fill="#eef2ff">Aurora Glass Lagoon</text>
+<rect x="334" y="366" width="190" height="40" rx="20" fill="#f3cf5e" fill-opacity=".15" stroke="#f3cf5e" stroke-opacity=".6"/>
+<circle cx="356" cy="386" r="7" fill="#f3cf5e"/><text x="372" y="391" font-size="13" fill="#eef2ff">Aurora Glass Ember</text>
+</svg>
