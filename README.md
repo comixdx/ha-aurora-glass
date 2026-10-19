@@ -286,8 +286,6 @@ On a wide screen the card has 12 columns: `S` takes 3, `M` 4 (the default), `L` 
     invert_grid: true       # GoodWe: active_power is + when exporting
 ```
 
-![The energy flow widget: solar, grid and battery into the inverter, the inverter into the house](docs/images/shot-widget-energy-v2.svg)
-
 The entity ids above are examples. Use the ones from **Settings → Devices & services → your inverter**, or start typing in the visual editor's entity picker.
 
 **Which way the dots run.** The card expects the battery to be positive while charging and the grid positive while importing. If a line flows the wrong way on your dashboard, set `invert_battery: true` or `invert_grid: true`. Most GoodWe setups need both.
