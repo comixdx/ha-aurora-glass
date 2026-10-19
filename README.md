@@ -118,9 +118,17 @@ Hold any tile (or right-click it), or tap a header chip, an energy-flow node or 
 
 **+ Add card → Aurora Glass Entity** puts a single entity anywhere as a glass tile (or a row with a switch) whose icon animates with its state: the bulb glows and sends out rays at its brightness, the power ring turns, fan blades spin at their speed, the snowflake turns while cooling and the flame flickers while heating, the speaker bars bounce, the lock shackle jumps, blinds slide, doors swing, motion sends out ripples, the thermometer and battery fill to their level, and power sensors flicker while energy flows. Tap toggles (or runs a scene), hold opens the pop-up; both can be changed in its editor along with layout, icon, theme and accent.
 
-![Aurora Glass Entity cards: a light, a fan, a lock, an AC and a sensor](docs/images/shot-entity-cards.svg)
+![Aurora Glass Entity cards: a light, a fan, a lock, an AC and a temperature sensor](docs/images/shot-entity-cards-v2.svg)
 
-**Aurora Glass Room** (+ Add card → **Aurora Glass Room**) puts one room in one tile: its name next to the thermometer, the temperature large and the humidity beside it with an animated drop. Pick the room's temperature sensor and, optionally, its humidity sensor; the card picker starts with a room whose two sensors belong to the same device.
+Sensor tiles (temperature, humidity, power, …) read like a card: the icon and the name on top, the value large below, rounded the way the widgets show it (22.3°, 65%). They stay plain glass; only switches, lights and other things that turn on light up.
+
+**Aurora Glass Room** (+ Add card → **Aurora Glass Room**) puts one room in one tile: its name next to the thermometer, the temperature large and the humidity beside it with an animated drop.
+
+1. Pick the room's **temperature sensor** and, optionally, its **humidity sensor**. The card picker starts with a room whose two sensors belong to the same device.
+2. Give it a **name** (the area shows under it on wide tiles).
+3. It starts six columns wide. Narrower, it makes room for itself: the area line goes first, then everything gets smaller, and at three columns the humidity moves under the temperature.
+
+![The room card at six and at three columns](docs/images/shot-room-cards.svg)
 
 ## 8. Widgets as separate cards
 
@@ -139,8 +147,11 @@ Each one is a card of its own:
 | ![Scenes card](docs/images/shot-widget-scenes.svg) | ![Now playing card](docs/images/shot-widget-media.svg) |
 | ![Fan card](docs/images/shot-widget-fan.svg) | ![Floor heating card](docs/images/shot-widget-floor.svg) |
 | ![Security card](docs/images/shot-widget-security.svg) | ![Weather card](docs/images/shot-widget-weather.svg) |
+| ![Rooms card](docs/images/shot-widget-rooms.svg) | |
 
 They look and animate exactly like the widgets on the board, pop-ups included. The Customize button belongs to the big card only.
+
+Small cards fit small screens: a card narrower than about 300 pixels (an S card on a phone) uses less padding, hides the small note in its header, puts its tiles in one column and shrinks the fan, the lock, the weather picture, the climate dial and the big numbers, so nothing is cut off.
 
 ## 9. The theme for all of Home Assistant
 
@@ -161,7 +172,7 @@ Not needed for the Aurora Glass dashboard itself.
 
 ## 10. The complete example
 
-[`examples/dashboard.yaml`](examples/dashboard.yaml) is a whole dashboard: the Aurora Glass card with every widget, kiosk mode (guests get it full screen without the sidebar and header) and a small round power button next to the Customize button (`header_buttons`) that opens a glass menu with Restart, Reboot host and Shut down (with confirmation), visible only to the users you list. Kiosk mode needs kiosk-mode; the power menu needs Bubble Card.
+[`examples/dashboard.yaml`](examples/dashboard.yaml) is a whole dashboard: the Aurora Glass card with every widget, kiosk mode (guests get it full screen without the sidebar and header) and a small round power button next to the Customize button (`header_buttons`) that opens a glass menu in the middle of the screen with Restart, Reboot host and Shut down (with confirmation), visible only to the users you list. Kiosk mode needs kiosk-mode; the power menu needs Bubble Card.
 
 1. Create an empty dashboard ([step 2](#2-create-a-dashboard)).
 2. ✏️ → ⋮ → **Raw configuration editor** → paste the file → **Save**.
@@ -276,6 +287,17 @@ The entity ids above are examples. Use the ones from **Settings → Devices & se
 
 **Missing sensors are fine, solar included.** Without `solar_power` the solar node disappears (no solar panels? leave it empty); without `grid_power` the grid node disappears; without `battery_power` and `battery_soc` the battery node disappears. The inverter stays in the middle while there is solar, a battery or an inverter sensor; a house with only a grid meter gets a single line from the grid to the house. Without `home_power` the load is calculated as solar + grid import − battery charging. Without `inverter_power` the inverter shows solar minus battery charging.
 
+No solar panels, a grid meter and a home battery:
+
+```yaml
+  - type: energy
+    grid_power: sensor.active_power
+    battery_power: sensor.battery_power
+    battery_soc: sensor.battery_state_of_charge
+```
+
+![The energy flow without solar: grid, inverter and house in a row, the battery below](docs/images/shot-energy-no-solar.svg)
+
 ## Lights and scenes
 
 ![What name, subtitle and description change on a tile](docs/images/list-items.svg)
@@ -362,6 +384,7 @@ Tap a tile to toggle it. The slider under the light tiles dims the last light yo
 | ![Climate](docs/images/shot-widget-climate.svg) | ![Now playing](docs/images/shot-widget-media.svg) |
 | ![Fan](docs/images/shot-widget-fan.svg) | ![Floor heating](docs/images/shot-widget-floor.svg) |
 | ![Security](docs/images/shot-widget-security.svg) | ![Weather](docs/images/shot-widget-weather.svg) |
+| ![Rooms](docs/images/shot-widget-rooms.svg) | |
 
 Every widget also accepts `title:` (replaces the heading) and `id:` (only needed if you use the same widget type twice and want each to keep its own place in Customize mode).
 
@@ -394,7 +417,7 @@ show_state: true
 motion: true
 ```
 
-![Entity cards](docs/images/shot-entity-cards.svg)
+![Entity cards](docs/images/shot-entity-cards-v2.svg)
 
 A temperature tile can also show a humidity sensor beside the value: add `humidity: sensor.living_room_humidity`. The room card does the same with names that read better:
 
@@ -404,6 +427,8 @@ name: Living room
 temperature: sensor.living_room_temperature
 humidity: sensor.living_room_humidity    # optional
 ```
+
+![Room cards](docs/images/shot-room-cards.svg)
 
 `auto` toggles lights, switches, fans and covers, runs scenes, scripts and buttons, and opens the pop-up for everything else. In a Sections view, a tile takes 3 columns × 2 rows and a row takes 6 × 1; drag the corner to resize.
 
@@ -482,3 +507,5 @@ Every widget takes `type`, `size` (`S`/`M`/`L`/`XL`), `title`, `id`, and:
 | The energy dots run the wrong way | Set `invert_battery` or `invert_grid` ([energy flow](#energy-flow)). |
 | Changes in the editor don't show on one device | That device has its own Customize layout; open Customize → **Reset layout**. |
 | The whole YAML turns red | Usually a tab character or a missing space after `:`. Use two spaces per level. |
+| HACS shows the new version but the card still looks old | The browser (or the phone app) still has the old file. Reload with Ctrl+Shift+R, or Settings → Companion app → Troubleshooting → **Reset frontend cache**. If it persists, HACS → Aurora Glass → ⋮ → **Redownload**. |
+| The card shows texts in English | Your profile language isn't one of the nine built in. Pick one under **Language** in the card's Appearance, or add your own words with `translations:`. |

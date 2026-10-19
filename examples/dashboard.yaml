@@ -80,6 +80,12 @@ views:
                 entity: climate.living_room_ac
                 title: Living room
                 # modes: [cool, heat, dry, off]
+              - type: rooms            # temperature and humidity of each room
+                size: L
+                rooms:
+                  - { name: Living room, temperature: sensor.living_room_temperature, humidity: sensor.living_room_humidity }
+                  - { name: Bedroom, temperature: sensor.bedroom_temperature, humidity: sensor.bedroom_humidity }
+                  - { name: Bathroom, temperature: sensor.bathroom_temperature, humidity: sensor.bathroom_humidity }
               - type: scenes
                 entities:
                   - { entity: scene.good_morning, description: "Lights at 80%, bedroom stays dark" }
