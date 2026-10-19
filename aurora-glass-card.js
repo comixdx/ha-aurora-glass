@@ -1,15 +1,16 @@
 /*!
- * Aurora Glass Card for Home Assistant — v0.7.2
+ * Aurora Glass Card for Home Assistant — v0.8.0
  * A frosted-glass, customizable dashboard card with state-driven animations.
  * Widgets: energy flow, lights, climate, rooms, scenes, media, fan, floor heating, security, weather.
  * Each widget (and the header) is also its own card, e.g. custom:aurora-glass-lights, to place anywhere on a dashboard.
- * Also: glass pop-ups for any entity (hold a tile) and the custom:aurora-glass-entity card with animated icons.
+ * Also: glass pop-ups for any entity (hold a tile), the custom:aurora-glass-entity card with animated icons
+ * and custom:aurora-glass-room (a room's temperature and humidity in one tile).
  * Visual editor: Edit dashboard → Add card → Aurora Glass (no YAML needed).
  * No build step, no dependencies. Add as a dashboard resource (type: JavaScript module).
  * Companion theme: themes/aurora_glass.yaml
  */
 (() => {
-  const VERSION = "0.7.2";
+  const VERSION = "0.8.0";
 
   /* ---------------------------------------------------------------- palette */
   const PRESETS = {
@@ -2602,6 +2603,11 @@
 
   if (!customElements.get("aurora-glass-card-editor")) customElements.define("aurora-glass-card-editor", AuroraGlassCardEditor);
 
+  // "Senzor Dormitor Temperature" → "Dormitor"
+  const roomName = (st, id) => String(st?.attributes?.friendly_name || id).replace(/\s*temperature\s*$/i, "").replace(/^(senzor|sensor)\s+/i, "");
+  // The humidity sensor of the same device as a temperature sensor, by entity id
+  const humidityFor = (states, id) => (id && /temperature$/.test(id) && states?.[id.replace(/temperature$/, "humidity")] ? id.replace(/temperature$/, "humidity") : null);
+
   /* Card-picker stub: builds a starting config from what the user's HA actually has. */
   function stubFromHass(hass) {
     const st = hass?.states || {};
@@ -2641,8 +2647,8 @@
     if (lock || opens.length) { const s = { type: "security", size: "S" }; if (lock) s.lock = lock; if (opens.length) s.sensors = opens; widgets.push(s); }
     const wx = of("weather")[0];
     // rooms: each temperature sensor with the humidity sensor of the same device
-    const rooms = of("sensor").filter((id) => st[id].attributes.device_class === "temperature" && /temperature$/.test(id) && st[id.replace(/temperature$/, "humidity")])
-      .slice(0, 6).map((id) => ({ name: String(st[id].attributes.friendly_name || id).replace(/\s*temperature\s*$/i, "").replace(/^(senzor|sensor)\s+/i, ""), temperature: id, humidity: id.replace(/temperature$/, "humidity") }));
+    const rooms = of("sensor").filter((id) => st[id].attributes.device_class === "temperature" && humidityFor(st, id))
+      .slice(0, 6).map((id) => ({ name: roomName(st[id], id), temperature: id, humidity: humidityFor(st, id) }));
     if (rooms.length) widgets.push({ type: "rooms", size: "L", rooms });
     widgets.push(wx ? { type: "weather", size: "S", entity: wx } : { type: "weather", size: "S", source: "open_meteo" });
     return { widgets };
@@ -2822,6 +2828,8 @@
   .ec.sens .eh{justify-content:flex-start;align-items:center;gap:12px}
   .ec.sens .eic{width:40px;height:40px;border-radius:14px}
   .ec.sens .en{flex:1}
+  .ev2{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
+  .ehum{display:flex;align-items:center;gap:4px;font-size:15px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
   .tg{flex:none;width:50px;height:30px;border-radius:99px;padding:3px;display:flex;justify-content:flex-start;background:var(--track);transition:background .25s;border:0;cursor:pointer}
   .tg.on{justify-content:flex-end;background:var(--ai)}
   .tg i{width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
@@ -2888,6 +2896,10 @@
         const numeric = d === "sensor" && isFinite(parseFloat(st.state));
         // Sensors read like the widgets: one decimal (none for %), "°" for temperatures, and the tile stays neutral glass.
         let valTxt = stTxt;
+        // `humidity`: a second sensor shown beside the value, with its own drop icon (the room card sets it)
+        const hs = c.humidity ? this._hass.states[c.humidity] : null;
+        const hn = hs ? parseFloat(hs.state) : NaN;
+        const humTxt = hs ? `<span class="ehum">${animIcon(hs, 16, 2)}${isFinite(hn) ? `${Math.round(hn)}%` : esc(hs.state)}</span>` : "";
         if (numeric) {
           const n = parseFloat(st.state), u = a.unit_of_measurement || "";
           const dec = c.decimals ?? (u === "%" ? 0 : Math.abs(n) < 100 ? 1 : 0);
@@ -2907,7 +2919,7 @@
         } else if (numeric) {
           html = `<div class="${cls} sens" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
             <div class="eh">${icon}<div class="en"><b>${esc(name)}</b>${area ? `<span>${esc(area)}</span>` : ""}</div></div>
-            ${c.show_state !== false ? `<span class="ebig">${esc(valTxt)}</span>` : ""}</div>`;
+            ${c.show_state !== false ? `<div class="ev2"><span class="ebig">${esc(valTxt)}</span>${humTxt}</div>` : ""}</div>`;
         } else {
           html = `<div class="${cls}" data-k="ec" role="button" tabindex="0" aria-label="${esc(name)}">
             <div class="eh">${icon}${c.show_state !== false && !numeric ? `<span class="eval">${esc(pct != null ? pct + "%" : stTxt)}</span>` : ""}</div>
@@ -2975,23 +2987,7 @@
     _render() {
       if (!this._config || !this.shadowRoot) return;
       if (!this._ready || !customElements.get("ha-form") || !this._hass) { this.shadowRoot.innerHTML = `<div style="color:var(--secondary-text-color)">${esc(this._l("loading"))}</div>`; return; }
-      const presetLabels = { auto: this._l("auto") }; Object.keys(PRESETS).forEach((k) => { presetLabels[k] = PRESETS[k].name; });
-      const accentLabels = {}; Object.keys(ACCENTS).forEach((k) => { accentLabels[k] = ACCENTS[k].name; });
-      const acts = (list) => opt(list, { auto: this._l("act_auto"), toggle: this._l("act_toggle"), popup: this._l("act_popup"), native: this._l("act_native"), none: this._l("act_none") });
-      const schema = [
-        { name: "entity", required: true, selector: { entity: {} } },
-        { type: "grid", name: "", schema: [{ name: "name", selector: { text: {} } }, { name: "icon", selector: { icon: {} } }] },
-        { type: "grid", name: "", schema: [
-          { name: "layout", selector: { select: { mode: "dropdown", options: opt(["tile", "row"], { tile: this._l("layout_tile"), row: this._l("layout_row") }) } } },
-          { name: "subtitle", selector: { text: {} } }] },
-        { type: "grid", name: "", schema: [
-          { name: "tap_action", selector: { select: { mode: "dropdown", options: acts(["auto", "toggle", "popup", "native", "none"]) } } },
-          { name: "hold_action", selector: { select: { mode: "dropdown", options: acts(["popup", "native", "none"]) } } }] },
-        { type: "grid", name: "", schema: [
-          { name: "preset", selector: { select: { mode: "dropdown", options: opt(["auto", ...Object.keys(PRESETS)], presetLabels) } } },
-          { name: "accent", selector: { select: { mode: "dropdown", options: opt(Object.keys(ACCENTS), accentLabels) } } }] },
-        { type: "grid", name: "", schema: [{ name: "show_state", selector: { boolean: {} } }, { name: "glass", selector: { boolean: {} } }, { name: "motion", selector: { boolean: {} } }] }
-      ];
+      const schema = this._schema();
       const DEF = { layout: "tile", tap_action: "auto", hold_action: "popup", preset: "auto", accent: "peach", show_state: true, glass: true, motion: true };
       const data = { ...DEF, ...this._config };
       this.shadowRoot.innerHTML = "";
@@ -3004,7 +3000,7 @@
         ev.stopPropagation();
         const v = { ...ev.detail.value };
         f.data = v;
-        const cfg = { type: this._config.type || "custom:aurora-glass-entity" };
+        const cfg = { type: this._config.type || this._type };
         Object.keys(v).forEach((k) => { if (v[k] === "" || v[k] == null || DEF[k] === v[k]) return; cfg[k] = v[k]; });
         this._config = { ...cfg };
         this._lastFired = JSON.stringify(cfg);
@@ -3013,9 +3009,66 @@
       this._form = f;
       this.shadowRoot.appendChild(f);
     }
+    get _type() { return "custom:aurora-glass-entity"; }
+    _look() {
+      const presetLabels = { auto: this._l("auto") }; Object.keys(PRESETS).forEach((k) => { presetLabels[k] = PRESETS[k].name; });
+      const accentLabels = {}; Object.keys(ACCENTS).forEach((k) => { accentLabels[k] = ACCENTS[k].name; });
+      return { type: "grid", name: "", schema: [
+        { name: "preset", selector: { select: { mode: "dropdown", options: opt(["auto", ...Object.keys(PRESETS)], presetLabels) } } },
+        { name: "accent", selector: { select: { mode: "dropdown", options: opt(Object.keys(ACCENTS), accentLabels) } } }] };
+    }
+    _schema() {
+      const acts = (list) => opt(list, { auto: this._l("act_auto"), toggle: this._l("act_toggle"), popup: this._l("act_popup"), native: this._l("act_native"), none: this._l("act_none") });
+      return [
+        { name: "entity", required: true, selector: { entity: {} } },
+        { type: "grid", name: "", schema: [{ name: "name", selector: { text: {} } }, { name: "icon", selector: { icon: {} } }] },
+        { type: "grid", name: "", schema: [
+          { name: "layout", selector: { select: { mode: "dropdown", options: opt(["tile", "row"], { tile: this._l("layout_tile"), row: this._l("layout_row") }) } } },
+          { name: "subtitle", selector: { text: {} } }] },
+        { type: "grid", name: "", schema: [
+          { name: "tap_action", selector: { select: { mode: "dropdown", options: acts(["auto", "toggle", "popup", "native", "none"]) } } },
+          { name: "hold_action", selector: { select: { mode: "dropdown", options: acts(["popup", "native", "none"]) } } }] },
+        this._look(),
+        { type: "grid", name: "", schema: [{ name: "show_state", selector: { boolean: {} } }, { name: "glass", selector: { boolean: {} } }, { name: "motion", selector: { boolean: {} } }] }
+      ];
+    }
   }
   if (!customElements.get("aurora-glass-entity-editor")) customElements.define("aurora-glass-entity-editor", AuroraGlassEntityEditor);
+
+  /* ================================================================ room card */
+  // One room in one tile: the temperature large with its thermometer, the humidity beside it with its drop.
+  // It is the entity card with `temperature` as its entity and `humidity` as the second value.
+  class AuroraGlassRoomCard extends AuroraGlassEntityCard {
+    static getConfigElement() { return document.createElement("aurora-glass-room-editor"); }
+    static getStubConfig(hass) {
+      const st = hass?.states || {};
+      const temps = Object.keys(st).filter((id) => id.startsWith("sensor.") && st[id].attributes.device_class === "temperature");
+      const id = temps.find((t) => humidityFor(st, t)) || temps[0];
+      if (!id) return { temperature: "" };
+      const hum = humidityFor(st, id);
+      return { name: roomName(st[id], id), temperature: id, ...(hum ? { humidity: hum } : {}) };
+    }
+    setConfig(c) {
+      if (!c || !(c.temperature || c.entity)) throw new Error("aurora-glass-room: choose a temperature sensor");
+      super.setConfig({ ...c, entity: c.temperature || c.entity });
+    }
+  }
+  class AuroraGlassRoomEditor extends AuroraGlassEntityEditor {
+    get _type() { return "custom:aurora-glass-room"; }
+    _schema() {
+      return [
+        { name: "name", selector: { text: {} } },
+        { type: "grid", name: "", schema: [
+          { name: "temperature", required: true, selector: { entity: { domain: "sensor", device_class: "temperature" } } },
+          { name: "humidity", selector: { entity: { domain: "sensor", device_class: "humidity" } } }] },
+        this._look(),
+        { type: "grid", name: "", schema: [{ name: "glass", selector: { boolean: {} } }, { name: "motion", selector: { boolean: {} } }] }
+      ];
+    }
+  }
+  if (!customElements.get("aurora-glass-room-editor")) customElements.define("aurora-glass-room-editor", AuroraGlassRoomEditor);
   if (!customElements.get("aurora-glass-entity")) customElements.define("aurora-glass-entity", AuroraGlassEntityCard);
+  if (!customElements.get("aurora-glass-room")) customElements.define("aurora-glass-room", AuroraGlassRoomCard);
 
   if (!customElements.get("aurora-glass-card")) customElements.define("aurora-glass-card", AuroraGlassCard);
   window.customCards = window.customCards || [];
@@ -3024,6 +3077,9 @@
   }
   if (!window.customCards.some((c) => c.type === "aurora-glass-entity")) {
     window.customCards.push({ type: "aurora-glass-entity", name: "Aurora Glass Entity", description: "One entity as an animated glass tile, with the Aurora Glass pop-up", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
+  }
+  if (!window.customCards.some((c) => c.type === "aurora-glass-room")) {
+    window.customCards.push({ type: "aurora-glass-room", name: "Aurora Glass Room", description: "A room's temperature and humidity in one glass tile", preview: true, documentationURL: "https://github.com/comixdx/ha-aurora-glass" });
   }
   Object.keys(WIDGET_CARDS).forEach((kind) => {
     const tag = `aurora-glass-${kind}`;

@@ -118,6 +118,8 @@ Hold any tile (or right-click it), or tap a header chip, an energy-flow node or 
 
 ![Aurora Glass Entity cards: a light, a fan, a lock, an AC and a sensor](docs/images/shot-entity-cards.svg)
 
+**Aurora Glass Room** (+ Add card → **Aurora Glass Room**) puts one room in one tile: its name next to the thermometer, the temperature large and the humidity beside it with an animated drop. Pick the room's temperature sensor and, optionally, its humidity sensor; the card picker starts with a room whose two sensors belong to the same device.
+
 ## 8. Widgets as separate cards
 
 Every widget is also a card of its own, for a **Sections** view where Home Assistant places and sizes each card.
@@ -391,6 +393,15 @@ motion: true
 ```
 
 ![Entity cards](docs/images/shot-entity-cards.svg)
+
+A temperature tile can also show a humidity sensor beside the value: add `humidity: sensor.living_room_humidity`. The room card does the same with names that read better:
+
+```yaml
+type: custom:aurora-glass-room
+name: Living room
+temperature: sensor.living_room_temperature
+humidity: sensor.living_room_humidity    # optional
+```
 
 `auto` toggles lights, switches, fans and covers, runs scenes, scripts and buttons, and opens the pop-up for everything else. In a Sections view, a tile takes 3 columns × 2 rows and a row takes 6 × 1; drag the corner to resize.
 
